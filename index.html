@@ -545,23 +545,11 @@
         </div>
       </div>
       <div class="field">
-        <label>镂空造型 / 形状</label>
-        <select id="cfgTemplate" onchange="onTemplateOrSizeChange()">
-          <option value="full">满格棋盘</option>
-          <option value="corners">四角镂空</option>
-          <option value="center_hole">中心镂空</option>
-          <option value="cross">十字造型</option>
-          <option value="ring">环形造型</option>
-          <option value="random">随机镂空</option>
-          <option value="custom">自定义形状（点击格子开关）</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>填充模式</label>
-        <select id="cfgFillMode">
-          <option value="full_cover">满铺模板（全格必须使用）</option>
-          <option value="auto_void">紧凑交叉（未用格镂空）</option>
-        </select>
+        <label>异形棋盘</label>
+        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); cursor:pointer; padding-top:6px;">
+          <input type="checkbox" id="cfgCustomShapeCheck" onchange="onTemplateOrSizeChange()" />
+          开启异形矩阵编辑
+        </label>
       </div>
       <div class="field">
         <label>目标词长度序列 (留空自动搭配)</label>
@@ -944,10 +932,9 @@
         setVal("cfgRows", spec[0]);
         setVal("cfgCols", spec[1]);
         setVal("cfgLevelNum", spec[2]);
-        setVal("cfgTemplate", "full");
-        setVal("cfgFillMode", "full_cover");
         setVal("cfgStrictness", "deadlock_free");
       }
+      document.getElementById("cfgCustomShapeCheck").checked = false;
       onTemplateOrSizeChange();
       generateSingle();
     }
@@ -957,7 +944,7 @@
         b.classList.toggle("active", b.dataset.preset === "custom");
       });
       document.getElementById("advancedDrawer").classList.remove("hidden");
-      document.getElementById("cfgTemplate").value = "custom";
+      document.getElementById("cfgCustomShapeCheck").checked = true;
       onTemplateOrSizeChange();
     }
 
@@ -978,9 +965,9 @@
     }
 
     function onTemplateOrSizeChange() {
-      const tpl = document.getElementById("cfgTemplate").value;
+      const isCustom = document.getElementById("cfgCustomShapeCheck").checked;
       const panel = document.getElementById("customShapePanel");
-      if (tpl === "custom") {
+      if (isCustom) {
         panel.classList.remove("hidden");
         syncCustomVoidMask();
         renderCustomShapeGrid();
@@ -1036,15 +1023,15 @@
       const word_lengths = lenStr
         ? lenStr.split(/[,，\s]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x) && x >= 2)
         : null;
-      const tpl = document.getElementById("cfgTemplate").value;
-      if (tpl === "custom") syncCustomVoidMask();
+      const isCustom = document.getElementById("cfgCustomShapeCheck").checked;
+      if (isCustom) syncCustomVoidMask();
       return {
         level_num: parseInt(document.getElementById("cfgLevelNum").value, 10) || 2,
         rows: parseInt(document.getElementById("cfgRows").value, 10) || 4,
         cols: parseInt(document.getElementById("cfgCols").value, 10) || 4,
-        template: tpl === "custom" ? "full" : tpl,
-        void_mask: tpl === "custom" ? customVoidMask.map((row) => [...row]) : null,
-        fill_mode: document.getElementById("cfgFillMode").value,
+        template: "full",
+        void_mask: isCustom ? customVoidMask.map((row) => [...row]) : null,
+        fill_mode: "full_cover",
         word_lengths,
         seed_words: document.getElementById("cfgSeeds").value.trim(),
         max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000,
