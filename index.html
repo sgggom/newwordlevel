@@ -524,6 +524,7 @@
       <button class="btn" onclick="hintNextWord()">💡 提示一步</button>
       <button class="btn" onclick="resetPlaySession()">🔄 重置本关</button>
       <button class="btn" id="statsToggleBtn" onclick="toggleStatsView()">📊 关卡统计 (<span id="poolCountHeader">0</span>)</button>
+      <button class="btn" id="dbToggleBtn" onclick="toggleDbView()">🗄️ 本地库 (<span id="dbCountHeader">0</span>)</button>
       <button class="btn" id="advToggleBtn" onclick="toggleAdvanced()">⚙️ 高级设置 / 导出</button>
     </div>
   </header>
@@ -619,6 +620,10 @@
       <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
         <input type="checkbox" id="batchDedupCheck" checked />
         生成去重
+      </label>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
+        <input type="checkbox" id="batchSaveDbCheck" checked />
+        存入本地库
       </label>
       <button class="btn btn-sm btn-primary" id="batchRunBtn" onclick="runConfiguredBatch(false)">📦 批量生成入池</button>
       <button class="btn btn-sm" id="batchExportBtn" onclick="runConfiguredBatch(true)">💾 批量跑并导出 JSONL</button>
@@ -764,11 +769,104 @@
     </div>
   </section>
 
+  <!-- Local IndexedDB Level Database View -->
+  <section id="dbView" class="stats-container hidden">
+    <div class="stats-toolbar">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="font-size:15px;">🗄️ 本地关卡数据库（IndexedDB · 零下载原生内置）</strong>
+        <span class="pill pill-blue" id="dbTotalPill">库中 0 关</span>
+        <span class="pill" id="dbMatchPill">匹配 0 关</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="triggerDbImport()">📥 导入 JSONL / JSON 入库</button>
+        <input type="file" id="dbImportFile" accept=".jsonl,.json" class="hidden" onchange="handleDbImportFile(event)" />
+        <button class="btn btn-sm btn-primary" onclick="exportDbFiltered()">📤 导出筛选结果 JSONL</button>
+        <button class="btn btn-sm btn-warn" onclick="clearLocalDb()">🗑️ 清空本地库</button>
+        <button class="btn btn-sm" onclick="toggleDbView(false)">← 返回棋盘</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:12px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div class="field" style="min-width:100px;">
+          <label>尺寸</label>
+          <select id="dbFilterSize">
+            <option value="">全部尺寸</option>
+            <option value="2x4">2×4</option>
+            <option value="3x3">3×3</option>
+            <option value="2x5">2×5</option>
+            <option value="3x4">3×4</option>
+            <option value="3x5">3×5</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>最大层数 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinMaxCnt" placeholder="1" min="1" max="20" style="width:56px;" />
+            <input type="number" id="dbMaxMaxCnt" placeholder="10" min="1" max="20" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>目标词数 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinTargets" placeholder="1" min="1" style="width:56px;" />
+            <input type="number" id="dbMaxTargets" placeholder="99" min="1" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>额外词数 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinExtras" placeholder="0" min="0" style="width:56px;" />
+            <input type="number" id="dbMaxExtras" placeholder="99" min="0" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>包含目标词</label>
+          <input type="text" id="dbFilterWord" placeholder="如 CAT" style="width:110px; text-transform:uppercase;" />
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="runDbQuery(0)">🔍 筛选查询</button>
+      </div>
+      <div id="dbStatusText" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <span>查询结果（每页 50 条）</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="btn btn-sm" id="dbPrevPageBtn" onclick="changeDbPage(-1)">上一页</button>
+          <span id="dbPageInfo" style="font-size:12px; color:var(--muted);">第 1 页</span>
+          <button class="btn btn-sm" id="dbNextPageBtn" onclick="changeDbPage(1)">下一页</button>
+        </div>
+      </div>
+      <div class="pool-table-wrap">
+        <table class="pool-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>尺寸</th>
+              <th>最大层数</th>
+              <th>目标词数</th>
+              <th>额外词数</th>
+              <th>目标词预览</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="dbTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script src="./level_db.js"></script>
   <script src="./pyodide_bridge.js"></script>
   <script>
     let levels = [];
     let currentIndex = 0;
     let statsViewOpen = false;
+    let dbViewOpen = false;
+    let dbPage = 0;
+    let dbLastTotal = 0;
+    let dbCurrentItems = [];
     let hideWords = false;
     let editMode = false;
     let selectedCell = null;
@@ -790,6 +888,7 @@
       if (wInput && navigator.hardwareConcurrency) {
         wInput.value = Math.max(1, Math.min(32, navigator.hardwareConcurrency));
       }
+      refreshDbCount();
       try {
         const res = await fetch("/api/meta");
         const data = await res.json();
@@ -922,6 +1021,7 @@
         size_mode: document.getElementById("batchSizeModeSelect").value,
         avoid_hot: document.getElementById("batchAvoidHotCheck").checked,
         dedup: document.getElementById("batchDedupCheck").checked,
+        save_db: document.getElementById("batchSaveDbCheck").checked,
         workers: Math.max(1, Math.min(32, parseInt(document.getElementById("batchWorkersInput").value || "4", 10))),
       };
     }
@@ -972,7 +1072,9 @@
             ? Number(baseConfig.rng_seed) + (r - 1) * 1000000
             : Math.floor(Math.random() * 10000000);
 
+          const dbWriteQueue = [];
           const acceptLevels = (batchLevels) => {
+            const newlyAccepted = [];
             for (const lvl of batchLevels) {
               if (roundAccepted >= n) break;
               if (batchOpts.dedup) {
@@ -992,6 +1094,7 @@
               }
               roundAccepted++;
               grandTotal++;
+              newlyAccepted.push(lvl);
               if (exportJsonl) {
                 roundExport.push(lvl);
               } else {
@@ -999,6 +1102,11 @@
                 document.getElementById("poolCountHeader").textContent = levels.length;
                 document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
               }
+            }
+            if (batchOpts.save_db && window.LevelDB && newlyAccepted.length > 0) {
+              dbWriteQueue.push(
+                window.LevelDB.insertBatch(newlyAccepted).then(() => refreshDbCount()).catch(() => {})
+              );
             }
             const rLabel = rounds > 1 ? `第 ${r}/${rounds} 轮 · ` : "";
             const dupLabel = dupSkippedTotal > 0 ? `（已去重 ${dupSkippedTotal}）` : "";
@@ -1047,6 +1155,10 @@
               acceptLevels(batchLevels);
               await new Promise((resYield) => setTimeout(resYield, 0));
             }
+          }
+
+          if (dbWriteQueue.length > 0) {
+            await Promise.all(dbWriteQueue);
           }
 
           if (exportJsonl && roundExport.length > 0) {
@@ -1136,6 +1248,11 @@
 
     function toggleStatsView(force) {
       statsViewOpen = typeof force === "boolean" ? force : !statsViewOpen;
+      if (statsViewOpen) {
+        dbViewOpen = false;
+        document.getElementById("dbView").classList.add("hidden");
+        document.getElementById("dbToggleBtn").classList.remove("btn-primary");
+      }
       document.getElementById("mainWorkspace").classList.toggle("hidden", statsViewOpen);
       document.getElementById("statsView").classList.toggle("hidden", !statsViewOpen);
       document.getElementById("statsToggleBtn").classList.toggle("btn-warn", statsViewOpen);
@@ -1848,6 +1965,177 @@
       };
       reader.readAsText(file);
       ev.target.value = "";
+    }
+
+    // ==================== Local IndexedDB Level Database ====================
+    async function refreshDbCount() {
+      if (!window.LevelDB) return 0;
+      try {
+        const cnt = await window.LevelDB.count();
+        const hdr = document.getElementById("dbCountHeader");
+        const pill = document.getElementById("dbTotalPill");
+        if (hdr) hdr.textContent = cnt;
+        if (pill) pill.textContent = `库中 ${cnt} 关`;
+        return cnt;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    async function toggleDbView(forceState) {
+      dbViewOpen = typeof forceState === "boolean" ? forceState : !dbViewOpen;
+      if (dbViewOpen) {
+        statsViewOpen = false;
+        document.getElementById("statsView").classList.add("hidden");
+        document.getElementById("statsToggleBtn").classList.remove("btn-primary");
+      }
+      document.getElementById("mainWorkspace").classList.toggle("hidden", dbViewOpen);
+      document.getElementById("dbView").classList.toggle("hidden", !dbViewOpen);
+      document.getElementById("dbToggleBtn").classList.toggle("btn-primary", dbViewOpen);
+      if (dbViewOpen) {
+        await refreshDbCount();
+        await runDbQuery(0);
+      }
+    }
+
+    function collectDbFilters() {
+      const numOrNull = (id) => {
+        const v = document.getElementById(id).value.trim();
+        return v === "" ? null : parseInt(v, 10);
+      };
+      return {
+        size: document.getElementById("dbFilterSize").value,
+        minMaxCount: numOrNull("dbMinMaxCnt"),
+        maxMaxCount: numOrNull("dbMaxMaxCnt"),
+        minTargets: numOrNull("dbMinTargets"),
+        maxTargets: numOrNull("dbMaxTargets"),
+        minExtras: numOrNull("dbMinExtras"),
+        maxExtras: numOrNull("dbMaxExtras"),
+        wordContains: document.getElementById("dbFilterWord").value.trim().toUpperCase(),
+      };
+    }
+
+    async function runDbQuery(page = 0) {
+      if (!window.LevelDB) return;
+      dbPage = Math.max(0, page);
+      const limit = 50;
+      const offset = dbPage * limit;
+      const filters = collectDbFilters();
+      const statusEl = document.getElementById("dbStatusText");
+      if (statusEl) statusEl.textContent = "⏳ 正在查询本地库...";
+      const t0 = performance.now();
+      const res = await window.LevelDB.queryLevels(filters, limit, offset);
+      const dt = (performance.now() - t0).toFixed(1);
+
+      dbLastTotal = res.totalMatched;
+      dbCurrentItems = res.items;
+      document.getElementById("dbMatchPill").textContent = `匹配 ${res.totalMatched} 关`;
+      const totalPages = Math.max(1, Math.ceil(res.totalMatched / limit));
+      document.getElementById("dbPageInfo").textContent = `第 ${dbPage + 1} / ${totalPages} 页`;
+      document.getElementById("dbPrevPageBtn").disabled = dbPage <= 0;
+      document.getElementById("dbNextPageBtn").disabled = (dbPage + 1) * limit >= res.totalMatched;
+      if (statusEl) statusEl.textContent = `✅ 查询完成，耗时 ${dt} ms（共匹配 ${res.totalMatched} 关）`;
+
+      const tbody = document.getElementById("dbTableBody");
+      tbody.innerHTML = "";
+      for (let i = 0; i < res.items.length; i++) {
+        const rec = res.items[i];
+        const tr = document.createElement("tr");
+        const wordsPreview = (rec.data.target_words || []).slice(0, 6).join(", ") +
+          ((rec.data.target_words || []).length > 6 ? " ..." : "");
+        tr.innerHTML = `
+          <td>#${rec.id}</td>
+          <td>${rec.size}</td>
+          <td>${rec.max_cell_count}</td>
+          <td>${rec.target_count}</td>
+          <td>${rec.extra_count}</td>
+          <td style="font-family:monospace;">${wordsPreview}</td>
+          <td><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    async function changeDbPage(delta) {
+      await runDbQuery(dbPage + delta);
+    }
+
+    async function loadDbLevelToBoard(idx) {
+      const rec = dbCurrentItems[idx];
+      if (!rec) return;
+      const lvl = JSON.parse(JSON.stringify(rec.data));
+      levels.push(lvl);
+      currentIndex = levels.length - 1;
+      await toggleDbView(false);
+      setStatus("⏳ 正在对载入关卡执行求解验算...");
+      try {
+        const res = await fetch("/api/solve", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ level: lvl, max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000 }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          lvl.solver_report = data.solver_report;
+          lvl.extra_words = data.extra_words;
+          lvl.other_candidates = data.other_candidates || [];
+        }
+      } catch (_) {}
+      await onLevelLoaded(`已从本地库载入 #${rec.id}（${rec.size} · ${rec.target_count} 词）`);
+    }
+
+    function triggerDbImport() {
+      document.getElementById("dbImportFile").click();
+    }
+
+    async function handleDbImportFile(ev) {
+      const file = ev.target.files[0];
+      if (!file || !window.LevelDB) return;
+      const statusEl = document.getElementById("dbStatusText");
+      if (statusEl) statusEl.textContent = `⏳ 正在读取并导入 ${file.name} ...`;
+      try {
+        const text = await file.text();
+        const isJsonl = file.name.toLowerCase().endsWith(".jsonl");
+        const res = await window.LevelDB.importText(text, isJsonl, (done, total, ins, skip) => {
+          if (statusEl) statusEl.textContent = `⏳ 导入中 ${done}/${total}（新增 ${ins}，去重跳过 ${skip}）...`;
+        });
+        await refreshDbCount();
+        await runDbQuery(0);
+        if (statusEl) {
+          statusEl.textContent = `✅ 导入完成：共 ${res.total} 条，新增 ${res.inserted} 关，去重跳过 ${res.skipped} 关`;
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = `❌ 导入失败: ${err.message}`;
+      }
+      ev.target.value = "";
+    }
+
+    async function exportDbFiltered() {
+      if (!window.LevelDB) return;
+      const statusEl = document.getElementById("dbStatusText");
+      const filters = collectDbFilters();
+      if (statusEl) statusEl.textContent = "⏳ 正在导出筛选结果...";
+      const lines = await window.LevelDB.collectAllMatching(filters, (scanned, matched) => {
+        if (statusEl) statusEl.textContent = `⏳ 已扫描 ${scanned} 条，匹配 ${matched} 条...`;
+      });
+      if (!lines.length) {
+        if (statusEl) statusEl.textContent = "⚠️ 当前筛选条件下没有可导出的关卡";
+        return;
+      }
+      const blob = new Blob([lines.join("\n") + "\n"], { type: "application/x-ndjson;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `db_filtered_${lines.length}.jsonl`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      if (statusEl) statusEl.textContent = `✅ 已导出 ${lines.length} 关 JSONL`;
+    }
+
+    async function clearLocalDb() {
+      if (!window.LevelDB) return;
+      await window.LevelDB.clear();
+      await refreshDbCount();
+      await runDbQuery(0);
     }
 
     init();
