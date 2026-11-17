@@ -587,8 +587,12 @@
 
     <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
       <div class="field" style="min-width:90px;">
-        <label>批量数量</label>
-        <input type="number" id="batchCountInput" value="20" min="1" max="10000" style="width:86px;" />
+        <label>每轮数量</label>
+        <input type="number" id="batchCountInput" value="20" min="1" max="100000" style="width:90px;" />
+      </div>
+      <div class="field" style="min-width:76px;">
+        <label>连续轮数</label>
+        <input type="number" id="batchRoundsInput" value="1" min="1" max="100" style="width:70px;" />
       </div>
       <div class="field" style="min-width:85px;">
         <label>并行核心数</label>
@@ -612,8 +616,13 @@
         <input type="checkbox" id="batchAvoidHotCheck" checked />
         防高频重复避让
       </label>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
+        <input type="checkbox" id="batchDedupCheck" checked />
+        生成去重
+      </label>
       <button class="btn btn-sm btn-primary" id="batchRunBtn" onclick="runConfiguredBatch(false)">📦 批量生成入池</button>
       <button class="btn btn-sm" id="batchExportBtn" onclick="runConfiguredBatch(true)">💾 批量跑并导出 JSONL</button>
+      <button class="btn btn-sm" onclick="dedupPool()">🧹 池内去重</button>
       <button class="btn btn-sm btn-warn hidden" id="batchStopBtn" onclick="stopBatchRun()">⏹️ 停止</button>
     </div>
 
@@ -880,21 +889,50 @@
       batchAbort = true;
     }
 
+    function levelSignature(lvl) {
+      const boardKey = (lvl.board || [])
+        .map((row) => row.map((c) => (c.void ? "#" : `${c.letter}${c.count}`)).join(","))
+        .join("/");
+      const targetsKey = [...(lvl.target_words || [])].sort().join(",");
+      return `${lvl.rows}x${lvl.cols}|${boardKey}|${targetsKey}`;
+    }
+
+    async function dedupPool() {
+      if (!levels.length) return;
+      const seen = new Set();
+      const unique = [];
+      let dupCount = 0;
+      for (const lvl of levels) {
+        const sig = levelSignature(lvl);
+        if (seen.has(sig)) {
+          dupCount++;
+        } else {
+          seen.add(sig);
+          unique.push(lvl);
+        }
+      }
+      levels = unique;
+      if (currentIndex >= levels.length) currentIndex = Math.max(0, levels.length - 1);
+      await onLevelLoaded(`🧹 去重完成：移除 ${dupCount} 个重复关卡，当前池中共 ${levels.length} 关`);
+    }
+
     function collectBatchOptions() {
       return {
         strategy: document.getElementById("batchStrategySelect").value,
         size_mode: document.getElementById("batchSizeModeSelect").value,
         avoid_hot: document.getElementById("batchAvoidHotCheck").checked,
+        dedup: document.getElementById("batchDedupCheck").checked,
         workers: Math.max(1, Math.min(32, parseInt(document.getElementById("batchWorkersInput").value || "4", 10))),
       };
     }
 
     async function runConfiguredBatch(exportJsonl = false) {
-      const n = Math.max(1, Math.min(10000, parseInt(document.getElementById("batchCountInput").value || "20", 10)));
-      await generateBatch(n, exportJsonl);
+      const n = Math.max(1, Math.min(100000, parseInt(document.getElementById("batchCountInput").value || "20", 10)));
+      const rounds = Math.max(1, Math.min(100, parseInt(document.getElementById("batchRoundsInput").value || "1", 10)));
+      await generateBatch(n, exportJsonl, rounds);
     }
 
-    async function generateBatch(n, exportJsonl = false) {
+    async function generateBatch(n, exportJsonl = false, rounds = 1) {
       batchAbort = false;
       const runBtn = document.getElementById("batchRunBtn");
       const expBtn = document.getElementById("batchExportBtn");
@@ -904,75 +942,124 @@
       if (stopBtn) stopBtn.classList.remove("hidden");
 
       const batchOpts = collectBatchOptions();
-      const chunkSize = Math.max(10, Math.min(100, batchOpts.workers * 5));
-      const collectedForExport = [];
       const wordFreq = new Map();
-      let generatedTotal = 0;
+      const seenKeys = new Set();
+      if (batchOpts.dedup) {
+        for (const lvl of levels) seenKeys.add(levelSignature(lvl));
+      }
+      let grandTotal = 0;
+      let dupSkippedTotal = 0;
       const firstNew = levels.length;
 
+      function downloadRoundJsonl(roundLevels, roundIdx) {
+        if (!roundLevels.length) return;
+        const jsonl = roundLevels.map((l) => JSON.stringify(l)).join("\n") + "\n";
+        const blob = new Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        const rTag = rounds > 1 ? `_r${roundIdx}of${rounds}` : "";
+        a.download = `levels_${batchOpts.strategy}${rTag}_${roundLevels.length}.jsonl`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
       try {
-        while (generatedTotal < n && !batchAbort) {
-          const curChunk = Math.min(chunkSize, n - generatedTotal);
-          setStatus(`正在 ${batchOpts.workers} 核并行跑关：${generatedTotal} / ${n} ...`);
-          const cfg = { ...collectConfig(), ...batchOpts };
-          cfg.count = curChunk;
-          cfg.start_level_num = (exportJsonl ? generatedTotal : levels.length) + 1;
-          if (batchOpts.avoid_hot && wordFreq.size > 0) {
-            cfg.avoid_words = Array.from(wordFreq.entries())
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 150)
-              .map(([w]) => w);
-          }
-          if (cfg.rng_seed !== null && cfg.rng_seed !== undefined) {
-            cfg.rng_seed = Number(cfg.rng_seed) + generatedTotal;
-          }
+        for (let r = 1; r <= rounds && !batchAbort; r++) {
+          let roundAccepted = 0;
+          const roundExport = [];
+          const baseConfig = collectConfig();
+          const baseSeed = baseConfig.rng_seed !== null && baseConfig.rng_seed !== undefined
+            ? Number(baseConfig.rng_seed) + (r - 1) * 1000000
+            : Math.floor(Math.random() * 10000000);
 
-          const res = await fetch("/api/generate_batch", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(cfg),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "批量生成失败");
-          const batchLevels = data.levels || [];
-          if (batchLevels.length === 0) break;
-
-          for (const lvl of batchLevels) {
-            for (const w of lvl.target_words || []) {
-              wordFreq.set(w, (wordFreq.get(w) || 0) + 1);
+          const acceptLevels = (batchLevels) => {
+            for (const lvl of batchLevels) {
+              if (roundAccepted >= n) break;
+              if (batchOpts.dedup) {
+                const sig = levelSignature(lvl);
+                if (seenKeys.has(sig)) {
+                  dupSkippedTotal++;
+                  continue;
+                }
+                seenKeys.add(sig);
+              }
+              for (const w of lvl.target_words || []) {
+                wordFreq.set(w, (wordFreq.get(w) || 0) + 1);
+              }
+              for (const ex of lvl.extra_words || []) {
+                const ew = typeof ex === "string" ? ex : ex.word;
+                if (ew) wordFreq.set(ew, (wordFreq.get(ew) || 0) + 1);
+              }
+              roundAccepted++;
+              grandTotal++;
+              if (exportJsonl) {
+                roundExport.push(lvl);
+              } else {
+                levels.push(lvl);
+                document.getElementById("poolCountHeader").textContent = levels.length;
+                document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
+              }
             }
-            for (const ex of lvl.extra_words || []) {
-              const ew = typeof ex === "string" ? ex : ex.word;
-              if (ew) wordFreq.set(ew, (wordFreq.get(ew) || 0) + 1);
+            const rLabel = rounds > 1 ? `第 ${r}/${rounds} 轮 · ` : "";
+            const dupLabel = dupSkippedTotal > 0 ? `（已去重 ${dupSkippedTotal}）` : "";
+            setStatus(`正在 ${batchOpts.workers} 核满载并行跑关：${rLabel}${roundAccepted} / ${n}${dupLabel} ...`);
+          };
+
+          const makeTaskCfg = (take, workerIdx, seq) => {
+            const cfg = { ...baseConfig, ...batchOpts };
+            cfg.count = take;
+            cfg.start_level_num = (exportJsonl ? grandTotal : levels.length) + 1;
+            cfg.rng_seed = baseSeed + workerIdx * 500000 + seq * 1000;
+            if (batchOpts.avoid_hot && wordFreq.size > 0) {
+              cfg.avoid_words = Array.from(wordFreq.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 150)
+                .map(([w]) => w);
+            }
+            return cfg;
+          };
+
+          const usedContinuous = typeof window.runContinuousBatch === "function"
+            ? await window.runContinuousBatch({
+                reqWorkers: batchOpts.workers,
+                chunkPerWorker: 20,
+                getRemaining: (inFlight) => n - roundAccepted - inFlight,
+                makeTaskCfg,
+                onLevels: acceptLevels,
+                shouldStop: () => batchAbort,
+              })
+            : false;
+
+          if (!usedContinuous) {
+            let seq = 0;
+            while (roundAccepted < n && !batchAbort) {
+              const curChunk = Math.min(20, n - roundAccepted);
+              const cfg = makeTaskCfg(curChunk, 0, ++seq);
+              const res = await fetch("/api/generate_batch", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(cfg),
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || "批量生成失败");
+              const batchLevels = data.levels || [];
+              if (batchLevels.length === 0) break;
+              acceptLevels(batchLevels);
+              await new Promise((resYield) => setTimeout(resYield, 0));
             }
           }
 
-          generatedTotal += batchLevels.length;
-          if (exportJsonl) {
-            collectedForExport.push(...batchLevels);
-          } else {
-            levels.push(...batchLevels);
-            document.getElementById("poolCountHeader").textContent = levels.length;
-            document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
+          if (exportJsonl && roundExport.length > 0) {
+            downloadRoundJsonl(roundExport, r);
           }
-          // Yield to UI thread so progress & stop button remain responsive
-          await new Promise((r) => setTimeout(r, 0));
         }
 
+        const dupMsg = dupSkippedTotal > 0 ? `（跳过重复 ${dupSkippedTotal} 关）` : "";
         if (exportJsonl) {
-          if (collectedForExport.length > 0) {
-            const jsonl = collectedForExport.map((l) => JSON.stringify(l)).join("\n") + "\n";
-            const blob = new Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `levels_${batchOpts.strategy}_${collectedForExport.length}.jsonl`;
-            a.click();
-            URL.revokeObjectURL(a.href);
-          }
           setStatus(
             batchAbort
-              ? `⏹️ 已停止，导出已完成的 ${collectedForExport.length} 关 JSONL`
-              : `✅ 已完成并导出 ${collectedForExport.length} 关 JSONL`,
+              ? `⏹️ 已停止，共导出 ${grandTotal} 关 JSONL${dupMsg}`
+              : `✅ 全部完成，共导出 ${grandTotal} 关 JSONL${dupMsg}`,
             "st-ok"
           );
         } else {
@@ -980,8 +1067,8 @@
             currentIndex = firstNew;
             await onLevelLoaded(
               batchAbort
-                ? `⏹️ 已停止，新增 ${generatedTotal} 关入池（池中共 ${levels.length} 关）`
-                : `✅ 已新增 ${generatedTotal} 关入池（池中共 ${levels.length} 关）`
+                ? `⏹️ 已停止，新增 ${grandTotal} 关入池${dupMsg}（池中共 ${levels.length} 关）`
+                : `✅ 已新增 ${grandTotal} 关入池${dupMsg}（池中共 ${levels.length} 关）`
             );
           }
         }

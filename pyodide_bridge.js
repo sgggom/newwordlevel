@@ -446,4 +446,44 @@ def dispatch_api(path, body_str):
     pyQueue = p.catch(() => {});
     return p;
   };
+
+  // Continuous work-stealing multi-worker runner (zero barrier wait, saturates all CPU cores)
+  window.runContinuousBatch = async function ({
+    reqWorkers,
+    chunkPerWorker = 20,
+    getRemaining,
+    makeTaskCfg,
+    onLevels,
+    shouldStop,
+  }) {
+    const mode = await ensureBackend();
+    if (mode !== "pyodide") return false;
+
+    const nWorkers = Math.max(1, Math.min(32, reqWorkers || (navigator.hardwareConcurrency || 4)));
+    const workers = ensureWorkers(nWorkers);
+    let inFlight = 0;
+    let taskSeq = 0;
+
+    async function workerLoop(workerIdx) {
+      const worker = workers[workerIdx];
+      while (!shouldStop()) {
+        const rem = getRemaining(inFlight);
+        if (rem <= 0) break;
+        const take = Math.max(1, Math.min(chunkPerWorker, rem));
+        inFlight += take;
+        const seq = ++taskSeq;
+        try {
+          const cfg = makeTaskCfg(take, workerIdx, seq);
+          const res = await runOnWorker(worker, cfg);
+          const lvls = (res && Array.isArray(res.levels)) ? res.levels : [];
+          onLevels(lvls);
+        } finally {
+          inFlight -= take;
+        }
+      }
+    }
+
+    await Promise.all(workers.map((_, idx) => workerLoop(idx)));
+    return true;
+  };
 })();
