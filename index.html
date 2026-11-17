@@ -516,6 +516,7 @@
       <button class="preset-btn" data-preset="2x5" onclick="selectPreset('2x5')">2×5</button>
       <button class="preset-btn active" data-preset="3x4" onclick="selectPreset('3x4')">3×4</button>
       <button class="preset-btn" data-preset="3x5" onclick="selectPreset('3x5')">3×5</button>
+      <button class="preset-btn" data-preset="custom" onclick="selectCustomShapePreset()">🧩 自定义形状</button>
     </div>
 
     <div class="actions">
@@ -622,7 +623,7 @@
         <label>批量尺寸模式</label>
         <select id="batchSizeModeSelect">
           <option value="presets">轮换尺寸 (2×4 ~ 3×5)</option>
-          <option value="current">仅当前尺寸</option>
+          <option value="current">仅当前尺寸 / 自定义形状</option>
         </select>
       </div>
       <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
@@ -949,6 +950,15 @@
       }
       onTemplateOrSizeChange();
       generateSingle();
+    }
+
+    function selectCustomShapePreset() {
+      document.querySelectorAll(".preset-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.preset === "custom");
+      });
+      document.getElementById("advancedDrawer").classList.remove("hidden");
+      document.getElementById("cfgTemplate").value = "custom";
+      onTemplateOrSizeChange();
     }
 
     let customVoidMask = [];
