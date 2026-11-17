@@ -94,22 +94,7 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 return
 
             if parsed.path == "/api/generate_batch":
-                count = max(1, min(30, int(body.get("count", 5))))
-                start_num = int(body.get("start_level_num", 1))
-                levels = []
-                for i in range(count):
-                    cfg = dict(body)
-                    cfg["level_num"] = start_num + i
-                    if cfg.get("rng_seed") is not None:
-                        cfg["rng_seed"] = int(cfg["rng_seed"]) + i
-                    # Level 1 automatically includes 2-letter guide lengths dynamically unless user specified word_lengths
-                    if cfg["level_num"] == 1 and not cfg.get("word_lengths"):
-                        cfg["rows"] = min(4, int(cfg.get("rows", 3)))
-                        cfg["cols"] = min(4, int(cfg.get("cols", 3)))
-                        cfg["fill_mode"] = "auto_void"
-                    elif cfg["level_num"] >= 2 and cfg.get("word_lengths"):
-                        cfg["word_lengths"] = [max(3, int(x)) for x in cfg["word_lengths"]]
-                    levels.append(self._handle_generate(cfg))
+                levels = self._handle_generate_batch(body)
                 self._send_json(HTTPStatus.OK, {"levels": levels})
                 return
 
@@ -216,6 +201,148 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             rng_seed=int(body["rng_seed"]) if body.get("rng_seed") not in (None, "") else None,
             timeout_sec=float(body.get("timeout_sec", 4.5)),
         )
+
+    @classmethod
+    def _handle_generate_batch(cls, body: dict[str, Any]) -> list[dict[str, Any]]:
+        count = max(1, min(100, int(body.get("count", 5))))
+        start_num = int(body.get("start_level_num", 1))
+        strategy = str(body.get("strategy", "standard"))
+        size_mode = str(body.get("size_mode", "current"))
+        avoid_hot = bool(body.get("avoid_hot", True))
+        max_cell_count = int(body.get("max_cell_count", 10))
+        max_rank = int(body.get("max_rank", 6000))
+        extra_cats = body.get("extra_categories") or ["inflection", "obscure_base"]
+        allowed_bands = body.get("allowed_bands") or None
+        allowed_spellings = body.get("allowed_spellings") or None
+
+        presets = [(2, 4), (3, 3), (2, 5), (3, 4), (3, 5)]
+        levels: list[dict[str, Any]] = []
+        attempts = 0
+        max_attempts = count * 8
+
+        while len(levels) < count and attempts < max_attempts:
+            idx = len(levels)
+            attempts += 1
+            cfg = dict(body)
+            cfg["level_num"] = start_num + idx
+            if size_mode == "presets":
+                pr, pc = presets[(start_num - 1 + idx) % len(presets)]
+                cfg["rows"] = pr
+                cfg["cols"] = pc
+                cfg["template"] = "full"
+                cfg["fill_mode"] = "full_cover"
+            if cfg.get("rng_seed") not in (None, ""):
+                cfg["rng_seed"] = int(cfg["rng_seed"]) + attempts - 1
+
+            if cfg["level_num"] == 1 and not cfg.get("word_lengths"):
+                cfg["rows"] = min(4, int(cfg.get("rows", 3)))
+                cfg["cols"] = min(4, int(cfg.get("cols", 3)))
+                cfg["fill_mode"] = "auto_void"
+            elif cfg["level_num"] >= 2 and cfg.get("word_lengths"):
+                cfg["word_lengths"] = [max(3, int(x)) for x in cfg["word_lengths"]]
+
+            if not avoid_hot:
+                GENERATOR.reset_usage_stats()
+
+            if strategy != "full_scan_peel":
+                levels.append(cls._handle_generate(cfg))
+                continue
+
+            # full_scan_peel: generate base board -> scan unique-path candidates -> peel to max_cell_count
+            cfg["strictness"] = "path_unique"
+            try:
+                base_lvl = cls._handle_generate(cfg)
+            except Exception:
+                continue
+
+            rows = int(base_lvl["rows"])
+            cols = int(base_lvl["cols"])
+            all_cands = SOLVER.scan_all_candidates(
+                base_lvl,
+                max_rank=max_rank,
+                allowed_bands=allowed_bands,
+                allowed_spellings=allowed_spellings,
+            )
+            unique_elig = [c for c in all_cands if c["eligible_for_target"] and c["path_count"] == 1]
+
+            counts = [[0] * cols for _ in range(rows)]
+            void_mask = [[bool(base_lvl["board"][r][col].get("void", False)) for col in range(cols)] for r in range(rows)]
+            for c in unique_elig:
+                for r, col in c["sample_paths"][0]:
+                    counts[r][col] += 1
+
+            if any(not void_mask[r][col] and counts[r][col] == 0 for r in range(rows) for col in range(cols)):
+                continue
+
+            rem_order = sorted(
+                range(len(unique_elig)),
+                key=lambda i: (-GENERATOR.target_usage[unique_elig[i]["word"]], unique_elig[i]["length"], unique_elig[i]["word"]),
+            )
+            removed_words: set[str] = set()
+            for i in rem_order:
+                cur_max = max(counts[r][col] for r in range(rows) for col in range(cols))
+                if cur_max <= max_cell_count:
+                    break
+                path = unique_elig[i]["sample_paths"][0]
+                if all(counts[r][col] >= 2 for r, col in path):
+                    for r, col in path:
+                        counts[r][col] -= 1
+                    removed_words.add(unique_elig[i]["word"])
+
+            if max(counts[r][col] for r in range(rows) for col in range(cols)) > max_cell_count:
+                continue
+
+            final_targets = [c["word"] for c in unique_elig if c["word"] not in removed_words]
+            final_board = [
+                [
+                    {
+                        "r": r,
+                        "c": col,
+                        "void": void_mask[r][col],
+                        "letter": "" if void_mask[r][col] else base_lvl["board"][r][col]["letter"],
+                        "count": 0 if void_mask[r][col] else counts[r][col],
+                    }
+                    for col in range(cols)
+                ]
+                for r in range(rows)
+            ]
+            peeled_lvl: dict[str, Any] = {
+                "level_num": int(base_lvl["level_num"]),
+                "rows": rows,
+                "cols": cols,
+                "template": base_lvl.get("template", "full"),
+                "fill_mode": base_lvl.get("fill_mode", "full_cover"),
+                "board": final_board,
+                "initial_words": list(final_targets),
+                "initial_word_paths": {
+                    c["word"]: c["sample_paths"][0]
+                    for c in unique_elig
+                    if c["word"] not in removed_words
+                },
+                "selected_candidates": [],
+                "selected_candidate_paths": {},
+                "target_words": final_targets,
+                "generation_ms": base_lvl.get("generation_ms", 0),
+            }
+            SOLVER.partition_candidates_and_solve(
+                peeled_lvl,
+                max_rank=max_rank,
+                extra_categories=extra_cats,
+                allowed_bands=allowed_bands,
+                allowed_spellings=allowed_spellings,
+            )
+            rep = peeled_lvl.get("solver_report", {})
+            if not (rep.get("is_solvable") and rep.get("zero_deadlock")):
+                continue
+
+            if avoid_hot:
+                for w in final_targets:
+                    GENERATOR.target_usage[w] += 1
+                for ex in peeled_lvl.get("extra_words", []):
+                    GENERATOR.extra_usage[ex["word"] if isinstance(ex, dict) else ex] += 1
+            levels.append(peeled_lvl)
+
+        return levels
 
 
 def main() -> None:

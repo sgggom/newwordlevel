@@ -585,10 +585,37 @@
       </div>
     </div>
 
+    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div class="field" style="min-width:90px;">
+        <label>批量数量</label>
+        <input type="number" id="batchCountInput" value="20" min="1" max="10000" style="width:86px;" />
+      </div>
+      <div class="field" style="min-width:210px;">
+        <label>批量策略</label>
+        <select id="batchStrategySelect">
+          <option value="full_scan_peel">全盘扫描 + 从多到少减词（零死局）</option>
+          <option value="standard">标准生成</option>
+        </select>
+      </div>
+      <div class="field" style="min-width:170px;">
+        <label>批量尺寸模式</label>
+        <select id="batchSizeModeSelect">
+          <option value="presets">轮换尺寸 (2×4 ~ 3×5)</option>
+          <option value="current">仅当前尺寸</option>
+        </select>
+      </div>
+      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
+        <input type="checkbox" id="batchAvoidHotCheck" checked />
+        防高频重复避让
+      </label>
+      <button class="btn btn-sm btn-primary" id="batchRunBtn" onclick="runConfiguredBatch(false)">📦 批量生成入池</button>
+      <button class="btn btn-sm" id="batchExportBtn" onclick="runConfiguredBatch(true)">💾 批量跑并导出 JSONL</button>
+      <button class="btn btn-sm btn-warn hidden" id="batchStopBtn" onclick="stopBatchRun()">⏹️ 停止</button>
+    </div>
+
     <div class="drawer-footer">
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-sm" id="editModeBtn" onclick="toggleEditMode()">✏️ 手动改盘开关</button>
-        <button class="btn btn-sm" onclick="generateBatch(5)">📦 批量生成 5 关</button>
         <button class="btn btn-sm" onclick="triggerImport()">📥 导入 JSON</button>
         <input type="file" id="importFile" accept=".json" class="hidden" onchange="handleImportFile(event)" />
         <button class="btn btn-sm" onclick="exportCurrentLevel()">📤 导出当前关卡</button>
@@ -839,25 +866,105 @@
       }
     }
 
-    async function generateBatch(n) {
-      setStatus(`正在批量生成 ${n} 关...`);
+    let batchAbort = false;
+
+    function stopBatchRun() {
+      batchAbort = true;
+    }
+
+    function collectBatchOptions() {
+      return {
+        strategy: document.getElementById("batchStrategySelect").value,
+        size_mode: document.getElementById("batchSizeModeSelect").value,
+        avoid_hot: document.getElementById("batchAvoidHotCheck").checked,
+      };
+    }
+
+    async function runConfiguredBatch(exportJsonl = false) {
+      const n = Math.max(1, Math.min(10000, parseInt(document.getElementById("batchCountInput").value || "20", 10)));
+      await generateBatch(n, exportJsonl);
+    }
+
+    async function generateBatch(n, exportJsonl = false) {
+      batchAbort = false;
+      const runBtn = document.getElementById("batchRunBtn");
+      const expBtn = document.getElementById("batchExportBtn");
+      const stopBtn = document.getElementById("batchStopBtn");
+      if (runBtn) runBtn.disabled = true;
+      if (expBtn) expBtn.disabled = true;
+      if (stopBtn) stopBtn.classList.remove("hidden");
+
+      const chunkSize = 10;
+      const collectedForExport = [];
+      let generatedTotal = 0;
+      const firstNew = levels.length;
+      const batchOpts = collectBatchOptions();
+
       try {
-        const cfg = collectConfig();
-        cfg.count = n;
-        cfg.start_level_num = levels.length + 1;
-        const res = await fetch("/api/generate_batch", {
-          method: "POST",
-          headers: {"Content-Type": "application/json"},
-          body: JSON.stringify(cfg),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "批量生成失败");
-        const firstNew = levels.length;
-        levels.push(...data.levels);
-        currentIndex = firstNew;
-        await onLevelLoaded(`已新增 ${data.levels.length} 关入池（池中共 ${levels.length} 关）`);
+        while (generatedTotal < n && !batchAbort) {
+          const curChunk = Math.min(chunkSize, n - generatedTotal);
+          setStatus(`正在批量跑关：${generatedTotal} / ${n} ...`);
+          const cfg = { ...collectConfig(), ...batchOpts };
+          cfg.count = curChunk;
+          cfg.start_level_num = (exportJsonl ? generatedTotal : levels.length) + 1;
+          if (cfg.rng_seed !== null && cfg.rng_seed !== undefined) {
+            cfg.rng_seed = Number(cfg.rng_seed) + generatedTotal;
+          }
+
+          const res = await fetch("/api/generate_batch", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(cfg),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "批量生成失败");
+          const batchLevels = data.levels || [];
+          if (batchLevels.length === 0) break;
+
+          generatedTotal += batchLevels.length;
+          if (exportJsonl) {
+            collectedForExport.push(...batchLevels);
+          } else {
+            levels.push(...batchLevels);
+            document.getElementById("poolCountHeader").textContent = levels.length;
+            document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
+          }
+          // Yield to UI thread so progress & stop button remain responsive
+          await new Promise((r) => setTimeout(r, 0));
+        }
+
+        if (exportJsonl) {
+          if (collectedForExport.length > 0) {
+            const jsonl = collectedForExport.map((l) => JSON.stringify(l)).join("\n") + "\n";
+            const blob = new Blob([jsonl], { type: "application/x-ndjson;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `levels_${batchOpts.strategy}_${collectedForExport.length}.jsonl`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }
+          setStatus(
+            batchAbort
+              ? `⏹️ 已停止，导出已完成的 ${collectedForExport.length} 关 JSONL`
+              : `✅ 已完成并导出 ${collectedForExport.length} 关 JSONL`,
+            "st-ok"
+          );
+        } else {
+          if (levels.length > firstNew) {
+            currentIndex = firstNew;
+            await onLevelLoaded(
+              batchAbort
+                ? `⏹️ 已停止，新增 ${generatedTotal} 关入池（池中共 ${levels.length} 关）`
+                : `✅ 已新增 ${generatedTotal} 关入池（池中共 ${levels.length} 关）`
+            );
+          }
+        }
       } catch (e) {
         setStatus("❌ " + e.message, "st-err");
+      } finally {
+        if (runBtn) runBtn.disabled = false;
+        if (expBtn) expBtn.disabled = false;
+        if (stopBtn) stopBtn.classList.add("hidden");
       }
     }
 
