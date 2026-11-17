@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>字母连词游戏工作台</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-soft: #162032;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --purple: #c084fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top, #17253e 0%, #0f172a 75%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Compact Top Bar */
+    header {
+      background: rgba(30, 41, 59, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .presets {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .preset-btn {
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .preset-btn:hover { color: var(--text); border-color: var(--accent); }
+    .preset-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button.btn {
+      background: #273549;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button.btn:hover { background: #334155; }
+    button.btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #081226;
+      border: none;
+    }
+    button.btn-primary:hover { filter: brightness(1.08); }
+    button.btn-sm { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
+    button.btn-warn { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.5); color: #fbbf24; }
+
+    /* Collapsible Advanced Drawer */
+    .drawer {
+      background: var(--panel-soft);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+    .drawer-grid {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px 14px;
+      align-items: end;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field label { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .field input, .field select {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      font-size: 12px;
+      outline: none;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    .drawer-footer {
+      max-width: 1180px;
+      margin: 12px auto 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* Main 2-column Layout */
+    .container {
+      flex: 1;
+      max-width: 1160px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(340px, 1.05fr) minmax(320px, 0.95fr);
+      gap: 22px;
+      align-items: start;
+    }
+    @media (max-width: 880px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* Left/Center Board Column */
+    .board-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-strip {
+      width: 100%;
+      max-width: 480px;
+      min-height: 44px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .status-strip.st-win { background: rgba(34, 197, 94, 0.16); border-color: var(--green); color: #86efac; }
+    .status-strip.st-target { background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.5); color: #86efac; }
+    .status-strip.st-extra { background: rgba(192, 132, 252, 0.14); border-color: rgba(192, 132, 252, 0.5); color: #e9d5ff; }
+    .status-strip.st-warn { background: rgba(245, 158, 11, 0.14); border-color: rgba(245, 158, 11, 0.5); color: #fde68a; }
+    .status-strip.st-err { background: rgba(239, 68, 68, 0.14); border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+
+    .live-word {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: var(--accent);
+    }
+
+    .board-stage {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      user-select: none;
+      touch-action: none;
+    }
+    .board-grid {
+      position: relative;
+      display: grid;
+      gap: 10px;
+    }
+    .board-svg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .cell {
+      border-radius: 13px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.15s;
+    }
+    .cell.active-tile {
+      background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+      color: #0f172a;
+      box-shadow: 0 4px 0 #94a3b8, 0 6px 14px rgba(0, 0, 0, 0.25);
+    }
+    .cell.active-tile:hover { transform: translateY(-1px); }
+    .cell.void-tile {
+      background: rgba(15, 23, 42, 0.5);
+      border: 2px dashed #334155;
+      color: #475569;
+      font-size: 11px !important;
+      font-weight: 600;
+    }
+    .cell.cleared-tile {
+      background: rgba(30, 41, 59, 0.45);
+      border: 1px solid #334155;
+      color: #475569;
+      box-shadow: none;
+    }
+    .cell.in-path {
+      background: linear-gradient(180deg, #fde047 0%, #facc15 100%) !important;
+      color: #422006 !important;
+      box-shadow: 0 4px 0 #ca8a04, 0 0 18px rgba(250, 204, 21, 0.45) !important;
+      transform: scale(1.04);
+    }
+    .cell.preview-path {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .cell.edit-selected {
+      outline: 3px solid var(--amber);
+      outline-offset: 2px;
+    }
+    .cnt-badge {
+      position: absolute;
+      top: 4px;
+      right: 5px;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 5px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .cnt-1 { background: #3b82f6; }
+    .cnt-2 { background: #f59e0b; }
+    .cnt-3 { background: #ec4899; }
+    .cnt-4 { background: #8b5cf6; }
+
+    .board-subcontrols {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Inline Editor Bar (only when manual edit enabled) */
+    .edit-bar {
+      width: 100%;
+      max-width: 480px;
+      background: var(--panel);
+      border: 1px solid var(--amber);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    /* Right Info Panel */
+    .info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .solver-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .section-head {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .target-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 8px;
+    }
+    .target-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .target-card:hover { border-color: var(--accent); }
+    .target-card.found {
+      border-color: rgba(34, 197, 94, 0.55);
+      background: rgba(34, 197, 94, 0.08);
+    }
+    .target-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+    .target-word {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+    }
+    .target-zh {
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .extra-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .extra-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: 0.15s;
+    }
+    .extra-chip:hover { border-color: var(--accent); }
+    .extra-chip.collected {
+      background: rgba(192, 132, 252, 0.18);
+      border-color: var(--purple);
+      color: #e9d5ff;
+    }
+    .extra-tag {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .pill-green { background: rgba(34, 197, 94, 0.16); color: #4ade80; }
+    .pill-blue { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
+    .pill-amber { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+    .pill-red { background: rgba(239, 68, 68, 0.18); color: #f87171; }
+
+    .batch-strip {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Stats View */
+    .stats-container {
+      max-width: 1160px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .stats-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .kpi-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .kpi-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .kpi-val { font-size: 28px; font-weight: 800; color: var(--text); }
+    .kpi-sub { font-size: 11px; color: var(--muted); }
+    .dist-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 780px) { .dist-grid { grid-template-columns: 1fr; } }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 82px 1fr 48px;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+    .bar-track {
+      height: 10px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 999px;
+    }
+    .pool-table-wrap {
+      overflow-x: auto;
+    }
+    table.pool-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    table.pool-table th, table.pool-table td {
+      text-align: left;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    table.pool-table th {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11px;
+    }
+    table.pool-table tr:hover td {
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>字母连词工坊</span>
+      <span id="levelBadge" class="pill pill-blue">第 2 关</span>
+    </div>
+
+    <div class="presets">
+      <button class="preset-btn" data-preset="2x4" onclick="selectPreset('2x4')">2×4</button>
+      <button class="preset-btn" data-preset="3x3" onclick="selectPreset('3x3')">3×3</button>
+      <button class="preset-btn" data-preset="2x5" onclick="selectPreset('2x5')">2×5</button>
+      <button class="preset-btn active" data-preset="3x4" onclick="selectPreset('3x4')">3×4</button>
+      <button class="preset-btn" data-preset="3x5" onclick="selectPreset('3x5')">3×5</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="generateSingle()">🎲 生成新关卡</button>
+      <button class="btn" id="hideWordsBtn" onclick="toggleHideWords()">🙈 隐藏单词</button>
+      <button class="btn" onclick="hintNextWord()">💡 提示一步</button>
+      <button class="btn" onclick="resetPlaySession()">🔄 重置本关</button>
+      <button class="btn" id="statsToggleBtn" onclick="toggleStatsView()">📊 关卡统计 (<span id="poolCountHeader">0</span>)</button>
+      <button class="btn" id="advToggleBtn" onclick="toggleAdvanced()">⚙️ 高级设置 / 导出</button>
+    </div>
+  </header>
+
+  <!-- Collapsible Advanced Drawer -->
+  <div id="advancedDrawer" class="drawer hidden">
+    <div class="drawer-grid">
+      <div class="field">
+        <label>关卡号 (1=允许2字母)</label>
+        <input type="number" id="cfgLevelNum" value="2" min="1" max="999" />
+      </div>
+      <div class="field">
+        <label>行数 × 列数</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" id="cfgRows" value="3" min="2" max="7" />
+          <input type="number" id="cfgCols" value="4" min="2" max="7" />
+        </div>
+      </div>
+      <div class="field">
+        <label>镂空造型</label>
+        <select id="cfgTemplate">
+          <option value="full">满格棋盘</option>
+          <option value="corners">四角镂空</option>
+          <option value="center_hole">中心镂空</option>
+          <option value="cross">十字造型</option>
+          <option value="ring">环形造型</option>
+          <option value="random">随机镂空</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>填充模式</label>
+        <select id="cfgFillMode">
+          <option value="full_cover">满铺模板（全格必须使用）</option>
+          <option value="auto_void">紧凑交叉（未用格镂空）</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>目标词长度序列 (留空自动搭配)</label>
+        <input type="text" id="cfgLengths" value="" placeholder="留空随机，或填 3,4,5" />
+      </div>
+      <div class="field">
+        <label>必含种子词 (可选)</label>
+        <input type="text" id="cfgSeeds" value="" placeholder="BOOK, PLAY" />
+      </div>
+      <div class="field">
+        <label>目标词词频上限</label>
+        <input type="number" id="cfgMaxRank" value="6000" min="200" max="7300" step="100" />
+      </div>
+      <div class="field">
+        <label>单格最大次数 / 死局标准</label>
+        <div style="display:flex; gap:6px;">
+          <input type="number" id="cfgMaxCellCount" value="10" min="1" max="20" style="width:62px;" />
+          <select id="cfgStrictness">
+            <option value="deadlock_free">全顺序零死局</option>
+            <option value="path_unique">路径唯一</option>
+            <option value="solvable">仅需有解</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-sm" id="editModeBtn" onclick="toggleEditMode()">✏️ 手动改盘开关</button>
+        <button class="btn btn-sm" onclick="generateBatch(5)">📦 批量生成 5 关</button>
+        <button class="btn btn-sm" onclick="triggerImport()">📥 导入 JSON</button>
+        <input type="file" id="importFile" accept=".json" class="hidden" onchange="handleImportFile(event)" />
+        <button class="btn btn-sm" onclick="exportCurrentLevel()">📤 导出当前关卡</button>
+        <button class="btn btn-sm" id="exportAllBtn" onclick="exportAllLevels()">📤 导出全部 (1)</button>
+      </div>
+      <span id="dictSummary" style="font-size:11px; color:var(--muted);">词库加载中...</span>
+    </div>
+  </div>
+
+  <main class="container" id="mainWorkspace">
+    <!-- Left Column: Interactive Board -->
+    <section class="board-col">
+      <div id="batchStrip" class="batch-strip hidden"></div>
+
+      <div id="statusStrip" class="status-strip">
+        <span id="statusMsg">按住拖拽相邻字母连词（退回上一格可撤销）</span>
+        <span id="liveWord" class="live-word"></span>
+      </div>
+
+      <!-- Inline Manual Edit Controls (hidden unless toggled in Advanced) -->
+      <div id="editBar" class="edit-bar hidden">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <strong style="color:var(--amber);" id="editCellLabel">点击下方格子修改</strong>
+          <input type="text" id="editLetterInput" maxlength="1" placeholder="字" style="width:42px; text-align:center; font-weight:800; text-transform:uppercase; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:4px;" oninput="applyCellEdit()" />
+          <button class="btn btn-sm" onclick="adjustCellCount(-1)">-1</button>
+          <span id="editCountVal" style="font-weight:700;">0</span>
+          <button class="btn btn-sm" onclick="adjustCellCount(1)">+1</button>
+          <button class="btn btn-sm btn-warn" onclick="toggleCellVoid()">镂空切换</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span style="color:var(--muted); white-space:nowrap;">目标词:</span>
+          <input type="text" id="editTargetsInput" style="flex:1; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:4px 8px;" />
+          <button class="btn btn-sm btn-primary" onclick="applyTargetsAndResolve()">重算校验</button>
+        </div>
+      </div>
+
+      <div class="board-stage">
+        <div class="board-grid" id="boardGrid"></div>
+        <svg class="board-svg" id="boardSvg"></svg>
+      </div>
+
+      <div class="board-subcontrols">
+        <span>格子余次合计: <strong style="color:var(--text)" id="remCountsText">0</strong>（试玩不限步数）</span>
+        <button class="btn btn-sm" onclick="undoStep()">↩ 退回一步</button>
+        <button class="btn btn-sm btn-primary" onclick="submitActivePath()">提交当前词</button>
+        <button class="btn btn-sm hidden" id="clearPreviewBtn" onclick="clearPreview()">清除高亮</button>
+      </div>
+    </section>
+
+    <!-- Right Column: Compact Solver + Targets + Extras -->
+    <section class="info-col">
+      <div class="card">
+        <div class="solver-line">
+          <span id="solverBadge">⏳ 准备中</span>
+          <span id="solverStats" style="font-size:12px; color:var(--muted); font-weight:500;"></span>
+        </div>
+        <div id="deadlockTip" class="hidden" style="margin-top:8px; font-size:12px; color:#fca5a5;"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-head">
+          <span>目标词 (<span id="targetProgressText">0/0</span>) · <span style="font-weight:500;">初始词 + 选中候选</span></span>
+          <span style="font-size:11px; font-weight:500;">点击看路径 · ✕可移回额外词</span>
+        </div>
+        <div class="target-grid" id="targetGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-head">
+          <span>额外词 (<span id="extraProgressText">0/0</span>) · <span style="font-weight:500;">剩余同长候选</span></span>
+          <span style="font-size:11px; font-weight:500;">点词看路径 · ＋可升为目标</span>
+        </div>
+        <div class="extra-wrap" id="extraWrap"></div>
+        <div id="otherCandSection" class="hidden" style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border);">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">未并入目标的候选词（受单格次数上限或死局约束跳过，可手动 ＋ 加入）</div>
+          <div class="extra-wrap" id="otherCandWrap" style="max-height:110px;"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Level Pool Statistics View -->
+  <section id="statsView" class="stats-container hidden">
+    <div class="stats-toolbar">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong style="font-size:15px;">📊 关卡池统计视图</strong>
+        <span class="pill pill-blue" id="statsPoolCountPill">共 0 关</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-sm btn-primary" onclick="generateSingle()">🎲 +1 关入池</button>
+        <button class="btn btn-sm" onclick="generateBatch(10)">📦 批量 +10 关入池</button>
+        <button class="btn btn-sm" onclick="exportAllLevels()">📤 导出关卡池 JSON</button>
+        <button class="btn btn-sm btn-warn" onclick="clearPool()">🗑️ 清空关卡池</button>
+        <button class="btn btn-sm" onclick="toggleStatsView(false)">← 返回棋盘</button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="statsKpiGrid"></div>
+
+    <div class="dist-grid">
+      <div class="card">
+        <div class="section-head"><span>目标词长度分布</span></div>
+        <div id="lenDistBox"></div>
+      </div>
+      <div class="card">
+        <div class="section-head"><span>目标词生僻度分布 (0~100分，越低越常用)</span></div>
+        <div id="rarityDistBox"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <span>关卡池明细（点击「查看」可切回棋盘）</span>
+      </div>
+      <div class="pool-table-wrap">
+        <table class="pool-table">
+          <thead>
+            <tr>
+              <th>池序号</th>
+              <th>尺寸</th>
+              <th>安全状态</th>
+              <th>目标词数</th>
+              <th>额外词数</th>
+              <th>平均词长</th>
+              <th>目标生僻度</th>
+              <th>额外生僻度</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="poolTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let levels = [];
+    let currentIndex = 0;
+    let statsViewOpen = false;
+    let hideWords = false;
+    let editMode = false;
+    let selectedCell = null;
+
+    // Preview path highlight (cleared automatically when user touches board to play)
+    let previewPaths = [];
+    let previewIdx = 0;
+    let previewWord = "";
+
+    // Playtest state
+    let playSessionId = null;
+    let playSnapshot = null;
+    let activeDragPath = [];
+    let isDragging = false;
+    let dragMoved = false;
+
+    async function init() {
+      try {
+        const res = await fetch("/api/meta");
+        const data = await res.json();
+        const m = data.meta;
+        document.getElementById("dictSummary").textContent =
+          `词库: 核心 ${m.core_count} · 变形 ${m.inflection_count} · 生僻 ${m.obscure_count}`;
+      } catch (e) {
+        document.getElementById("dictSummary").textContent = "词库连接失败";
+      }
+      await generateSingle();
+    }
+
+    function toggleHideWords() {
+      hideWords = !hideWords;
+      const btn = document.getElementById("hideWordsBtn");
+      btn.classList.toggle("btn-warn", hideWords);
+      btn.textContent = hideWords ? "👁️ 显示单词" : "🙈 隐藏单词";
+      if (hideWords) clearPreview();
+      renderInfoPanel();
+    }
+
+    function toggleAdvanced() {
+      document.getElementById("advancedDrawer").classList.toggle("hidden");
+    }
+
+    function selectPreset(name) {
+      document.querySelectorAll(".preset-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.preset === name);
+      });
+      const setVal = (id, v) => { document.getElementById(id).value = v; };
+      const specMap = {
+        "2x4": [2, 4, 2],
+        "3x3": [3, 3, 2],
+        "2x5": [2, 5, 3],
+        "3x4": [3, 4, 4],
+        "3x5": [3, 5, 5],
+      };
+      const spec = specMap[name];
+      if (spec) {
+        setVal("cfgRows", spec[0]);
+        setVal("cfgCols", spec[1]);
+        setVal("cfgLevelNum", spec[2]);
+        setVal("cfgTemplate", "full");
+        setVal("cfgFillMode", "full_cover");
+        setVal("cfgStrictness", "deadlock_free");
+      }
+      generateSingle();
+    }
+
+    function collectConfig() {
+      const lenStr = document.getElementById("cfgLengths").value.trim();
+      const word_lengths = lenStr
+        ? lenStr.split(/[,，\s]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x) && x >= 2)
+        : null;
+      return {
+        level_num: parseInt(document.getElementById("cfgLevelNum").value, 10) || 2,
+        rows: parseInt(document.getElementById("cfgRows").value, 10) || 4,
+        cols: parseInt(document.getElementById("cfgCols").value, 10) || 4,
+        template: document.getElementById("cfgTemplate").value,
+        fill_mode: document.getElementById("cfgFillMode").value,
+        word_lengths,
+        seed_words: document.getElementById("cfgSeeds").value.trim(),
+        max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000,
+        max_cell_count: parseInt(document.getElementById("cfgMaxCellCount").value, 10) || 10,
+        strictness: document.getElementById("cfgStrictness").value,
+        extra_categories: ["inflection", "obscure_base"],
+      };
+    }
+
+    function setStatus(text, cls = "") {
+      const strip = document.getElementById("statusStrip");
+      strip.className = "status-strip" + (cls ? " " + cls : "");
+      document.getElementById("statusMsg").textContent = text;
+    }
+
+    async function generateSingle() {
+      setStatus("正在生成零死局关卡...");
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(collectConfig()),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "生成失败");
+        levels.push(data.level);
+        currentIndex = levels.length - 1;
+        await onLevelLoaded(`新关卡已入池（共 ${levels.length} 关 · 耗时 ${data.level.generation_ms} ms）`);
+      } catch (e) {
+        setStatus("❌ " + e.message, "st-err");
+      }
+    }
+
+    async function generateBatch(n) {
+      setStatus(`正在批量生成 ${n} 关...`);
+      try {
+        const cfg = collectConfig();
+        cfg.count = n;
+        cfg.start_level_num = levels.length + 1;
+        const res = await fetch("/api/generate_batch", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(cfg),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "批量生成失败");
+        const firstNew = levels.length;
+        levels.push(...data.levels);
+        currentIndex = firstNew;
+        await onLevelLoaded(`已新增 ${data.levels.length} 关入池（池中共 ${levels.length} 关）`);
+      } catch (e) {
+        setStatus("❌ " + e.message, "st-err");
+      }
+    }
+
+    function currentLevel() {
+      return levels[currentIndex] || null;
+    }
+
+    async function onLevelLoaded(msg) {
+      document.getElementById("poolCountHeader").textContent = levels.length;
+      document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
+      if (statsViewOpen) renderStatsView();
+      const lvl = currentLevel();
+      if (!lvl) return;
+      previewPaths = [];
+      previewWord = "";
+      document.getElementById("levelBadge").textContent = `池 #${currentIndex + 1} · ${lvl.rows}×${lvl.cols}`;
+      document.getElementById("editTargetsInput").value = (lvl.target_words || []).join(", ");
+      renderBatchStrip();
+      await resetPlaySession(msg);
+    }
+
+    function renderBatchStrip() {
+      const strip = document.getElementById("batchStrip");
+      strip.innerHTML = "";
+      if (levels.length <= 1) {
+        strip.classList.add("hidden");
+        return;
+      }
+      strip.classList.remove("hidden");
+      if (levels.length <= 10) {
+        levels.forEach((lvl, idx) => {
+          const b = document.createElement("button");
+          b.className = "preset-btn" + (idx === currentIndex ? " active" : "");
+          b.textContent = `#${idx + 1}`;
+          b.onclick = () => { currentIndex = idx; onLevelLoaded(); };
+          strip.appendChild(b);
+        });
+      } else {
+        const prev = document.createElement("button");
+        prev.className = "btn btn-sm";
+        prev.textContent = "◀ 上一关";
+        prev.onclick = () => { currentIndex = (currentIndex - 1 + levels.length) % levels.length; onLevelLoaded(); };
+        const lbl = document.createElement("span");
+        lbl.style.fontSize = "12px";
+        lbl.style.color = "var(--muted)";
+        lbl.textContent = `关卡池第 ${currentIndex + 1} / ${levels.length} 关`;
+        const next = document.createElement("button");
+        next.className = "btn btn-sm";
+        next.textContent = "下一关 ▶";
+        next.onclick = () => { currentIndex = (currentIndex + 1) % levels.length; onLevelLoaded(); };
+        strip.appendChild(prev);
+        strip.appendChild(lbl);
+        strip.appendChild(next);
+      }
+    }
+
+    function toggleStatsView(force) {
+      statsViewOpen = typeof force === "boolean" ? force : !statsViewOpen;
+      document.getElementById("mainWorkspace").classList.toggle("hidden", statsViewOpen);
+      document.getElementById("statsView").classList.toggle("hidden", !statsViewOpen);
+      document.getElementById("statsToggleBtn").classList.toggle("btn-warn", statsViewOpen);
+      if (statsViewOpen) renderStatsView();
+    }
+
+    function clearPool() {
+      levels = [];
+      currentIndex = 0;
+      playSnapshot = null;
+      document.getElementById("poolCountHeader").textContent = "0";
+      document.getElementById("exportAllBtn").textContent = "📤 导出全部 (0)";
+      renderBatchStrip();
+      renderStatsView();
+    }
+
+    function removeLevelFromPool(idx) {
+      levels.splice(idx, 1);
+      if (currentIndex >= levels.length) currentIndex = Math.max(0, levels.length - 1);
+      document.getElementById("poolCountHeader").textContent = levels.length;
+      document.getElementById("exportAllBtn").textContent = `📤 导出全部 (${levels.length})`;
+      renderStatsView();
+      if (levels.length > 0) onLevelLoaded();
+    }
+
+    function jumpToPoolLevel(idx) {
+      currentIndex = idx;
+      toggleStatsView(false);
+      onLevelLoaded();
+    }
+
+    function renderStatsView() {
+      const n = levels.length;
+      document.getElementById("statsPoolCountPill").textContent = `共 ${n} 关`;
+      const kpiGrid = document.getElementById("statsKpiGrid");
+      const lenBox = document.getElementById("lenDistBox");
+      const rarBox = document.getElementById("rarityDistBox");
+      const tbody = document.getElementById("poolTableBody");
+
+      if (n === 0) {
+        kpiGrid.innerHTML = `<div class="kpi-card"><div class="kpi-label">关卡池为空</div><div class="kpi-val">0 关</div><div class="kpi-sub">点击右上角「+1 关入池」或「批量 +10 关入池」开始统计</div></div>`;
+        lenBox.innerHTML = `<span style="font-size:12px; color:var(--muted);">暂无数据</span>`;
+        rarBox.innerHTML = `<span style="font-size:12px; color:var(--muted);">暂无数据</span>`;
+        tbody.innerHTML = "";
+        return;
+      }
+
+      let sumTargets = 0, minT = Infinity, maxT = 0;
+      let sumExtras = 0, minE = Infinity, maxE = 0;
+      let targetChars = 0, extraChars = 0;
+      let targetRaritySum = 0, targetRarityCnt = 0;
+      let extraRaritySum = 0, extraRarityCnt = 0;
+      const lenCounts = {};
+      const rarBuckets = { "0-25 极常用": 0, "25-50 常见": 0, "50-75 进阶": 0, "75-100 生僻": 0 };
+
+      tbody.innerHTML = "";
+      levels.forEach((lvl, idx) => {
+        const rep = lvl.solver_report || {};
+        const tds = rep.target_details || [];
+        const exs = lvl.extra_words || [];
+        const tc = (lvl.target_words || []).length;
+        const ec = exs.length;
+
+        sumTargets += tc; minT = Math.min(minT, tc); maxT = Math.max(maxT, tc);
+        sumExtras += ec; minE = Math.min(minE, ec); maxE = Math.max(maxE, ec);
+
+        let lvlTChars = 0, lvlTRar = 0, lvlTRarN = 0;
+        (lvl.target_words || []).forEach(w => {
+          lvlTChars += w.length;
+          targetChars += w.length;
+          lenCounts[w.length] = (lenCounts[w.length] || 0) + 1;
+        });
+        tds.forEach(td => {
+          const r = typeof td.rarity === "number" ? td.rarity : 50;
+          lvlTRar += r; lvlTRarN++;
+          targetRaritySum += r; targetRarityCnt++;
+          if (r < 25) rarBuckets["0-25 极常用"]++;
+          else if (r < 50) rarBuckets["25-50 常见"]++;
+          else if (r < 75) rarBuckets["50-75 进阶"]++;
+          else rarBuckets["75-100 生僻"]++;
+        });
+
+        let lvlERar = 0, lvlERarN = 0;
+        exs.forEach(ex => {
+          extraChars += ex.word.length;
+          const r = typeof ex.rarity === "number" ? ex.rarity : 60;
+          lvlERar += r; lvlERarN++;
+          extraRaritySum += r; extraRarityCnt++;
+        });
+
+        const avgLenLvl = tc ? (lvlTChars / tc).toFixed(2) : "-";
+        const avgTRarLvl = lvlTRarN ? (lvlTRar / lvlTRarN).toFixed(1) : "-";
+        const avgERarLvl = lvlERarN ? (lvlERar / lvlERarN).toFixed(1) : "-";
+        const safePill = rep.zero_deadlock
+          ? `<span class="pill pill-green">${rep.path_unique ? "路径唯一" : "零死局"}</span>`
+          : `<span class="pill pill-amber">有风险</span>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>#${idx + 1}</strong></td>
+          <td>${lvl.rows}×${lvl.cols}</td>
+          <td>${safePill}</td>
+          <td>${tc}</td>
+          <td>${ec}</td>
+          <td>${avgLenLvl}</td>
+          <td>${avgTRarLvl}</td>
+          <td>${avgERarLvl}</td>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-sm" onclick="jumpToPoolLevel(${idx})">查看</button>
+            <button class="btn btn-sm" onclick="removeLevelFromPool(${idx})">移除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const avgT = (sumTargets / n).toFixed(2);
+      const avgE = (sumExtras / n).toFixed(2);
+      const avgTLen = sumTargets ? (targetChars / sumTargets).toFixed(2) : "0";
+      const avgELen = sumExtras ? (extraChars / sumExtras).toFixed(2) : "0";
+      const avgTRar = targetRarityCnt ? (targetRaritySum / targetRarityCnt).toFixed(1) : "0";
+      const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(1) : "0";
+      const rarNum = parseFloat(avgTRar);
+      const rarGrade = rarNum < 30 ? "大众高频" : (rarNum < 55 ? "中等进阶" : "偏生僻");
+
+      kpiGrid.innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">平均目标词数</div>
+          <div class="kpi-val">${avgT}</div>
+          <div class="kpi-sub">范围 ${minT} ~ ${maxT} 词 · 累计 ${sumTargets} 词</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">平均额外词数</div>
+          <div class="kpi-val">${avgE}</div>
+          <div class="kpi-sub">范围 ${minE} ~ ${maxE} 词 · 累计 ${sumExtras} 词</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">平均词长（目标词）</div>
+          <div class="kpi-val">${avgTLen} <span style="font-size:14px; font-weight:600; color:var(--muted);">字母</span></div>
+          <div class="kpi-sub">额外词平均词长：${avgELen} 字母</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">平均单词生僻度（目标词）</div>
+          <div class="kpi-val">${avgTRar} <span style="font-size:13px; font-weight:700; color:var(--accent);">${rarGrade}</span></div>
+          <div class="kpi-sub">额外词平均生僻度：${avgERar} / 100</div>
+        </div>
+      `;
+
+      // Render length distribution bars
+      const totalLenItems = Object.values(lenCounts).reduce((a, b) => a + b, 0) || 1;
+      lenBox.innerHTML = Object.keys(lenCounts).sort((a, b) => a - b).map(len => {
+        const cnt = lenCounts[len];
+        const pct = Math.round((cnt / totalLenItems) * 100);
+        return `<div class="bar-row"><span>${len} 字母</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span>${pct}% (${cnt})</span></div>`;
+      }).join("");
+
+      // Render rarity distribution bars
+      const totalRarItems = Object.values(rarBuckets).reduce((a, b) => a + b, 0) || 1;
+      rarBox.innerHTML = Object.entries(rarBuckets).map(([label, cnt]) => {
+        const pct = Math.round((cnt / totalRarItems) * 100);
+        return `<div class="bar-row" style="grid-template-columns:104px 1fr 58px;"><span>${label}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span>${pct}% (${cnt})</span></div>`;
+      }).join("");
+    }
+
+    async function resetPlaySession(customMsg) {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      activeDragPath = [];
+      isDragging = false;
+      previewPaths = [];
+      const res = await fetch("/api/play/start", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({level: lvl}),
+      });
+      const data = await res.json();
+      playSessionId = data.session_id;
+      playSnapshot = data.state;
+      setStatus(customMsg || "按住拖拽相邻字母连词（退回上一格可撤销）");
+      updateLiveWord();
+      renderBoard();
+      renderInfoPanel();
+    }
+
+    function updateLiveWord() {
+      if (!playSnapshot) return;
+      const board = playSnapshot.board;
+      const word = activeDragPath.map(([r, c]) => board[r][c].letter).join("");
+      document.getElementById("liveWord").textContent = word;
+      document.getElementById("remCountsText").textContent = playSnapshot.remaining_counts;
+      document.getElementById("clearPreviewBtn").classList.toggle("hidden", previewPaths.length === 0);
+    }
+
+    function tryExtendOrUndoCell(r, c) {
+      if (!playSnapshot || playSnapshot.cleared) return;
+      previewPaths = [];
+      const cell = playSnapshot.board[r][c];
+      if (cell.void || cell.count <= 0 || !cell.letter) return;
+
+      if (activeDragPath.length === 0) {
+        activeDragPath = [[r, c]];
+      } else if (
+        activeDragPath.length >= 2 &&
+        activeDragPath[activeDragPath.length - 2][0] === r &&
+        activeDragPath[activeDragPath.length - 2][1] === c
+      ) {
+        activeDragPath.pop();
+      } else if (activeDragPath.some(([ar, ac]) => ar === r && ac === c)) {
+        return;
+      } else {
+        const [lr, lc] = activeDragPath[activeDragPath.length - 1];
+        if (Math.abs(lr - r) + Math.abs(lc - c) !== 1) return;
+        activeDragPath.push([r, c]);
+      }
+      updateLiveWord();
+      renderBoard();
+    }
+
+    function undoStep() {
+      if (activeDragPath.length > 0) {
+        activeDragPath.pop();
+        updateLiveWord();
+        renderBoard();
+      }
+    }
+
+    async function submitActivePath() {
+      if (!playSnapshot || activeDragPath.length < 2) {
+        activeDragPath = [];
+        updateLiveWord();
+        renderBoard();
+        return;
+      }
+      const submitted = [...activeDragPath];
+      activeDragPath = [];
+      const res = await fetch("/api/play/submit", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({session_id: playSessionId, level: currentLevel(), path: submitted}),
+      });
+      const data = await res.json();
+      if (!res.ok) return;
+      playSessionId = data.session_id;
+      playSnapshot = data.state;
+
+      if (data.cleared) {
+        setStatus("🎉 恭喜通关！全部目标词已找到，且所有格子次数已耗尽！", "st-win");
+      } else if (data.status === "TARGET") {
+        setStatus(`✅ 找到目标词 ${data.word}！路径格次数 -1`, "st-target");
+      } else if (data.status === "EXTRA") {
+        setStatus(`✨ 收集额外词 ${data.word}（不消耗次数）`, "st-extra");
+      } else if (data.status === "ALREADY_FOUND") {
+        setStatus(`⚠️ ${data.word} 已经找过了`, "st-warn");
+      } else {
+        setStatus(`❌ ${data.message || "无效单词或非法路径"}`, "st-err");
+      }
+      updateLiveWord();
+      renderBoard();
+      renderInfoPanel();
+    }
+
+    window.addEventListener("pointerup", () => {
+      if (!editMode && isDragging) {
+        isDragging = false;
+        if (dragMoved && activeDragPath.length >= 2) {
+          submitActivePath();
+        }
+        dragMoved = false;
+      }
+    });
+
+    function previewWordPaths(word, paths) {
+      if (!paths || !paths.length) return;
+      if (previewWord === word && previewPaths.length > 1) {
+        previewIdx = (previewIdx + 1) % previewPaths.length;
+      } else {
+        previewWord = word;
+        previewPaths = paths;
+        previewIdx = 0;
+      }
+      activeDragPath = [];
+      updateLiveWord();
+      renderBoard();
+    }
+
+    function clearPreview() {
+      previewPaths = [];
+      previewWord = "";
+      updateLiveWord();
+      renderBoard();
+    }
+
+    function hintNextWord() {
+      const lvl = currentLevel();
+      if (!lvl || !playSnapshot) return;
+      const found = new Set(playSnapshot.found_targets);
+      const sol = lvl.solver_report?.winning_solution || [];
+      const nextStep = sol.find(s => !found.has(s.word));
+      if (nextStep) {
+        previewWordPaths(nextStep.word, [nextStep.path]);
+        setStatus(`💡 提示：试试连出 ${nextStep.word}`, "st-warn");
+      } else {
+        setStatus("本关所有目标词已全部完成！", "st-win");
+      }
+    }
+
+    /* Manual Edit Mode */
+    function toggleEditMode() {
+      editMode = !editMode;
+      document.getElementById("editModeBtn").classList.toggle("btn-warn", editMode);
+      document.getElementById("editBar").classList.toggle("hidden", !editMode);
+      if (editMode) {
+        setStatus("✏️ 编辑模式：点击棋盘格子修改字母/次数/镂空，改完点「重算校验」", "st-warn");
+      } else {
+        resetPlaySession();
+      }
+      renderBoard();
+    }
+
+    function selectEditCell(r, c) {
+      selectedCell = {r, c};
+      const cell = currentLevel().board[r][c];
+      document.getElementById("editCellLabel").textContent = `格 (${r},${c})`;
+      document.getElementById("editLetterInput").value = cell.void ? "" : (cell.letter || "");
+      document.getElementById("editCountVal").textContent = cell.void ? "镂空" : cell.count;
+      renderBoard();
+    }
+
+    function applyCellEdit() {
+      if (!selectedCell) return;
+      const cell = currentLevel().board[selectedCell.r][selectedCell.c];
+      const v = document.getElementById("editLetterInput").value.trim().toUpperCase().replace(/[^A-Z]/g, "");
+      if (v) {
+        cell.void = false;
+        cell.letter = v[0];
+        if (cell.count <= 0) cell.count = 1;
+      }
+      renderBoard();
+    }
+
+    function adjustCellCount(delta) {
+      if (!selectedCell) return;
+      const cell = currentLevel().board[selectedCell.r][selectedCell.c];
+      if (cell.void) cell.void = false;
+      cell.count = Math.max(0, Math.min(9, (cell.count || 0) + delta));
+      if (cell.count === 0) cell.void = true;
+      else if (!cell.letter) cell.letter = "A";
+      selectEditCell(selectedCell.r, selectedCell.c);
+    }
+
+    function toggleCellVoid() {
+      if (!selectedCell) return;
+      const cell = currentLevel().board[selectedCell.r][selectedCell.c];
+      cell.void = !cell.void;
+      if (cell.void) { cell.count = 0; cell.letter = ""; }
+      else { cell.count = Math.max(1, cell.count || 1); if (!cell.letter) cell.letter = "A"; }
+      selectEditCell(selectedCell.r, selectedCell.c);
+    }
+
+    async function applyTargetsAndResolve() {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      const raw = document.getElementById("editTargetsInput").value;
+      const edited = raw.split(/[,，\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+      const oldInitSet = new Set((lvl.initial_words || []).map(w => w.toUpperCase()));
+      lvl.target_words = edited;
+      lvl.initial_words = edited.filter(w => oldInitSet.has(w));
+      lvl.selected_candidates = edited.filter(w => !oldInitSet.has(w));
+      if (lvl.initial_words.length === 0) {
+        lvl.initial_words = edited;
+        lvl.selected_candidates = [];
+      }
+      const res = await fetch("/api/solve", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({level: lvl, max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        lvl.solver_report = data.solver_report;
+        lvl.extra_words = data.extra_words;
+        lvl.other_candidates = data.other_candidates || [];
+        await resetPlaySession("已重新校验死局与额外词");
+      }
+    }
+
+    function renderBoard() {
+      const lvl = currentLevel();
+      const grid = document.getElementById("boardGrid");
+      const svg = document.getElementById("boardSvg");
+      if (!lvl) return;
+
+      const board = (!editMode && playSnapshot) ? playSnapshot.board : lvl.board;
+      const rows = lvl.rows;
+      const cols = lvl.cols;
+      const tileSize = Math.max(48, Math.min(72, Math.floor(390 / Math.max(rows, cols))));
+      const gap = 10;
+
+      grid.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
+      grid.style.gap = `${gap}px`;
+      grid.innerHTML = "";
+
+      const overlayPath = previewPaths.length > 0 ? previewPaths[previewIdx] : activeDragPath;
+      const overlaySet = new Set(overlayPath.map(([r, c]) => `${r},${c}`));
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = board[r][c];
+          const div = document.createElement("div");
+          div.style.width = `${tileSize}px`;
+          div.style.height = `${tileSize}px`;
+          div.style.fontSize = `${Math.round(tileSize * 0.38)}px`;
+
+          if (cell.void) {
+            div.className = "cell void-tile";
+            div.textContent = "镂空";
+          } else if (cell.count <= 0) {
+            div.className = "cell cleared-tile";
+            div.textContent = "·";
+          } else {
+            div.className = "cell active-tile";
+            div.textContent = cell.letter;
+            const badge = document.createElement("span");
+            badge.className = `cnt-badge ${cell.count >= 4 ? "cnt-4" : "cnt-" + cell.count}`;
+            badge.textContent = cell.count;
+            div.appendChild(badge);
+          }
+
+          if (overlaySet.has(`${r},${c}`)) {
+            div.classList.add(previewPaths.length > 0 ? "preview-path" : "in-path");
+          }
+          if (editMode && selectedCell && selectedCell.r === r && selectedCell.c === c) {
+            div.classList.add("edit-selected");
+          }
+
+          if (editMode) {
+            div.onclick = () => selectEditCell(r, c);
+          } else {
+            div.onpointerdown = (ev) => {
+              ev.preventDefault();
+              if (cell.void || cell.count <= 0) return;
+              isDragging = true;
+              dragMoved = false;
+              if (activeDragPath.length >= 2) {
+                const [lr, lc] = activeDragPath[activeDragPath.length - 1];
+                if (lr === r && lc === c) {
+                  isDragging = false;
+                  submitActivePath();
+                  return;
+                }
+              }
+              tryExtendOrUndoCell(r, c);
+            };
+            div.onpointerenter = () => {
+              if (isDragging) {
+                dragMoved = true;
+                tryExtendOrUndoCell(r, c);
+              }
+            };
+          }
+          grid.appendChild(div);
+        }
+      }
+
+      const pad = 20;
+      const totalW = cols * tileSize + (cols - 1) * gap + pad * 2;
+      const totalH = rows * tileSize + (rows - 1) * gap + pad * 2;
+      svg.setAttribute("viewBox", `0 0 ${totalW} ${totalH}`);
+      svg.innerHTML = "";
+
+      if (overlayPath.length >= 1) {
+        const pts = overlayPath.map(([r, c]) => ({
+          x: pad + c * (tileSize + gap) + tileSize / 2,
+          y: pad + r * (tileSize + gap) + tileSize / 2,
+        }));
+        if (pts.length >= 2) {
+          const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          poly.setAttribute("points", pts.map(p => `${p.x},${p.y}`).join(" "));
+          poly.setAttribute("fill", "none");
+          poly.setAttribute("stroke", previewPaths.length > 0 ? "rgba(56,189,248,0.88)" : "rgba(234,179,8,0.85)");
+          poly.setAttribute("stroke-width", "6");
+          poly.setAttribute("stroke-linecap", "round");
+          poly.setAttribute("stroke-linejoin", "round");
+          svg.appendChild(poly);
+        }
+        if (previewPaths.length > 0) {
+          pts.forEach((p, idx) => {
+            const cEl = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            cEl.setAttribute("cx", p.x - tileSize * 0.28);
+            cEl.setAttribute("cy", p.y - tileSize * 0.28);
+            cEl.setAttribute("r", "9");
+            cEl.setAttribute("fill", "#0284c7");
+            const tEl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            tEl.setAttribute("x", p.x - tileSize * 0.28);
+            tEl.setAttribute("y", p.y - tileSize * 0.28 + 3.5);
+            tEl.setAttribute("text-anchor", "middle");
+            tEl.setAttribute("font-size", "10");
+            tEl.setAttribute("font-weight", "800");
+            tEl.setAttribute("fill", "#fff");
+            tEl.textContent = idx + 1;
+            svg.appendChild(cEl);
+            svg.appendChild(tEl);
+          });
+        }
+      }
+    }
+
+    function renderInfoPanel() {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      const rep = lvl.solver_report || {};
+
+      // Top 1-line solver badge
+      const badgeEl = document.getElementById("solverBadge");
+      if (rep.safety_level === "PATH_UNIQUE_ZERO_DEADLOCK") {
+        badgeEl.innerHTML = `<span class="pill pill-green">✅ 零死局（路径唯一）</span>`;
+      } else if (rep.safety_level === "MULTI_PATH_ZERO_DEADLOCK") {
+        badgeEl.innerHTML = `<span class="pill pill-blue">✅ 零死局（多路径兼容）</span>`;
+      } else if (rep.safety_level === "HAS_DEADLOCK_RISK") {
+        badgeEl.innerHTML = `<span class="pill pill-amber">⚠️ 存在死局风险</span>`;
+      } else {
+        badgeEl.innerHTML = `<span class="pill pill-red">❌ 无解 / 配置异常</span>`;
+      }
+      document.getElementById("solverStats").textContent =
+        `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×`;
+
+      const dlTip = document.getElementById("deadlockTip");
+      if (rep.deadlock_witness) {
+        dlTip.classList.remove("hidden");
+        dlTip.innerHTML = `死局示例：${rep.deadlock_witness.reason} `;
+        const btn = document.createElement("button");
+        btn.className = "btn btn-sm btn-warn";
+        btn.textContent = "查看首步";
+        const firstStep = rep.deadlock_witness.steps?.[0];
+        if (firstStep) btn.onclick = () => previewWordPaths(firstStep.word, [firstStep.path]);
+        dlTip.appendChild(btn);
+      } else if ((rep.issues || []).length > 0) {
+        dlTip.classList.remove("hidden");
+        dlTip.textContent = rep.issues.join("；");
+      } else {
+        dlTip.classList.add("hidden");
+      }
+
+      // Target cards (initial_words + selected_candidates)
+      const foundTargets = new Set(playSnapshot ? playSnapshot.found_targets : []);
+      const initSet = new Set((lvl.initial_words || []).map(w => w.toUpperCase()));
+      const targets = rep.target_details || [];
+      document.getElementById("targetProgressText").textContent = `${foundTargets.size}/${targets.length}`;
+      const tGrid = document.getElementById("targetGrid");
+      tGrid.innerHTML = "";
+      targets.forEach(td => {
+        const isDone = foundTargets.has(td.word);
+        const masked = hideWords && !isDone;
+        const isInitial = td.origin === "initial" || initSet.has(td.word);
+        const card = document.createElement("div");
+        card.className = "target-card" + (isDone ? " found" : "");
+        const originTag = isInitial
+          ? `<span class="pill pill-blue">初始</span>`
+          : `<span class="pill pill-green">候选</span>`;
+        const pTag = (!masked && td.path_count > 1) ? `<span class="pill pill-amber">${td.path_count}路</span>` : "";
+        const demoteBtn = (!masked && !isInitial)
+          ? `<button class="btn btn-sm" style="padding:1px 5px; font-size:10px;" title="移回候选/额外词（格次数-1）" onclick="event.stopPropagation(); toggleCandidate('${td.word}')">✕</button>`
+          : "";
+        const displayWord = masked ? `${"●".repeat(td.word.length)} (${td.word.length}字)` : `${isDone ? "✓ " : ""}${td.word}`;
+        const displayZh = masked
+          ? `<span style="color:var(--muted);">找到后揭晓释义</span>`
+          : `${td.rarity != null ? `<span style="color:var(--accent);">生僻${td.rarity}</span> · ` : ""}${td.zh || td.band || ""}`;
+        card.innerHTML = `
+          <div class="target-top">
+            <span class="target-word">${displayWord}</span>
+            <span style="display:flex; gap:3px; align-items:center;">${originTag}${pTag}${demoteBtn}</span>
+          </div>
+          <div class="target-zh" title="${masked ? "" : (td.zh || "")}">${displayZh}</div>
+        `;
+        card.onclick = () => {
+          if (!masked) previewWordPaths(td.word, td.sample_paths);
+        };
+        tGrid.appendChild(card);
+      });
+
+      // Extra words compact chips (remaining candidates matching target lengths)
+      const extras = lvl.extra_words || [];
+      const foundExtras = new Set(playSnapshot ? playSnapshot.found_extras : []);
+      document.getElementById("extraProgressText").textContent = `${foundExtras.size}/${extras.length}`;
+      const eWrap = document.getElementById("extraWrap");
+      eWrap.innerHTML = "";
+      const shortTag = {
+        inflection: "变形",
+        obscure_base: "生僻",
+        unselected_common: "常用",
+        tutorial_2: "引导",
+      };
+      if (extras.length === 0) {
+        eWrap.innerHTML = `<span style="font-size:12px; color:var(--muted);">本关棋盘暂无额外词</span>`;
+      } else if (hideWords) {
+        const collectedList = extras.filter(ex => foundExtras.has(ex.word));
+        collectedList.forEach(ex => {
+          const chip = document.createElement("span");
+          chip.className = "extra-chip collected";
+          chip.title = (ex.tag_desc ? `[${ex.tag_desc}] ` : "") + (ex.zh || "");
+          chip.innerHTML = `${ex.word}<span class="extra-tag">${shortTag[ex.category] || ""}</span>`;
+          chip.onclick = () => previewWordPaths(ex.word, ex.sample_paths);
+          eWrap.appendChild(chip);
+        });
+        const remExtra = extras.length - collectedList.length;
+        if (remExtra > 0) {
+          const hint = document.createElement("span");
+          hint.style.fontSize = "12px";
+          hint.style.color = "var(--muted)";
+          hint.textContent = `还有 ${remExtra} 个额外词待发现`;
+          eWrap.appendChild(hint);
+        }
+      } else {
+        extras.forEach(ex => {
+          const chip = document.createElement("span");
+          chip.className = "extra-chip" + (foundExtras.has(ex.word) ? " collected" : "");
+          chip.title = (ex.tag_desc ? `[${ex.tag_desc}] ` : "") + (ex.zh || "");
+          chip.innerHTML = `${ex.word}<span class="extra-tag">${shortTag[ex.category] || ""}</span><span title="设为目标词（格次数+1）" style="color:var(--accent); font-weight:800; padding-left:2px;" onclick="event.stopPropagation(); toggleCandidate('${ex.word}')">＋</span>`;
+          chip.onclick = () => previewWordPaths(ex.word, ex.sample_paths);
+          eWrap.appendChild(chip);
+        });
+      }
+
+      // Other-length remaining candidates
+      const others = hideWords ? [] : (lvl.other_candidates || []).filter(c => c.eligible_for_target);
+      const otherSec = document.getElementById("otherCandSection");
+      const otherWrap = document.getElementById("otherCandWrap");
+      otherWrap.innerHTML = "";
+      if (others.length === 0) {
+        otherSec.classList.add("hidden");
+      } else {
+        otherSec.classList.remove("hidden");
+        others.slice(0, 24).forEach(c => {
+          const chip = document.createElement("span");
+          chip.className = "extra-chip";
+          chip.title = c.zh || "";
+          chip.innerHTML = `${c.word}<span class="extra-tag">${c.length}字</span><span title="升为目标词（格次数+1）" style="color:var(--accent); font-weight:800; padding-left:2px;" onclick="event.stopPropagation(); toggleCandidate('${c.word}')">＋</span>`;
+          chip.onclick = () => previewWordPaths(c.word, c.sample_paths);
+          otherWrap.appendChild(chip);
+        });
+      }
+    }
+
+    async function toggleCandidate(word) {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      try {
+        const res = await fetch("/api/toggle_candidate", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            level: lvl,
+            word,
+            max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "切换失败");
+        levels[currentIndex] = data.level;
+        await onLevelLoaded(`已更新目标词组合：${word}`);
+      } catch (e) {
+        setStatus("❌ " + e.message, "st-err");
+      }
+    }
+
+    /* Import / Export */
+    function exportCurrentLevel() {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      downloadJson(lvl, `level_${lvl.level_num || 1}.json`);
+    }
+    function exportAllLevels() {
+      if (!levels.length) return;
+      downloadJson(levels, `levels_pack_${levels.length}.json`);
+    }
+    function downloadJson(obj, filename) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function triggerImport() { document.getElementById("importFile").click(); }
+    function handleImportFile(ev) {
+      const file = ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          levels = Array.isArray(parsed) ? parsed : [parsed];
+          currentIndex = 0;
+          const lvl = currentLevel();
+          if (lvl) {
+            const res = await fetch("/api/solve", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({level: lvl, max_rank: parseInt(document.getElementById("cfgMaxRank").value, 10) || 6000}),
+            });
+            const data = await res.json();
+            if (res.ok) {
+              lvl.solver_report = data.solver_report;
+              lvl.extra_words = data.extra_words;
+              lvl.other_candidates = data.other_candidates || [];
+            }
+          }
+          await onLevelLoaded("已导入外部关卡 JSON");
+        } catch (err) {
+          setStatus("❌ 导入 JSON 失败: " + err.message, "st-err");
+        }
+      };
+      reader.readAsText(file);
+      ev.target.value = "";
+    }
+
+    init();
+  </script>
+</body>
+</html>
