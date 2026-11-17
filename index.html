@@ -609,9 +609,10 @@
       </div>
       <div class="field" style="min-width:170px;">
         <label>批量尺寸模式</label>
-        <select id="batchSizeModeSelect">
+        <select id="batchSizeModeSelect" onchange="onBatchSizeModeChange()">
           <option value="presets">轮换尺寸 (2×4 ~ 3×5)</option>
-          <option value="current">仅当前尺寸 / 自定义形状</option>
+          <option value="current">仅当前尺寸</option>
+          <option value="custom_shape">当前异形棋盘</option>
         </select>
       </div>
       <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
@@ -964,15 +965,28 @@
       customVoidMask = next;
     }
 
+    function onBatchSizeModeChange() {
+      const mode = document.getElementById("batchSizeModeSelect").value;
+      if (mode === "custom_shape") {
+        document.getElementById("cfgCustomShapeCheck").checked = true;
+        onTemplateOrSizeChange();
+      }
+    }
+
     function onTemplateOrSizeChange() {
       const isCustom = document.getElementById("cfgCustomShapeCheck").checked;
       const panel = document.getElementById("customShapePanel");
+      const batchSizeSel = document.getElementById("batchSizeModeSelect");
       if (isCustom) {
         panel.classList.remove("hidden");
         syncCustomVoidMask();
         renderCustomShapeGrid();
+        if (batchSizeSel) batchSizeSel.value = "custom_shape";
       } else {
         panel.classList.add("hidden");
+        if (batchSizeSel && batchSizeSel.value === "custom_shape") {
+          batchSizeSel.value = "presets";
+        }
       }
     }
 
