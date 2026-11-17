@@ -328,6 +328,83 @@ def dispatch_api(path, body_str):
     return initPromise;
   }
 
+  const workerPool = [];
+  let workerMsgSeq = 0;
+
+  function ensureWorkers(n) {
+    while (workerPool.length < n) {
+      workerPool.push(new Worker("./pyodide_worker.js"));
+    }
+    return workerPool.slice(0, n);
+  }
+
+  function runOnWorker(worker, cfg) {
+    return new Promise((resolve, reject) => {
+      const id = ++workerMsgSeq;
+      const onMsg = (ev) => {
+        if (ev.data && ev.data.id === id) {
+          worker.removeEventListener("message", onMsg);
+          worker.removeEventListener("error", onErr);
+          if (ev.data.ok) {
+            resolve(JSON.parse(ev.data.jsonStr));
+          } else {
+            reject(new Error(ev.data.error || "Worker failed"));
+          }
+        }
+      };
+      const onErr = (err) => {
+        worker.removeEventListener("message", onMsg);
+        worker.removeEventListener("error", onErr);
+        reject(new Error(err.message || "Worker error"));
+      };
+      worker.addEventListener("message", onMsg);
+      worker.addEventListener("error", onErr);
+      worker.postMessage({ id, bodyStr: JSON.stringify(cfg) });
+    });
+  }
+
+  async function runParallelBatch(bodyStr) {
+    const body = bodyStr ? JSON.parse(bodyStr) : {};
+    const count = Math.max(1, parseInt(body.count || "5", 10));
+    const reqWorkers = Math.max(1, Math.min(32, parseInt(body.workers || (navigator.hardwareConcurrency || 4), 10)));
+    const nWorkers = Math.min(reqWorkers, count);
+    if (nWorkers <= 1) return null;
+
+    const workers = ensureWorkers(nWorkers);
+    const baseCount = Math.floor(count / nWorkers);
+    const rem = count % nWorkers;
+    const startNum = parseInt(body.start_level_num || "1", 10);
+    const baseSeed = body.rng_seed !== null && body.rng_seed !== undefined && body.rng_seed !== ""
+      ? Number(body.rng_seed)
+      : Math.floor(Math.random() * 10000000);
+
+    let offset = 0;
+    const promises = [];
+    for (let i = 0; i < nWorkers; i++) {
+      const wCount = baseCount + (i < rem ? 1 : 0);
+      const subCfg = {
+        ...body,
+        count: wCount,
+        start_level_num: startNum + offset,
+        rng_seed: baseSeed + i * 500000,
+      };
+      offset += wCount;
+      promises.push(runOnWorker(workers[i], subCfg));
+    }
+
+    const results = await Promise.all(promises);
+    const merged = [];
+    for (const r of results) {
+      if (r && Array.isArray(r.levels)) {
+        merged.push(...r.levels);
+      }
+    }
+    return new Response(JSON.stringify({ levels: merged }), {
+      status: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+
   window.fetch = async function (input, init) {
     const url = typeof input === "string" ? input : input.url;
     if (!url || !url.startsWith("/api/")) {
@@ -339,9 +416,23 @@ def dispatch_api(path, body_str):
       return nativeFetch(input, init);
     }
 
+    const cleanPath = url.split("?")[0];
     const bodyStr = init && init.body ? String(init.body) : "";
+
+    if (cleanPath === "/api/generate_batch") {
+      try {
+        const parallelResp = await runParallelBatch(bodyStr);
+        if (parallelResp) return parallelResp;
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 400,
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+        });
+      }
+    }
+
     const runTask = () => {
-      const resTuple = dispatchPy(url.split("?")[0], bodyStr);
+      const resTuple = dispatchPy(cleanPath, bodyStr);
       const status = resTuple.get(0);
       const jsonStr = resTuple.get(1);
       resTuple.destroy();
