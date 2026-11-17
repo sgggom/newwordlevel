@@ -539,19 +539,20 @@
       <div class="field">
         <label>行数 × 列数</label>
         <div style="display:flex; gap:6px;">
-          <input type="number" id="cfgRows" value="3" min="2" max="7" />
-          <input type="number" id="cfgCols" value="4" min="2" max="7" />
+          <input type="number" id="cfgRows" value="3" min="2" max="7" onchange="onTemplateOrSizeChange()" />
+          <input type="number" id="cfgCols" value="4" min="2" max="7" onchange="onTemplateOrSizeChange()" />
         </div>
       </div>
       <div class="field">
-        <label>镂空造型</label>
-        <select id="cfgTemplate">
+        <label>镂空造型 / 形状</label>
+        <select id="cfgTemplate" onchange="onTemplateOrSizeChange()">
           <option value="full">满格棋盘</option>
           <option value="corners">四角镂空</option>
           <option value="center_hole">中心镂空</option>
           <option value="cross">十字造型</option>
           <option value="ring">环形造型</option>
           <option value="random">随机镂空</option>
+          <option value="custom">自定义形状（点击格子开关）</option>
         </select>
       </div>
       <div class="field">
@@ -584,6 +585,17 @@
           </select>
         </div>
       </div>
+    </div>
+
+    <div id="customShapePanel" class="hidden" style="margin-top:10px; padding:10px; border:1px dashed var(--accent); border-radius:8px; background:rgba(56,189,248,0.05);">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <span style="font-size:12px; font-weight:700; color:var(--accent);">🧩 自定义异形矩阵（点击格子删除/镂空，再点击打开）</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="customShapeInfo" style="font-size:12px; color:var(--muted);"></span>
+          <button class="btn btn-sm" onclick="resetCustomShape()">🔄 全部打开</button>
+        </div>
+      </div>
+      <div id="customShapeGrid" style="display:inline-grid; gap:5px;"></div>
     </div>
 
     <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
@@ -935,7 +947,78 @@
         setVal("cfgFillMode", "full_cover");
         setVal("cfgStrictness", "deadlock_free");
       }
+      onTemplateOrSizeChange();
       generateSingle();
+    }
+
+    let customVoidMask = [];
+
+    function syncCustomVoidMask() {
+      const rows = Math.max(2, Math.min(7, parseInt(document.getElementById("cfgRows").value, 10) || 3));
+      const cols = Math.max(2, Math.min(7, parseInt(document.getElementById("cfgCols").value, 10) || 4));
+      const next = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          row.push(Boolean(customVoidMask[r] && customVoidMask[r][c]));
+        }
+        next.push(row);
+      }
+      customVoidMask = next;
+    }
+
+    function onTemplateOrSizeChange() {
+      const tpl = document.getElementById("cfgTemplate").value;
+      const panel = document.getElementById("customShapePanel");
+      if (tpl === "custom") {
+        panel.classList.remove("hidden");
+        syncCustomVoidMask();
+        renderCustomShapeGrid();
+      } else {
+        panel.classList.add("hidden");
+      }
+    }
+
+    function renderCustomShapeGrid() {
+      syncCustomVoidMask();
+      const rows = customVoidMask.length;
+      const cols = rows ? customVoidMask[0].length : 0;
+      const grid = document.getElementById("customShapeGrid");
+      grid.style.gridTemplateColumns = `repeat(${cols}, 34px)`;
+      grid.innerHTML = "";
+      let activeCount = 0;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const isVoid = customVoidMask[r][c];
+          if (!isVoid) activeCount++;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = isVoid ? "✕" : "✓";
+          btn.title = isVoid ? `(${r},${c}) 已删除，点击打开` : `(${r},${c}) 有效格，点击删除`;
+          btn.style.cssText = isVoid
+            ? "width:34px;height:34px;border-radius:6px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;"
+            : "width:34px;height:34px;border-radius:6px;border:1px solid var(--accent);background:rgba(56,189,248,0.18);color:var(--text);cursor:pointer;font-weight:700;font-size:13px;";
+          btn.onclick = () => toggleShapeCell(r, c);
+          grid.appendChild(btn);
+        }
+      }
+      const info = document.getElementById("customShapeInfo");
+      if (info) info.textContent = `有效格：${activeCount} / ${rows * cols}`;
+    }
+
+    function toggleShapeCell(r, c) {
+      if (!customVoidMask[r]) return;
+      customVoidMask[r][c] = !customVoidMask[r][c];
+      renderCustomShapeGrid();
+    }
+
+    function resetCustomShape() {
+      for (let r = 0; r < customVoidMask.length; r++) {
+        for (let c = 0; c < customVoidMask[r].length; c++) {
+          customVoidMask[r][c] = false;
+        }
+      }
+      renderCustomShapeGrid();
     }
 
     function collectConfig() {
@@ -943,11 +1026,14 @@
       const word_lengths = lenStr
         ? lenStr.split(/[,，\s]+/).map(x => parseInt(x, 10)).filter(x => !isNaN(x) && x >= 2)
         : null;
+      const tpl = document.getElementById("cfgTemplate").value;
+      if (tpl === "custom") syncCustomVoidMask();
       return {
         level_num: parseInt(document.getElementById("cfgLevelNum").value, 10) || 2,
         rows: parseInt(document.getElementById("cfgRows").value, 10) || 4,
         cols: parseInt(document.getElementById("cfgCols").value, 10) || 4,
-        template: document.getElementById("cfgTemplate").value,
+        template: tpl === "custom" ? "full" : tpl,
+        void_mask: tpl === "custom" ? customVoidMask.map((row) => [...row]) : null,
         fill_mode: document.getElementById("cfgFillMode").value,
         word_lengths,
         seed_words: document.getElementById("cfgSeeds").value.trim(),
