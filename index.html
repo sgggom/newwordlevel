@@ -839,6 +839,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-sm" onclick="triggerDbImport()">📥 导入 JSONL / JSON 入库</button>
         <input type="file" id="dbImportFile" accept=".jsonl,.json" class="hidden" onchange="handleDbImportFile(event)" />
+        <button class="btn btn-sm btn-primary" id="dbOrientAllBtn" onclick="orientAllDbLevels()">🧭 全体转最大方向分</button>
         <button class="btn btn-sm btn-primary" onclick="exportDbFiltered()">📤 导出筛选结果 JSONL</button>
         <button class="btn btn-sm btn-warn" onclick="clearLocalDb()">🗑️ 清空本地库</button>
         <button class="btn btn-sm" onclick="toggleDbView(false)">← 返回棋盘</button>
@@ -2487,6 +2488,30 @@
       a.click();
       URL.revokeObjectURL(a.href);
       if (statusEl) statusEl.textContent = `✅ 已导出 ${lines.length} 关 JSONL`;
+    }
+
+    async function orientAllDbLevels() {
+      if (!window.LevelDB) return;
+      const btn = document.getElementById("dbOrientAllBtn");
+      const statusEl = document.getElementById("dbStatusText");
+      if (btn) btn.disabled = true;
+      if (statusEl) statusEl.textContent = "⏳ 正在对本地库全部关卡计算最大方向分朝向...";
+      try {
+        const res = await window.LevelDB.orientAllLevels((done, total, upd, unch, dedup) => {
+          if (statusEl) {
+            statusEl.textContent = `⏳ 正在优化朝向 ${done} / ${total}（已翻转 ${upd} 关，原向最优 ${unch} 关${dedup ? `，合并重复 ${dedup}` : ""}）...`;
+          }
+        });
+        await refreshDbCount();
+        await runDbQuery(dbPage);
+        if (statusEl) {
+          statusEl.textContent = `✅ 全部处理完成：共 ${res.total} 关，已优化翻转 ${res.updated} 关，原向已最优 ${res.unchanged} 关${res.deduped ? `，去重合并 ${res.deduped} 关` : ""}`;
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = `❌ 处理失败: ${err.message}`;
+      } finally {
+        if (btn) btn.disabled = false;
+      }
     }
 
     async function clearLocalDb() {

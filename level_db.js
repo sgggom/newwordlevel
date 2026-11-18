@@ -414,6 +414,177 @@
     return { total: items.length, inserted: totalInserted, skipped: totalSkipped };
   }
 
+  function applyBoardSymmetry(lvl, mode) {
+    if (!mode || mode === "id") return lvl;
+    const rows = Number(lvl.rows || (lvl.board ? lvl.board.length : 0));
+    const cols = Number(lvl.cols || (lvl.board && lvl.board[0] ? lvl.board[0].length : 0));
+    const fnMap = {
+      flip_h: (r, c) => [r, cols - 1 - c],
+      flip_v: (r, c) => [rows - 1 - r, c],
+      rot180: (r, c) => [rows - 1 - r, cols - 1 - c],
+    };
+    const fn = fnMap[mode];
+    if (!fn) return lvl;
+
+    const nextBoard = Array.from({ length: rows }, () => Array(cols).fill(null));
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const [nr, nc] = fn(r, c);
+        nextBoard[nr][nc] = { ...lvl.board[r][c], r: nr, c: nc };
+      }
+    }
+    const cloned = { ...lvl, board: nextBoard };
+    delete cloned.initial_word_paths;
+    delete cloned.selected_candidate_paths;
+    delete cloned.word_dir_scores;
+    delete cloned.word_path_scores;
+    return cloned;
+  }
+
+  function orientLevelForward(lvl) {
+    const rows = Number(lvl.rows || (lvl.board ? lvl.board.length : 0));
+    const cols = Number(lvl.cols || (lvl.board && lvl.board[0] ? lvl.board[0].length : 0));
+    if (!rows || !cols || !lvl.board) {
+      return { changed: false, mode: "id", lvl, metrics: computeLevelMetrics(lvl) };
+    }
+    const fnMap = {
+      id: (r, c) => [r, c],
+      flip_h: (r, c) => [r, cols - 1 - c],
+      flip_v: (r, c) => [rows - 1 - r, c],
+      rot180: (r, c) => [rows - 1 - r, cols - 1 - c],
+    };
+
+    const validModes = ["id"];
+    for (const mode of ["flip_h", "flip_v", "rot180"]) {
+      const fn = fnMap[mode];
+      let ok = true;
+      for (let r = 0; r < rows && ok; r++) {
+        for (let c = 0; c < cols; c++) {
+          const [nr, nc] = fn(r, c);
+          if (Boolean(lvl.board[r][c].void) !== Boolean(lvl.board[nr][nc].void)) {
+            ok = false;
+            break;
+          }
+        }
+      }
+      if (ok) validModes.push(mode);
+    }
+
+    let bestMode = "id";
+    let bestMetrics = null;
+    let bestKey = null;
+    let bestLvl = lvl;
+
+    for (const mode of validModes) {
+      const cand = mode === "id" ? lvl : applyBoardSymmetry(lvl, mode);
+      const m = computeLevelMetrics(cand);
+      const key = [m.dir_score_total, -(m.path_score_total || 0), mode === "id" ? 1 : 0];
+      if (
+        !bestKey ||
+        key[0] > bestKey[0] ||
+        (key[0] === bestKey[0] && key[1] > bestKey[1]) ||
+        (key[0] === bestKey[0] && key[1] === bestKey[1] && key[2] > bestKey[2])
+      ) {
+        bestKey = key;
+        bestMode = mode;
+        bestMetrics = m;
+        bestLvl = cand;
+      }
+    }
+
+    return {
+      changed: bestMode !== "id",
+      mode: bestMode,
+      lvl: bestLvl,
+      metrics: bestMetrics,
+    };
+  }
+
+  async function orientAllLevels(onProgress) {
+    const db = await openDB();
+    const total = await count();
+    if (total === 0) return { total: 0, updated: 0, unchanged: 0, deduped: 0 };
+
+    // Read all keys/records in chunks via cursor, then write updates in batches
+    const allRecs = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const req = tx.objectStore(STORE_NAME).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+
+    let updated = 0;
+    let unchanged = 0;
+    let deduped = 0;
+    const chunkSize = 500;
+
+    for (let i = 0; i < allRecs.length; i += chunkSize) {
+      const chunk = allRecs.slice(i, i + chunkSize);
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+
+        for (const rec of chunk) {
+          const res = orientLevelForward(rec.data);
+          const m = res.metrics;
+          const needUpdate =
+            res.changed ||
+            rec.avg_len == null ||
+            rec.dir_score_avg == null ||
+            rec.path_score_avg == null ||
+            !rec.data.word_path_scores;
+
+          if (!needUpdate) {
+            unchanged++;
+            continue;
+          }
+
+          const newData = {
+            ...res.lvl,
+            word_dir_scores: m.word_dir_scores,
+            word_path_scores: m.word_path_scores,
+          };
+          const newRec = {
+            ...rec,
+            sig: computeSignature(newData),
+            avg_len: m.avg_len,
+            dir_score_total: m.dir_score_total,
+            dir_score_avg: m.dir_score_avg,
+            path_score_total: m.path_score_total,
+            path_score_avg: m.path_score_avg,
+            fwd_word_count: m.fwd_word_count,
+            rev_word_count: m.rev_word_count,
+            data: newData,
+          };
+
+          const putReq = store.put(newRec);
+          putReq.onsuccess = () => {
+            if (res.changed) updated++;
+            else unchanged++;
+          };
+          putReq.onerror = (ev) => {
+            // If flipped signature collides with an existing record, delete this redundant one
+            ev.preventDefault();
+            ev.stopPropagation();
+            store.delete(rec.id);
+            deduped++;
+          };
+        }
+
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+
+      if (onProgress) {
+        onProgress(Math.min(i + chunk.length, allRecs.length), allRecs.length, updated, unchanged, deduped);
+      }
+      // Yield to browser UI thread between chunks
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    return { total: allRecs.length, updated, unchanged, deduped };
+  }
+
   window.LevelDB = {
     openDB,
     count,
@@ -426,5 +597,7 @@
     computeLevelMetrics,
     scorePathDirection,
     scoreWordPath,
+    orientLevelForward,
+    orientAllLevels,
   };
 })();
