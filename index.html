@@ -944,7 +944,7 @@
               <th>平均词长</th>
               <th>正/逆向分 (正/逆词)</th>
               <th>路径均分</th>
-              <th>目标词（完整）</th>
+              <th>目标词（绿0 / 蓝1 / 黄2 / 红&gt;2）</th>
               <th>额外词（完整）</th>
               <th>操作</th>
             </tr>
@@ -2108,17 +2108,11 @@
         const originTag = isInitial
           ? `<span class="pill pill-blue">初始</span>`
           : `<span class="pill pill-green">候选</span>`;
-        const wDirScore = (!masked && lvlMetrics && lvlMetrics.word_dir_scores)
-          ? lvlMetrics.word_dir_scores[td.word]
-          : null;
         const wPathScore = (!masked && lvlMetrics && lvlMetrics.word_path_scores)
           ? lvlMetrics.word_path_scores[td.word]
           : null;
-        const dirTag = (wDirScore !== null && wDirScore !== undefined)
-          ? `<span class="pill ${wDirScore > 0 ? "pill-green" : (wDirScore < 0 ? "pill-amber" : "")}" title="方向分（右/下+1，左/上-1，首步双倍）">${wDirScore > 0 ? "+" + wDirScore : wDirScore}</span>`
-          : "";
-        const pathTag = (wPathScore !== null && wPathScore !== undefined)
-          ? `<span class="pill" title="路径分（起步右/下0,左/上1 + 拐弯+1 + 折返+1）">路${wPathScore}</span>`
+        const pathColorCls = (wPathScore !== null && wPathScore !== undefined)
+          ? (wPathScore <= 0 ? "pill-green" : (wPathScore === 1 ? "pill-blue" : (wPathScore === 2 ? "pill-amber" : "pill-red")))
           : "";
         const pTag = (!masked && td.path_count > 1) ? `<span class="pill pill-amber">${td.path_count}路</span>` : "";
         const demoteBtn = (!masked && !isInitial)
@@ -2130,8 +2124,8 @@
           : `${td.rarity != null ? `<span style="color:var(--accent);">生僻${td.rarity}</span> · ` : ""}${td.zh || td.band || ""}`;
         card.innerHTML = `
           <div class="target-top">
-            <span class="target-word">${displayWord}</span>
-            <span style="display:flex; gap:3px; align-items:center;">${dirTag}${pathTag}${originTag}${pTag}${demoteBtn}</span>
+            <span class="target-word ${pathColorCls ? "pill " + pathColorCls : ""}" style="${pathColorCls ? "font-size:13px; padding:1px 7px;" : ""}">${displayWord}</span>
+            <span style="display:flex; gap:3px; align-items:center;">${originTag}${pTag}${demoteBtn}</span>
           </div>
           <div class="target-zh" title="${masked ? "" : (td.zh || "")}">${displayZh}</div>
         `;
@@ -2387,16 +2381,14 @@
       for (let i = 0; i < res.items.length; i++) {
         const rec = res.items[i];
         const tr = document.createElement("tr");
-        const scores = (rec.data && rec.data.word_dir_scores) || {};
         const pScores = (rec.data && rec.data.word_path_scores) || {};
         const targetWordsFull = (rec.data.target_words || []).map((w) => {
-          const s = scores[w];
           const ps = pScores[w];
-          const parts = [];
-          if (typeof s === "number") parts.push(s > 0 ? "+" + s : String(s));
-          if (typeof ps === "number") parts.push("路" + ps);
-          return parts.length ? `${w}(${parts.join("/")})` : w;
-        }).join(", ");
+          const cls = typeof ps === "number"
+            ? (ps <= 0 ? "pill-green" : (ps === 1 ? "pill-blue" : (ps === 2 ? "pill-amber" : "pill-red")))
+            : "";
+          return `<span class="pill ${cls}" style="margin:1px 2px; font-family:monospace; display:inline-block;">${w}</span>`;
+        }).join(" ");
         const extraWordsFull = (rec.data.extra_words || []).join(", ") || "-";
         const dirText = rec.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${rec.dir_score_avg}</span>`
