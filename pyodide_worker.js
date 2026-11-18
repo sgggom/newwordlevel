@@ -22,7 +22,7 @@ async function initPyodide() {
     await pyodide.runPythonAsync(`
 import sys, json
 sys.path.insert(0, "/home/pyodide")
-from level_core import GameDictionary, LevelGenerator, LevelSolver
+from level_core import GameDictionary, LevelGenerator, LevelSolver, orient_level_forward
 
 GDICT = GameDictionary()
 SOLVER = LevelSolver(GDICT)
@@ -193,6 +193,8 @@ def run_batch(body_str):
         rep = peeled_lvl.get("solver_report", {})
         if not (rep.get("is_solvable") and rep.get("zero_deadlock")):
             continue
+        if body.get("auto_forward", True):
+            orient_level_forward(peeled_lvl)
 
         if avoid_hot:
             for w in final_targets:

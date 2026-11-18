@@ -15,7 +15,7 @@ from pathlib import Path
 WORKSPACE = Path(__file__).resolve().parent
 sys.path.insert(0, str(WORKSPACE))
 
-from level_core import GameDictionary, LevelGenerator, LevelSolver
+from level_core import GameDictionary, LevelGenerator, LevelSolver, orient_level_forward
 
 
 def worker_run(args: tuple[int, int, int, int, int, str]) -> dict:
@@ -136,6 +136,7 @@ def worker_run(args: tuple[int, int, int, int, int, str]) -> dict:
             rep = solver.analyze_solvability(final_lvl, max_states=10000)
             if not (rep.get("is_solvable") and rep.get("zero_deadlock")):
                 continue
+            orient_level_forward(final_lvl)
 
             for w in final_targets:
                 target_usage[w] += 1

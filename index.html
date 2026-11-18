@@ -681,6 +681,10 @@
         <span>格子余次合计: <strong style="color:var(--text)" id="remCountsText">0</strong>（试玩不限步数）</span>
         <button class="btn btn-sm" onclick="undoStep()">↩ 退回一步</button>
         <button class="btn btn-sm btn-primary" onclick="submitActivePath()">提交当前词</button>
+        <button class="btn btn-sm" onclick="transformCurrentBoard('auto')" title="自动从原盘/左右翻转/上下翻转/旋转180°中选出最正向的朝向">🧭 转正向</button>
+        <button class="btn btn-sm" onclick="transformCurrentBoard('flip_h')" title="左右顺序颠倒">↔️ 左右</button>
+        <button class="btn btn-sm" onclick="transformCurrentBoard('flip_v')" title="上下顺序颠倒">↕️ 上下</button>
+        <button class="btn btn-sm" onclick="transformCurrentBoard('rot180')" title="旋转180度">🔄 180°</button>
         <button class="btn btn-sm hidden" id="clearPreviewBtn" onclick="clearPreview()">清除高亮</button>
       </div>
     </section>
@@ -2490,6 +2494,96 @@
       await window.LevelDB.clear();
       await refreshDbCount();
       await runDbQuery(0);
+    }
+
+    function applyBoardTransform(lvl, mode) {
+      const rows = lvl.rows;
+      const cols = lvl.cols;
+      const fnMap = {
+        id: (r, c) => [r, c],
+        flip_h: (r, c) => [r, cols - 1 - c],
+        flip_v: (r, c) => [rows - 1 - r, c],
+        rot180: (r, c) => [rows - 1 - r, cols - 1 - c],
+      };
+      const fn = fnMap[mode];
+      if (!fn || mode === "id") return;
+      const xformPath = (p) => p.map(([r, c]) => fn(r, c));
+
+      const nextBoard = Array.from({ length: rows }, () => Array(cols).fill(null));
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const [nr, nc] = fn(r, c);
+          const cell = { ...lvl.board[r][c], r: nr, c: nc };
+          nextBoard[nr][nc] = cell;
+        }
+      }
+      lvl.board = nextBoard;
+      if (lvl.initial_word_paths) {
+        const nextP = {};
+        for (const [w, p] of Object.entries(lvl.initial_word_paths)) nextP[w] = xformPath(p);
+        lvl.initial_word_paths = nextP;
+      }
+      if (lvl.selected_candidate_paths) {
+        const nextP = {};
+        for (const [w, p] of Object.entries(lvl.selected_candidate_paths)) nextP[w] = xformPath(p);
+        lvl.selected_candidate_paths = nextP;
+      }
+      for (const key of ["extra_words", "other_candidates"]) {
+        if (Array.isArray(lvl[key])) {
+          lvl[key].forEach((item) => {
+            if (item && typeof item === "object" && Array.isArray(item.sample_paths)) {
+              item.sample_paths = item.sample_paths.map(xformPath);
+            }
+          });
+        }
+      }
+      const rep = lvl.solver_report;
+      if (rep) {
+        (rep.target_details || []).forEach((td) => {
+          if (Array.isArray(td.sample_paths)) td.sample_paths = td.sample_paths.map(xformPath);
+        });
+        if (Array.isArray(rep.winning_solution)) {
+          rep.winning_solution.forEach((step) => {
+            if (Array.isArray(step.path)) step.path = xformPath(step.path);
+          });
+        }
+      }
+    }
+
+    async function transformCurrentBoard(mode) {
+      const lvl = currentLevel();
+      if (!lvl) return;
+      if (mode === "auto") {
+        const modes = ["id", "flip_h", "flip_v", "rot180"];
+        let bestMode = "id";
+        let bestKey = null;
+        for (const mName of modes) {
+          const clone = JSON.parse(JSON.stringify(lvl));
+          applyBoardTransform(clone, mName);
+          const m = window.LevelDB ? window.LevelDB.computeLevelMetrics(clone) : { dir_score_total: 0, path_score_avg: 0 };
+          const key = [m.dir_score_total, -(m.path_score_avg || 0), mName === "id" ? 1 : 0];
+          if (
+            !bestKey ||
+            key[0] > bestKey[0] ||
+            (key[0] === bestKey[0] && key[1] > bestKey[1]) ||
+            (key[0] === bestKey[0] && key[1] === bestKey[1] && key[2] > bestKey[2])
+          ) {
+            bestKey = key;
+            bestMode = mName;
+          }
+        }
+        if (bestMode === "id") {
+          setStatus("✅ 当前朝向已是最优正向", "st-ok");
+          return;
+        }
+        applyBoardTransform(lvl, bestMode);
+        const labels = { flip_h: "左右翻转", flip_v: "上下翻转", rot180: "旋转180°" };
+        await onLevelLoaded(`🧭 已自动${labels[bestMode]}为最优正向朝向`);
+      } else {
+        applyBoardTransform(lvl, mode);
+        const labels = { flip_h: "左右翻转", flip_v: "上下翻转", rot180: "旋转180°" };
+        await onLevelLoaded(`已执行${labels[mode]}`);
+      }
     }
 
     init();

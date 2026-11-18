@@ -1342,6 +1342,170 @@ class LevelSolver:
 
 
 # ==============================================================================
+# Orientation Optimization (Forward Direction Alignment)
+# ==============================================================================
+
+
+def _score_path_dir_and_complexity(path: list[list[int]] | list[tuple[int, int]]) -> tuple[int, int]:
+    """Return (dir_score, path_score) for a word path."""
+    if not path or len(path) < 2:
+        return 0, 0
+    dr0 = path[1][0] - path[0][0]
+    dc0 = path[1][1] - path[0][1]
+    dir_total = 2 * (dr0 + dc0)
+    start_score = 1 if (dr0 == -1 or dc0 == -1) else 0
+    turns = 0
+    reversals = 0
+    prev_dr, prev_dc = dr0, dc0
+    last_horiz = dc0 if dc0 != 0 else 0
+    last_vert = dr0 if dr0 != 0 else 0
+
+    for k in range(1, len(path) - 1):
+        dr = path[k + 1][0] - path[k][0]
+        dc = path[k + 1][1] - path[k][1]
+        dir_total += dr + dc
+        if dr != prev_dr or dc != prev_dc:
+            turns += 1
+        if dc != 0:
+            if last_horiz != 0 and dc == -last_horiz:
+                reversals += 1
+            last_horiz = dc
+        if dr != 0:
+            if last_vert != 0 and dr == -last_vert:
+                reversals += 1
+            last_vert = dr
+        prev_dr, prev_dc = dr, dc
+
+    return dir_total, start_score + turns + reversals
+
+
+def orient_level_forward(level_data: dict[str, Any], force_any_shape: bool = False) -> dict[str, Any]:
+    """Pick the symmetry (id, flip_h, flip_v, rot180) preserving shape that maximizes forward direction score."""
+    rows = int(level_data["rows"])
+    cols = int(level_data["cols"])
+    board = level_data["board"]
+    targets = [str(w).upper() for w in level_data.get("target_words", [])]
+    if not targets or rows <= 0 or cols <= 0:
+        return level_data
+
+    transforms = {
+        "id": lambda r, c: (r, c),
+        "flip_h": lambda r, c: (r, cols - 1 - c),
+        "flip_v": lambda r, c: (rows - 1 - r, c),
+        "rot180": lambda r, c: (rows - 1 - r, cols - 1 - c),
+    }
+
+    # Preserve void silhouette unless caller explicitly allows changing asymmetric shapes
+    valid_names: list[str] = []
+    for name, fn in transforms.items():
+        if force_any_shape or name == "id":
+            valid_names.append(name)
+            continue
+        ok = True
+        for r in range(rows):
+            for c in range(cols):
+                nr, nc = fn(r, c)
+                if bool(board[r][c].get("void", False)) != bool(board[nr][nc].get("void", False)):
+                    ok = False
+                    break
+            if not ok:
+                break
+        if ok:
+            valid_names.append(name)
+
+    if len(valid_names) <= 1:
+        return level_data
+
+    # Collect primary path for each target word
+    init_paths = level_data.get("initial_word_paths") or {}
+    sel_paths = level_data.get("selected_candidate_paths") or {}
+    td_paths: dict[str, list[list[int]]] = {}
+    rep = level_data.get("solver_report") or {}
+    for td in rep.get("target_details") or []:
+        if td.get("word") and td.get("sample_paths"):
+            td_paths[str(td["word"]).upper()] = td["sample_paths"][0]
+
+    letters = [["" if board[r][c].get("void") else str(board[r][c].get("letter", "")).upper() for c in range(cols)] for r in range(rows)]
+    counts = [[0 if board[r][c].get("void") else int(board[r][c].get("count", 0)) for c in range(cols)] for r in range(rows)]
+    void_mask = [[bool(board[r][c].get("void", False)) for c in range(cols)] for r in range(rows)]
+
+    primary_paths: list[list[list[int]]] = []
+    for w in targets:
+        p = init_paths.get(w) or sel_paths.get(w) or td_paths.get(w)
+        if not p:
+            found = LevelSolver.find_word_paths(letters, counts, void_mask, w, limit=1)
+            if found:
+                p = [[pt[0], pt[1]] for pt in found[0]]
+        if p:
+            primary_paths.append(p)
+
+    if not primary_paths:
+        return level_data
+
+    best_name = "id"
+    best_key: tuple[int, int, int] | None = None
+    for name in valid_names:
+        fn = transforms[name]
+        dir_sum = 0
+        path_sum = 0
+        for p in primary_paths:
+            tp = [fn(pt[0], pt[1]) for pt in p]
+            ds, ps = _score_path_dir_and_complexity(tp)
+            dir_sum += ds
+            path_sum += ps
+        key = (dir_sum, -path_sum, 1 if name == "id" else 0)
+        if best_key is None or key > best_key:
+            best_key = key
+            best_name = name
+
+    if best_name == "id":
+        level_data["orientation_applied"] = "id"
+        return level_data
+
+    fn = transforms[best_name]
+
+    def xform_path(p: list[Any]) -> list[list[int]]:
+        return [[fn(pt[0], pt[1])[0], fn(pt[0], pt[1])[1]] for pt in p]
+
+    new_board = [[None for _ in range(cols)] for _ in range(rows)]
+    for r in range(rows):
+        for c in range(cols):
+            nr, nc = fn(r, c)
+            cell_copy = dict(board[r][c])
+            cell_copy["r"] = nr
+            cell_copy["c"] = nc
+            new_board[nr][nc] = cell_copy
+    level_data["board"] = new_board
+
+    if "initial_word_paths" in level_data and level_data["initial_word_paths"]:
+        level_data["initial_word_paths"] = {w: xform_path(p) for w, p in level_data["initial_word_paths"].items()}
+    if "selected_candidate_paths" in level_data and level_data["selected_candidate_paths"]:
+        level_data["selected_candidate_paths"] = {w: xform_path(p) for w, p in level_data["selected_candidate_paths"].items()}
+
+    for key in ("extra_words", "other_candidates"):
+        if key in level_data and isinstance(level_data[key], list):
+            for item in level_data[key]:
+                if isinstance(item, dict) and item.get("sample_paths"):
+                    item["sample_paths"] = [xform_path(p) for p in item["sample_paths"]]
+
+    if rep:
+        for td in rep.get("target_details") or []:
+            if td.get("sample_paths"):
+                td["sample_paths"] = [xform_path(p) for p in td["sample_paths"]]
+        if rep.get("winning_solution"):
+            for step in rep["winning_solution"]:
+                if step.get("path"):
+                    step["path"] = xform_path(step["path"])
+        if rep.get("deadlock_witness") and rep["deadlock_witness"].get("steps"):
+            for step in rep["deadlock_witness"]["steps"]:
+                if step.get("path"):
+                    step["path"] = xform_path(step["path"])
+
+    level_data["orientation_applied"] = best_name
+    return level_data
+
+
+# ==============================================================================
 # Level Generator
 # ==============================================================================
 
@@ -1641,6 +1805,7 @@ class LevelGenerator:
         avoid_words: set[str] | None = None,
         rng_seed: int | None = None,
         timeout_sec: float = 4.0,
+        auto_forward: bool = True,
     ) -> dict[str, Any]:
         """Generate a verified puzzle level satisfying strictness & coverage rules."""
         t0 = time.perf_counter()
@@ -1968,11 +2133,15 @@ class LevelGenerator:
                     best_fallback = (quality_key, level_candidate)
                 continue
 
+            if auto_forward:
+                orient_level_forward(level_candidate)
             self._record_usage(level_candidate)
             return level_candidate
 
         if best_fallback is not None:
             chosen_level = best_fallback[1]
+            if auto_forward:
+                orient_level_forward(chosen_level)
             self._record_usage(chosen_level)
             return chosen_level
 

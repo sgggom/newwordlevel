@@ -74,7 +74,7 @@
       await pyodide.runPythonAsync(`
 import sys, json, uuid
 sys.path.insert(0, "/home/pyodide")
-from level_core import GameDictionary, GameSession, LevelGenerator, LevelSolver
+from level_core import GameDictionary, GameSession, LevelGenerator, LevelSolver, orient_level_forward
 
 GDICT = GameDictionary()
 SOLVER = LevelSolver(GDICT)
@@ -253,6 +253,8 @@ def dispatch_api(path, body_str):
                 rep = peeled_lvl.get("solver_report", {})
                 if not (rep.get("is_solvable") and rep.get("zero_deadlock")):
                     continue
+                if body.get("auto_forward", True):
+                    orient_level_forward(peeled_lvl)
 
                 if avoid_hot:
                     for w in final_targets:

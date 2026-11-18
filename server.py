@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from level_core import GameDictionary, GameSession, LevelGenerator, LevelSolver
+from level_core import GameDictionary, GameSession, LevelGenerator, LevelSolver, orient_level_forward
 
 WORKSPACE = Path(__file__).resolve().parent
 INDEX_HTML = WORKSPACE / "index.html"
@@ -334,6 +334,8 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             rep = peeled_lvl.get("solver_report", {})
             if not (rep.get("is_solvable") and rep.get("zero_deadlock")):
                 continue
+            if body.get("auto_forward", True):
+                orient_level_forward(peeled_lvl)
 
             if avoid_hot:
                 for w in final_targets:
