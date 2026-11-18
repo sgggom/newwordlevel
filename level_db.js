@@ -597,6 +597,7 @@
     computeLevelMetrics,
     scorePathDirection,
     scoreWordPath,
+    findWordPathOnBoard,
     orientLevelForward,
     orientAllLevels,
   };
