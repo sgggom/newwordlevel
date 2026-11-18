@@ -780,6 +780,13 @@
             <input type="number" id="poolMaxDirAvg" placeholder="10" step="0.5" style="width:62px;" />
           </div>
         </div>
+        <div class="field" style="min-width:140px;" title="起步(右/下0,左/上1) + 拐弯(+1) + 折返(+1)">
+          <label>平均路径分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinPathAvg" placeholder="0" step="0.5" min="0" style="width:62px;" />
+            <input type="number" id="poolMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:62px;" />
+          </div>
+        </div>
         <div class="field" style="min-width:140px;">
           <label>正逆向倾向</label>
           <select id="poolDirTendency">
@@ -805,6 +812,7 @@
               <th>额外词数</th>
               <th>平均词长</th>
               <th>正/逆向均分 (正/逆词)</th>
+              <th>路径均分</th>
               <th>目标生僻度</th>
               <th>额外生僻度</th>
               <th>操作</th>
@@ -881,6 +889,13 @@
             <input type="number" id="dbMaxDirAvg" placeholder="10" step="0.5" style="width:64px;" />
           </div>
         </div>
+        <div class="field" style="min-width:145px;" title="起步(右/下0,左/上1) + 拐弯(+1) + 折返(+1)">
+          <label>平均路径分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinPathAvg" placeholder="0" step="0.5" min="0" style="width:64px;" />
+            <input type="number" id="dbMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:64px;" />
+          </div>
+        </div>
         <div class="field" style="min-width:130px;">
           <label>逆向词数量 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
@@ -928,7 +943,8 @@
               <th>额外词数</th>
               <th>平均词长</th>
               <th>正/逆向分 (正/逆词)</th>
-              <th>目标词预览 (含单字方向分)</th>
+              <th>路径均分</th>
+              <th>目标词预览 (含方向/路径分)</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -1476,12 +1492,14 @@
         maxExtras: fNum("poolMaxExtras"),
         minDirAvg: fNum("poolMinDirAvg"),
         maxDirAvg: fNum("poolMaxDirAvg"),
+        minPathAvg: fNum("poolMinPathAvg"),
+        maxPathAvg: fNum("poolMaxPathAvg"),
         dirTendency: (document.getElementById("poolDirTendency") || {}).value || "all",
       };
     }
 
     function resetPoolFilters() {
-      ["poolMinAvgLen", "poolMaxAvgLen", "poolMinTargets", "poolMaxTargets", "poolMinExtras", "poolMaxExtras", "poolMinDirAvg", "poolMaxDirAvg"].forEach((id) => {
+      ["poolMinAvgLen", "poolMaxAvgLen", "poolMinTargets", "poolMaxTargets", "poolMinExtras", "poolMaxExtras", "poolMinDirAvg", "poolMaxDirAvg", "poolMinPathAvg", "poolMaxPathAvg"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
@@ -1501,6 +1519,8 @@
       if (f.maxExtras != null && ec > f.maxExtras) return false;
       if (f.minDirAvg != null && m.dir_score_avg < f.minDirAvg) return false;
       if (f.maxDirAvg != null && m.dir_score_avg > f.maxDirAvg) return false;
+      if (f.minPathAvg != null && m.path_score_avg < f.minPathAvg) return false;
+      if (f.maxPathAvg != null && m.path_score_avg > f.maxPathAvg) return false;
       if (f.dirTendency === "forward" && !(m.dir_score_avg > 0)) return false;
       if (f.dirTendency === "reverse" && !(m.dir_score_avg < 0)) return false;
       if (f.dirTendency === "all_forward" && m.rev_word_count !== 0) return false;
@@ -1544,7 +1564,7 @@
       let targetChars = 0, extraChars = 0;
       let targetRaritySum = 0, targetRarityCnt = 0;
       let extraRaritySum = 0, extraRarityCnt = 0;
-      let dirAvgSum = 0;
+      let dirAvgSum = 0, pathAvgSum = 0;
       const lenCounts = {};
       const rarBuckets = { "0-25 极常用": 0, "25-50 常见": 0, "50-75 进阶": 0, "75-100 生僻": 0 };
       const pf = collectPoolFilters();
@@ -1559,9 +1579,10 @@
         const ec = exs.length;
         const m = window.LevelDB
           ? window.LevelDB.computeLevelMetrics(lvl)
-          : { avg_len: tc ? (lvl.target_words || []).reduce((a, w) => a + w.length, 0) / tc : 0, dir_score_avg: 0, fwd_word_count: 0, rev_word_count: 0 };
+          : { avg_len: tc ? (lvl.target_words || []).reduce((a, w) => a + w.length, 0) / tc : 0, dir_score_avg: 0, path_score_avg: 0, fwd_word_count: 0, rev_word_count: 0 };
 
         dirAvgSum += m.dir_score_avg;
+        pathAvgSum += m.path_score_avg || 0;
         sumTargets += tc; minT = Math.min(minT, tc); maxT = Math.max(maxT, tc);
         sumExtras += ec; minE = Math.min(minE, ec); maxE = Math.max(maxE, ec);
 
@@ -1612,6 +1633,7 @@
           <td>${ec}</td>
           <td>${avgLenLvl}</td>
           <td>${dirBadge} <span style="font-size:11px; color:var(--muted);">(${m.fwd_word_count}正/${m.rev_word_count}逆)</span></td>
+          <td><strong>${typeof m.path_score_avg === "number" ? m.path_score_avg : "-"}</strong></td>
           <td>${avgTRarLvl}</td>
           <td>${avgERarLvl}</td>
           <td style="display:flex; gap:6px;">
@@ -1633,6 +1655,7 @@
       const avgTRar = targetRarityCnt ? (targetRaritySum / targetRarityCnt).toFixed(1) : "0";
       const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(1) : "0";
       const avgDir = (dirAvgSum / n).toFixed(2);
+      const avgPathScore = (pathAvgSum / n).toFixed(2);
       const rarNum = parseFloat(avgTRar);
       const rarGrade = rarNum < 30 ? "大众高频" : (rarNum < 55 ? "中等进阶" : "偏生僻");
 
@@ -1661,6 +1684,11 @@
           <div class="kpi-label">正/逆向方向均分</div>
           <div class="kpi-val">${Number(avgDir) >= 0 ? "+" + avgDir : avgDir}</div>
           <div class="kpi-sub">右/下+1，左/上-1，首步双倍</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">平均路径分</div>
+          <div class="kpi-val">${avgPathScore}</div>
+          <div class="kpi-sub">起步(右/下0,左/上1)+拐弯+折返</div>
         </div>
       `;
 
@@ -2041,7 +2069,7 @@
       }
       const lvlMetrics = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : null;
       const dirSummary = lvlMetrics
-        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg}`
+        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg} · 路径分 ${lvlMetrics.path_score_avg}`
         : "";
       document.getElementById("solverStats").textContent =
         `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×${dirSummary}`;
@@ -2082,8 +2110,14 @@
         const wDirScore = (!masked && lvlMetrics && lvlMetrics.word_dir_scores)
           ? lvlMetrics.word_dir_scores[td.word]
           : null;
+        const wPathScore = (!masked && lvlMetrics && lvlMetrics.word_path_scores)
+          ? lvlMetrics.word_path_scores[td.word]
+          : null;
         const dirTag = (wDirScore !== null && wDirScore !== undefined)
           ? `<span class="pill ${wDirScore > 0 ? "pill-green" : (wDirScore < 0 ? "pill-amber" : "")}" title="方向分（右/下+1，左/上-1，首步双倍）">${wDirScore > 0 ? "+" + wDirScore : wDirScore}</span>`
+          : "";
+        const pathTag = (wPathScore !== null && wPathScore !== undefined)
+          ? `<span class="pill" title="路径分（起步右/下0,左/上1 + 拐弯+1 + 折返+1）">路${wPathScore}</span>`
           : "";
         const pTag = (!masked && td.path_count > 1) ? `<span class="pill pill-amber">${td.path_count}路</span>` : "";
         const demoteBtn = (!masked && !isInitial)
@@ -2096,7 +2130,7 @@
         card.innerHTML = `
           <div class="target-top">
             <span class="target-word">${displayWord}</span>
-            <span style="display:flex; gap:3px; align-items:center;">${dirTag}${originTag}${pTag}${demoteBtn}</span>
+            <span style="display:flex; gap:3px; align-items:center;">${dirTag}${pathTag}${originTag}${pTag}${demoteBtn}</span>
           </div>
           <div class="target-zh" title="${masked ? "" : (td.zh || "")}">${displayZh}</div>
         `;
@@ -2297,6 +2331,8 @@
         maxAvgLen: floatOrNull("dbMaxAvgLen"),
         minDirAvg: floatOrNull("dbMinDirAvg"),
         maxDirAvg: floatOrNull("dbMaxDirAvg"),
+        minPathAvg: floatOrNull("dbMinPathAvg"),
+        maxPathAvg: floatOrNull("dbMaxPathAvg"),
         minRevWords: intOrNull("dbMinRevWords"),
         maxRevWords: intOrNull("dbMaxRevWords"),
         dirTendency: (document.getElementById("dbDirTendency") || {}).value || "all",
@@ -2312,6 +2348,7 @@
         "dbMinExtras", "dbMaxExtras",
         "dbMinAvgLen", "dbMaxAvgLen",
         "dbMinDirAvg", "dbMaxDirAvg",
+        "dbMinPathAvg", "dbMaxPathAvg",
         "dbMinRevWords", "dbMaxRevWords",
         "dbFilterWord",
       ].forEach((id) => {
@@ -2350,12 +2387,14 @@
         const rec = res.items[i];
         const tr = document.createElement("tr");
         const scores = (rec.data && rec.data.word_dir_scores) || {};
+        const pScores = (rec.data && rec.data.word_path_scores) || {};
         const wordsPreview = (rec.data.target_words || []).slice(0, 5).map((w) => {
           const s = scores[w];
-          if (typeof s === "number") {
-            return `${w}(${s > 0 ? "+" + s : s})`;
-          }
-          return w;
+          const ps = pScores[w];
+          const parts = [];
+          if (typeof s === "number") parts.push(s > 0 ? "+" + s : String(s));
+          if (typeof ps === "number") parts.push("路" + ps);
+          return parts.length ? `${w}(${parts.join("/")})` : w;
         }).join(", ") + ((rec.data.target_words || []).length > 5 ? " ..." : "");
         const dirText = rec.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${rec.dir_score_avg}</span>`
@@ -2368,6 +2407,7 @@
           <td>${rec.extra_count}</td>
           <td>${typeof rec.avg_len === "number" ? rec.avg_len.toFixed(2) : "-"}</td>
           <td>${dirText} <span style="font-size:11px; color:var(--muted);">(${rec.fwd_word_count || 0}正/${rec.rev_word_count || 0}逆)</span></td>
+          <td><strong>${typeof rec.path_score_avg === "number" ? rec.path_score_avg.toFixed(2) : "-"}</strong></td>
           <td style="font-family:monospace;">${wordsPreview}</td>
           <td><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
         `;

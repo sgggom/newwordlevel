@@ -91,6 +91,39 @@
     return total;
   }
 
+  function scoreWordPath(path) {
+    if (!path || path.length < 2) return 0;
+    const dr0 = path[1][0] - path[0][0];
+    const dc0 = path[1][1] - path[0][1];
+    // 起步方向：右/下=0，左/上=1
+    const startScore = (dr0 === -1 || dc0 === -1) ? 1 : 0;
+    let turns = 0;
+    let reversals = 0;
+    let prevDr = dr0;
+    let prevDc = dc0;
+    let lastHoriz = dc0 !== 0 ? dc0 : 0;
+    let lastVert = dr0 !== 0 ? dr0 : 0;
+
+    for (let k = 1; k < path.length - 1; k++) {
+      const dr = path[k + 1][0] - path[k][0];
+      const dc = path[k + 1][1] - path[k][1];
+      if (dr !== prevDr || dc !== prevDc) {
+        turns++;
+      }
+      if (dc !== 0) {
+        if (lastHoriz !== 0 && dc === -lastHoriz) reversals++;
+        lastHoriz = dc;
+      }
+      if (dr !== 0) {
+        if (lastVert !== 0 && dr === -lastVert) reversals++;
+        lastVert = dr;
+      }
+      prevDr = dr;
+      prevDc = dc;
+    }
+    return startScore + turns + reversals;
+  }
+
   function computeLevelMetrics(lvl) {
     const targets = (lvl.target_words || []).map((w) => String(w).toUpperCase());
     const initPaths = lvl.initial_word_paths || {};
@@ -106,16 +139,21 @@
 
     let charSum = 0;
     let dirTotal = 0;
+    let pathTotal = 0;
     let fwdCount = 0;
     let revCount = 0;
     const wordDirScores = {};
+    const wordPathScores = {};
 
     for (const w of targets) {
       charSum += w.length;
       const p = initPaths[w] || selPaths[w] || tdMap[w] || findWordPathOnBoard(lvl.board, w);
       const score = p ? scorePathDirection(p) : 0;
+      const pScore = p ? scoreWordPath(p) : 0;
       wordDirScores[w] = score;
+      wordPathScores[w] = pScore;
       dirTotal += score;
+      pathTotal += pScore;
       if (score > 0) fwdCount++;
       else if (score < 0) revCount++;
     }
@@ -125,9 +163,12 @@
       avg_len: n ? Math.round((charSum / n) * 100) / 100 : 0,
       dir_score_total: dirTotal,
       dir_score_avg: n ? Math.round((dirTotal / n) * 100) / 100 : 0,
+      path_score_total: pathTotal,
+      path_score_avg: n ? Math.round((pathTotal / n) * 100) / 100 : 0,
       fwd_word_count: fwdCount,
       rev_word_count: revCount,
       word_dir_scores: wordDirScores,
+      word_path_scores: wordPathScores,
     };
   }
 
@@ -161,6 +202,8 @@
       avg_len: metrics.avg_len,
       dir_score_total: metrics.dir_score_total,
       dir_score_avg: metrics.dir_score_avg,
+      path_score_total: metrics.path_score_total,
+      path_score_avg: metrics.path_score_avg,
       fwd_word_count: metrics.fwd_word_count,
       rev_word_count: metrics.rev_word_count,
       data: {
@@ -173,6 +216,7 @@
         target_words: targets,
         extra_words: extras,
         word_dir_scores: metrics.word_dir_scores,
+        word_path_scores: metrics.word_path_scores,
       },
     };
   }
@@ -229,16 +273,21 @@
     if (
       rec.avg_len == null ||
       rec.dir_score_avg == null ||
+      rec.path_score_avg == null ||
       rec.rev_word_count == null ||
-      !rec.data.word_dir_scores
+      !rec.data.word_dir_scores ||
+      !rec.data.word_path_scores
     ) {
       const m = computeLevelMetrics(rec.data);
       rec.avg_len = m.avg_len;
       rec.dir_score_total = m.dir_score_total;
       rec.dir_score_avg = m.dir_score_avg;
+      rec.path_score_total = m.path_score_total;
+      rec.path_score_avg = m.path_score_avg;
       rec.fwd_word_count = m.fwd_word_count;
       rec.rev_word_count = m.rev_word_count;
       rec.data.word_dir_scores = m.word_dir_scores;
+      rec.data.word_path_scores = m.word_path_scores;
     }
     return rec;
   }
@@ -256,6 +305,8 @@
     if (f.maxAvgLen != null && rec.avg_len > f.maxAvgLen) return false;
     if (f.minDirAvg != null && rec.dir_score_avg < f.minDirAvg) return false;
     if (f.maxDirAvg != null && rec.dir_score_avg > f.maxDirAvg) return false;
+    if (f.minPathAvg != null && rec.path_score_avg < f.minPathAvg) return false;
+    if (f.maxPathAvg != null && rec.path_score_avg > f.maxPathAvg) return false;
     if (f.minRevWords != null && rec.rev_word_count < f.minRevWords) return false;
     if (f.maxRevWords != null && rec.rev_word_count > f.maxRevWords) return false;
     if (f.dirTendency && f.dirTendency !== "all") {
@@ -374,5 +425,6 @@
     computeSignature,
     computeLevelMetrics,
     scorePathDirection,
+    scoreWordPath,
   };
 })();
