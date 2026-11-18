@@ -749,6 +749,50 @@
     <div class="card">
       <div class="section-head">
         <span>关卡池明细（点击「查看」可切回棋盘）</span>
+        <span id="poolFilterSummary" style="font-size:12px; color:var(--muted);"></span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);">
+        <div class="field" style="min-width:125px;">
+          <label>平均词长 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinAvgLen" placeholder="2.0" step="0.1" min="2" max="8" style="width:56px;" />
+            <input type="number" id="poolMaxAvgLen" placeholder="8.0" step="0.1" min="2" max="8" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:125px;">
+          <label>目标数量 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinTargets" placeholder="1" min="1" max="99" style="width:56px;" />
+            <input type="number" id="poolMaxTargets" placeholder="99" min="1" max="99" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:125px;">
+          <label>额外词数量 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinExtras" placeholder="0" min="0" max="99" style="width:56px;" />
+            <input type="number" id="poolMaxExtras" placeholder="99" min="0" max="99" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:140px;" title="正向(左→右、上→下)+1，逆向(右→左、下→上)-1，首步双倍">
+          <label>平均正逆向分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinDirAvg" placeholder="-10" step="0.5" style="width:62px;" />
+            <input type="number" id="poolMaxDirAvg" placeholder="10" step="0.5" style="width:62px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:140px;">
+          <label>正逆向倾向</label>
+          <select id="poolDirTendency">
+            <option value="all">全部</option>
+            <option value="forward">整体偏正向 (均分&gt;0)</option>
+            <option value="reverse">整体偏逆向 (均分&lt;0)</option>
+            <option value="all_forward">全正向词 (0逆向)</option>
+            <option value="has_reverse">含逆向词 (≥1逆向)</option>
+          </select>
+        </div>
+        <button class="btn btn-sm btn-primary" onclick="renderStatsView()">🔍 筛选</button>
+        <button class="btn btn-sm" onclick="resetPoolFilters()">🔄 重置</button>
+        <button class="btn btn-sm" onclick="exportFilteredPool()">📤 导出筛选结果 JSON</button>
       </div>
       <div class="pool-table-wrap">
         <table class="pool-table">
@@ -760,6 +804,7 @@
               <th>目标词数</th>
               <th>额外词数</th>
               <th>平均词长</th>
+              <th>正/逆向均分 (正/逆词)</th>
               <th>目标生僻度</th>
               <th>额外生僻度</th>
               <th>操作</th>
@@ -809,31 +854,63 @@
           </div>
         </div>
         <div class="field" style="min-width:130px;">
-          <label>目标词数 (Min ~ Max)</label>
+          <label>目标数量 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
-            <input type="number" id="dbMinTargets" placeholder="1" min="1" style="width:56px;" />
-            <input type="number" id="dbMaxTargets" placeholder="99" min="1" style="width:56px;" />
+            <input type="number" id="dbMinTargets" placeholder="1" min="1" max="99" style="width:56px;" />
+            <input type="number" id="dbMaxTargets" placeholder="99" min="1" max="99" style="width:56px;" />
           </div>
         </div>
         <div class="field" style="min-width:130px;">
-          <label>额外词数 (Min ~ Max)</label>
+          <label>额外词数量 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
-            <input type="number" id="dbMinExtras" placeholder="0" min="0" style="width:56px;" />
-            <input type="number" id="dbMaxExtras" placeholder="99" min="0" style="width:56px;" />
+            <input type="number" id="dbMinExtras" placeholder="0" min="0" max="99" style="width:56px;" />
+            <input type="number" id="dbMaxExtras" placeholder="99" min="0" max="99" style="width:56px;" />
           </div>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>单词平均长度 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinAvgLen" placeholder="2.0" step="0.1" min="2" max="8" style="width:56px;" />
+            <input type="number" id="dbMaxAvgLen" placeholder="8.0" step="0.1" min="2" max="8" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:145px;" title="正向(左→右、上→下)+1，逆向(右→左、下→上)-1，第一步计双倍">
+          <label>平均正逆向分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinDirAvg" placeholder="-10" step="0.5" style="width:64px;" />
+            <input type="number" id="dbMaxDirAvg" placeholder="10" step="0.5" style="width:64px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:130px;">
+          <label>逆向词数量 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinRevWords" placeholder="0" min="0" max="99" style="width:56px;" />
+            <input type="number" id="dbMaxRevWords" placeholder="99" min="0" max="99" style="width:56px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:150px;">
+          <label>正逆向倾向</label>
+          <select id="dbDirTendency">
+            <option value="all">全部</option>
+            <option value="forward">整体偏正向 (均分&gt;0)</option>
+            <option value="reverse">整体偏逆向 (均分&lt;0)</option>
+            <option value="all_forward">全正向词 (0逆向)</option>
+            <option value="has_reverse">含逆向词 (≥1逆向)</option>
+          </select>
         </div>
         <div class="field" style="min-width:130px;">
           <label>包含目标词</label>
           <input type="text" id="dbFilterWord" placeholder="如 CAT" style="width:110px; text-transform:uppercase;" />
         </div>
         <button class="btn btn-sm btn-primary" onclick="runDbQuery(0)">🔍 筛选查询</button>
+        <button class="btn btn-sm" onclick="resetDbFilters()">🔄 重置筛选</button>
       </div>
       <div id="dbStatusText" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
     </div>
 
     <div class="card">
       <div class="section-head">
-        <span>查询结果（每页 50 条）</span>
+        <span>查询结果（每页 50 条 · 方向分规则：右/下 +1，左/上 -1，首步双倍）</span>
         <div style="display:flex; gap:6px; align-items:center;">
           <button class="btn btn-sm" id="dbPrevPageBtn" onclick="changeDbPage(-1)">上一页</button>
           <span id="dbPageInfo" style="font-size:12px; color:var(--muted);">第 1 页</span>
@@ -849,7 +926,9 @@
               <th>最大层数</th>
               <th>目标词数</th>
               <th>额外词数</th>
-              <th>目标词预览</th>
+              <th>平均词长</th>
+              <th>正/逆向分 (正/逆词)</th>
+              <th>目标词预览 (含单字方向分)</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -1381,6 +1460,67 @@
       onLevelLoaded();
     }
 
+    function collectPoolFilters() {
+      const fNum = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const v = el.value.trim();
+        return v === "" ? null : parseFloat(v);
+      };
+      return {
+        minAvgLen: fNum("poolMinAvgLen"),
+        maxAvgLen: fNum("poolMaxAvgLen"),
+        minTargets: fNum("poolMinTargets"),
+        maxTargets: fNum("poolMaxTargets"),
+        minExtras: fNum("poolMinExtras"),
+        maxExtras: fNum("poolMaxExtras"),
+        minDirAvg: fNum("poolMinDirAvg"),
+        maxDirAvg: fNum("poolMaxDirAvg"),
+        dirTendency: (document.getElementById("poolDirTendency") || {}).value || "all",
+      };
+    }
+
+    function resetPoolFilters() {
+      ["poolMinAvgLen", "poolMaxAvgLen", "poolMinTargets", "poolMaxTargets", "poolMinExtras", "poolMaxExtras", "poolMinDirAvg", "poolMaxDirAvg"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      const sel = document.getElementById("poolDirTendency");
+      if (sel) sel.value = "all";
+      renderStatsView();
+    }
+
+    function matchesPoolFilter(lvl, m, f) {
+      const tc = (lvl.target_words || []).length;
+      const ec = (lvl.extra_words || []).length;
+      if (f.minAvgLen != null && m.avg_len < f.minAvgLen) return false;
+      if (f.maxAvgLen != null && m.avg_len > f.maxAvgLen) return false;
+      if (f.minTargets != null && tc < f.minTargets) return false;
+      if (f.maxTargets != null && tc > f.maxTargets) return false;
+      if (f.minExtras != null && ec < f.minExtras) return false;
+      if (f.maxExtras != null && ec > f.maxExtras) return false;
+      if (f.minDirAvg != null && m.dir_score_avg < f.minDirAvg) return false;
+      if (f.maxDirAvg != null && m.dir_score_avg > f.maxDirAvg) return false;
+      if (f.dirTendency === "forward" && !(m.dir_score_avg > 0)) return false;
+      if (f.dirTendency === "reverse" && !(m.dir_score_avg < 0)) return false;
+      if (f.dirTendency === "all_forward" && m.rev_word_count !== 0) return false;
+      if (f.dirTendency === "has_reverse" && !(m.rev_word_count > 0)) return false;
+      return true;
+    }
+
+    function exportFilteredPool() {
+      const pf = collectPoolFilters();
+      const matched = levels.filter((lvl) => {
+        const m = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : { avg_len: 0, dir_score_avg: 0, rev_word_count: 0 };
+        return matchesPoolFilter(lvl, m, pf);
+      });
+      if (!matched.length) {
+        setStatus("⚠️ 当前筛选条件下没有可导出的关卡", "st-err");
+        return;
+      }
+      downloadJson(matched, `levels_filtered_${matched.length}.json`);
+    }
+
     function renderStatsView() {
       const n = levels.length;
       document.getElementById("statsPoolCountPill").textContent = `共 ${n} 关`;
@@ -1388,12 +1528,14 @@
       const lenBox = document.getElementById("lenDistBox");
       const rarBox = document.getElementById("rarityDistBox");
       const tbody = document.getElementById("poolTableBody");
+      const sumEl = document.getElementById("poolFilterSummary");
 
       if (n === 0) {
         kpiGrid.innerHTML = `<div class="kpi-card"><div class="kpi-label">关卡池为空</div><div class="kpi-val">0 关</div><div class="kpi-sub">点击右上角「+1 关入池」或「批量 +10 关入池」开始统计</div></div>`;
         lenBox.innerHTML = `<span style="font-size:12px; color:var(--muted);">暂无数据</span>`;
         rarBox.innerHTML = `<span style="font-size:12px; color:var(--muted);">暂无数据</span>`;
         tbody.innerHTML = "";
+        if (sumEl) sumEl.textContent = "";
         return;
       }
 
@@ -1402,8 +1544,11 @@
       let targetChars = 0, extraChars = 0;
       let targetRaritySum = 0, targetRarityCnt = 0;
       let extraRaritySum = 0, extraRarityCnt = 0;
+      let dirAvgSum = 0;
       const lenCounts = {};
       const rarBuckets = { "0-25 极常用": 0, "25-50 常见": 0, "50-75 进阶": 0, "75-100 生僻": 0 };
+      const pf = collectPoolFilters();
+      let matchedPoolCount = 0;
 
       tbody.innerHTML = "";
       levels.forEach((lvl, idx) => {
@@ -1412,7 +1557,11 @@
         const exs = lvl.extra_words || [];
         const tc = (lvl.target_words || []).length;
         const ec = exs.length;
+        const m = window.LevelDB
+          ? window.LevelDB.computeLevelMetrics(lvl)
+          : { avg_len: tc ? (lvl.target_words || []).reduce((a, w) => a + w.length, 0) / tc : 0, dir_score_avg: 0, fwd_word_count: 0, rev_word_count: 0 };
 
+        dirAvgSum += m.dir_score_avg;
         sumTargets += tc; minT = Math.min(minT, tc); maxT = Math.max(maxT, tc);
         sumExtras += ec; minE = Math.min(minE, ec); maxE = Math.max(maxE, ec);
 
@@ -1434,15 +1583,22 @@
 
         let lvlERar = 0, lvlERarN = 0;
         exs.forEach(ex => {
-          extraChars += ex.word.length;
-          const r = typeof ex.rarity === "number" ? ex.rarity : 60;
+          const ew = typeof ex === "string" ? ex : ex.word;
+          extraChars += ew.length;
+          const r = (typeof ex === "object" && typeof ex.rarity === "number") ? ex.rarity : 60;
           lvlERar += r; lvlERarN++;
           extraRaritySum += r; extraRarityCnt++;
         });
 
-        const avgLenLvl = tc ? (lvlTChars / tc).toFixed(2) : "-";
+        if (!matchesPoolFilter(lvl, m, pf)) return;
+        matchedPoolCount++;
+
+        const avgLenLvl = tc ? m.avg_len.toFixed(2) : "-";
         const avgTRarLvl = lvlTRarN ? (lvlTRar / lvlTRarN).toFixed(1) : "-";
         const avgERarLvl = lvlERarN ? (lvlERar / lvlERarN).toFixed(1) : "-";
+        const dirBadge = m.dir_score_avg >= 0
+          ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${m.dir_score_avg}</span>`
+          : `<span style="color:var(--amber,#f59e0b); font-weight:700;">${m.dir_score_avg}</span>`;
         const safePill = rep.zero_deadlock
           ? `<span class="pill pill-green">${rep.path_unique ? "路径唯一" : "零死局"}</span>`
           : `<span class="pill pill-amber">有风险</span>`;
@@ -1455,6 +1611,7 @@
           <td>${tc}</td>
           <td>${ec}</td>
           <td>${avgLenLvl}</td>
+          <td>${dirBadge} <span style="font-size:11px; color:var(--muted);">(${m.fwd_word_count}正/${m.rev_word_count}逆)</span></td>
           <td>${avgTRarLvl}</td>
           <td>${avgERarLvl}</td>
           <td style="display:flex; gap:6px;">
@@ -1465,12 +1622,17 @@
         tbody.appendChild(tr);
       });
 
+      if (sumEl) {
+        sumEl.textContent = `显示 ${matchedPoolCount} / ${n} 关`;
+      }
+
       const avgT = (sumTargets / n).toFixed(2);
       const avgE = (sumExtras / n).toFixed(2);
       const avgTLen = sumTargets ? (targetChars / sumTargets).toFixed(2) : "0";
       const avgELen = sumExtras ? (extraChars / sumExtras).toFixed(2) : "0";
       const avgTRar = targetRarityCnt ? (targetRaritySum / targetRarityCnt).toFixed(1) : "0";
       const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(1) : "0";
+      const avgDir = (dirAvgSum / n).toFixed(2);
       const rarNum = parseFloat(avgTRar);
       const rarGrade = rarNum < 30 ? "大众高频" : (rarNum < 55 ? "中等进阶" : "偏生僻");
 
@@ -1494,6 +1656,11 @@
           <div class="kpi-label">平均单词生僻度（目标词）</div>
           <div class="kpi-val">${avgTRar} <span style="font-size:13px; font-weight:700; color:var(--accent);">${rarGrade}</span></div>
           <div class="kpi-sub">额外词平均生僻度：${avgERar} / 100</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">正/逆向方向均分</div>
+          <div class="kpi-val">${Number(avgDir) >= 0 ? "+" + avgDir : avgDir}</div>
+          <div class="kpi-sub">右/下+1，左/上-1，首步双倍</div>
         </div>
       `;
 
@@ -1872,8 +2039,12 @@
       } else {
         badgeEl.innerHTML = `<span class="pill pill-red">❌ 无解 / 配置异常</span>`;
       }
+      const lvlMetrics = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : null;
+      const dirSummary = lvlMetrics
+        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg}`
+        : "";
       document.getElementById("solverStats").textContent =
-        `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×`;
+        `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×${dirSummary}`;
 
       const dlTip = document.getElementById("deadlockTip");
       if (rep.deadlock_witness) {
@@ -1908,6 +2079,12 @@
         const originTag = isInitial
           ? `<span class="pill pill-blue">初始</span>`
           : `<span class="pill pill-green">候选</span>`;
+        const wDirScore = (!masked && lvlMetrics && lvlMetrics.word_dir_scores)
+          ? lvlMetrics.word_dir_scores[td.word]
+          : null;
+        const dirTag = (wDirScore !== null && wDirScore !== undefined)
+          ? `<span class="pill ${wDirScore > 0 ? "pill-green" : (wDirScore < 0 ? "pill-amber" : "")}" title="方向分（右/下+1，左/上-1，首步双倍）">${wDirScore > 0 ? "+" + wDirScore : wDirScore}</span>`
+          : "";
         const pTag = (!masked && td.path_count > 1) ? `<span class="pill pill-amber">${td.path_count}路</span>` : "";
         const demoteBtn = (!masked && !isInitial)
           ? `<button class="btn btn-sm" style="padding:1px 5px; font-size:10px;" title="移回候选/额外词（格次数-1）" onclick="event.stopPropagation(); toggleCandidate('${td.word}')">✕</button>`
@@ -1919,7 +2096,7 @@
         card.innerHTML = `
           <div class="target-top">
             <span class="target-word">${displayWord}</span>
-            <span style="display:flex; gap:3px; align-items:center;">${originTag}${pTag}${demoteBtn}</span>
+            <span style="display:flex; gap:3px; align-items:center;">${dirTag}${originTag}${pTag}${demoteBtn}</span>
           </div>
           <div class="target-zh" title="${masked ? "" : (td.zh || "")}">${displayZh}</div>
         `;
@@ -2096,20 +2273,54 @@
     }
 
     function collectDbFilters() {
-      const numOrNull = (id) => {
-        const v = document.getElementById(id).value.trim();
+      const intOrNull = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const v = el.value.trim();
         return v === "" ? null : parseInt(v, 10);
+      };
+      const floatOrNull = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        const v = el.value.trim();
+        return v === "" ? null : parseFloat(v);
       };
       return {
         size: document.getElementById("dbFilterSize").value,
-        minMaxCount: numOrNull("dbMinMaxCnt"),
-        maxMaxCount: numOrNull("dbMaxMaxCnt"),
-        minTargets: numOrNull("dbMinTargets"),
-        maxTargets: numOrNull("dbMaxTargets"),
-        minExtras: numOrNull("dbMinExtras"),
-        maxExtras: numOrNull("dbMaxExtras"),
+        minMaxCount: intOrNull("dbMinMaxCnt"),
+        maxMaxCount: intOrNull("dbMaxMaxCnt"),
+        minTargets: intOrNull("dbMinTargets"),
+        maxTargets: intOrNull("dbMaxTargets"),
+        minExtras: intOrNull("dbMinExtras"),
+        maxExtras: intOrNull("dbMaxExtras"),
+        minAvgLen: floatOrNull("dbMinAvgLen"),
+        maxAvgLen: floatOrNull("dbMaxAvgLen"),
+        minDirAvg: floatOrNull("dbMinDirAvg"),
+        maxDirAvg: floatOrNull("dbMaxDirAvg"),
+        minRevWords: intOrNull("dbMinRevWords"),
+        maxRevWords: intOrNull("dbMaxRevWords"),
+        dirTendency: (document.getElementById("dbDirTendency") || {}).value || "all",
         wordContains: document.getElementById("dbFilterWord").value.trim().toUpperCase(),
       };
+    }
+
+    function resetDbFilters() {
+      document.getElementById("dbFilterSize").value = "";
+      [
+        "dbMinMaxCnt", "dbMaxMaxCnt",
+        "dbMinTargets", "dbMaxTargets",
+        "dbMinExtras", "dbMaxExtras",
+        "dbMinAvgLen", "dbMaxAvgLen",
+        "dbMinDirAvg", "dbMaxDirAvg",
+        "dbMinRevWords", "dbMaxRevWords",
+        "dbFilterWord",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+      const sel = document.getElementById("dbDirTendency");
+      if (sel) sel.value = "all";
+      runDbQuery(0);
     }
 
     async function runDbQuery(page = 0) {
@@ -2138,14 +2349,25 @@
       for (let i = 0; i < res.items.length; i++) {
         const rec = res.items[i];
         const tr = document.createElement("tr");
-        const wordsPreview = (rec.data.target_words || []).slice(0, 6).join(", ") +
-          ((rec.data.target_words || []).length > 6 ? " ..." : "");
+        const scores = (rec.data && rec.data.word_dir_scores) || {};
+        const wordsPreview = (rec.data.target_words || []).slice(0, 5).map((w) => {
+          const s = scores[w];
+          if (typeof s === "number") {
+            return `${w}(${s > 0 ? "+" + s : s})`;
+          }
+          return w;
+        }).join(", ") + ((rec.data.target_words || []).length > 5 ? " ..." : "");
+        const dirText = rec.dir_score_avg >= 0
+          ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${rec.dir_score_avg}</span>`
+          : `<span style="color:var(--amber,#f59e0b); font-weight:700;">${rec.dir_score_avg}</span>`;
         tr.innerHTML = `
           <td>#${rec.id}</td>
           <td>${rec.size}</td>
           <td>${rec.max_cell_count}</td>
           <td>${rec.target_count}</td>
           <td>${rec.extra_count}</td>
+          <td>${typeof rec.avg_len === "number" ? rec.avg_len.toFixed(2) : "-"}</td>
+          <td>${dirText} <span style="font-size:11px; color:var(--muted);">(${rec.fwd_word_count || 0}正/${rec.rev_word_count || 0}逆)</span></td>
           <td style="font-family:monospace;">${wordsPreview}</td>
           <td><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
         `;

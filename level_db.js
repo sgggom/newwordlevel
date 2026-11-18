@@ -34,6 +34,103 @@
     return `${lvl.rows}x${lvl.cols}|${boardKey}|${targetsKey}`;
   }
 
+  function findWordPathOnBoard(board, word) {
+    if (!board || !board.length || !word || word.length < 2) return null;
+    const rows = board.length;
+    const cols = board[0].length;
+    const w = String(word).toUpperCase();
+    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    const used = Array.from({ length: rows }, () => Array(cols).fill(false));
+    const path = [];
+
+    function dfs(r, c, idx) {
+      if (idx === w.length - 1) return true;
+      const nextCh = w[idx + 1];
+      for (const [dr, dc] of dirs) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !used[nr][nc]) {
+          const cell = board[nr][nc];
+          if (cell && !cell.void && Number(cell.count || 0) > 0 && String(cell.letter || "").toUpperCase() === nextCh) {
+            used[nr][nc] = true;
+            path.push([nr, nc]);
+            if (dfs(nr, nc, idx + 1)) return true;
+            path.pop();
+            used[nr][nc] = false;
+          }
+        }
+      }
+      return false;
+    }
+
+    const ch0 = w[0];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = board[r][c];
+        if (cell && !cell.void && Number(cell.count || 0) > 0 && String(cell.letter || "").toUpperCase() === ch0) {
+          used[r][c] = true;
+          path.push([r, c]);
+          if (dfs(r, c, 0)) return path.map(([pr, pc]) => [pr, pc]);
+          path.pop();
+          used[r][c] = false;
+        }
+      }
+    }
+    return null;
+  }
+
+  function scorePathDirection(path) {
+    if (!path || path.length < 2) return 0;
+    let total = 0;
+    for (let k = 0; k < path.length - 1; k++) {
+      const dr = path[k + 1][0] - path[k][0];
+      const dc = path[k + 1][1] - path[k][1];
+      const stepScore = dr + dc; // right(+1), down(+1), left(-1), up(-1)
+      total += (k === 0 ? 2 : 1) * stepScore;
+    }
+    return total;
+  }
+
+  function computeLevelMetrics(lvl) {
+    const targets = (lvl.target_words || []).map((w) => String(w).toUpperCase());
+    const initPaths = lvl.initial_word_paths || {};
+    const selPaths = lvl.selected_candidate_paths || {};
+    const tdMap = {};
+    if (lvl.solver_report && Array.isArray(lvl.solver_report.target_details)) {
+      for (const td of lvl.solver_report.target_details) {
+        if (td && td.word && td.sample_paths && td.sample_paths.length) {
+          tdMap[String(td.word).toUpperCase()] = td.sample_paths[0];
+        }
+      }
+    }
+
+    let charSum = 0;
+    let dirTotal = 0;
+    let fwdCount = 0;
+    let revCount = 0;
+    const wordDirScores = {};
+
+    for (const w of targets) {
+      charSum += w.length;
+      const p = initPaths[w] || selPaths[w] || tdMap[w] || findWordPathOnBoard(lvl.board, w);
+      const score = p ? scorePathDirection(p) : 0;
+      wordDirScores[w] = score;
+      dirTotal += score;
+      if (score > 0) fwdCount++;
+      else if (score < 0) revCount++;
+    }
+
+    const n = targets.length;
+    return {
+      avg_len: n ? Math.round((charSum / n) * 100) / 100 : 0,
+      dir_score_total: dirTotal,
+      dir_score_avg: n ? Math.round((dirTotal / n) * 100) / 100 : 0,
+      fwd_word_count: fwdCount,
+      rev_word_count: revCount,
+      word_dir_scores: wordDirScores,
+    };
+  }
+
   function slimLevel(lvl) {
     const rows = Number(lvl.rows || 0);
     const cols = Number(lvl.cols || 0);
@@ -51,6 +148,7 @@
     const extras = (lvl.extra_words || []).map((ex) =>
       typeof ex === "string" ? ex.toUpperCase() : String(ex.word || "").toUpperCase()
     ).filter(Boolean);
+    const metrics = computeLevelMetrics(lvl);
 
     return {
       sig: computeSignature(lvl),
@@ -60,6 +158,11 @@
       max_cell_count: maxCell,
       target_count: targets.length,
       extra_count: extras.length,
+      avg_len: metrics.avg_len,
+      dir_score_total: metrics.dir_score_total,
+      dir_score_avg: metrics.dir_score_avg,
+      fwd_word_count: metrics.fwd_word_count,
+      rev_word_count: metrics.rev_word_count,
       data: {
         level_num: Number(lvl.level_num || 2),
         rows,
@@ -69,6 +172,7 @@
         board: slimBoard,
         target_words: targets,
         extra_words: extras,
+        word_dir_scores: metrics.word_dir_scores,
       },
     };
   }
@@ -121,7 +225,26 @@
     });
   }
 
+  function ensureMetrics(rec) {
+    if (
+      rec.avg_len == null ||
+      rec.dir_score_avg == null ||
+      rec.rev_word_count == null ||
+      !rec.data.word_dir_scores
+    ) {
+      const m = computeLevelMetrics(rec.data);
+      rec.avg_len = m.avg_len;
+      rec.dir_score_total = m.dir_score_total;
+      rec.dir_score_avg = m.dir_score_avg;
+      rec.fwd_word_count = m.fwd_word_count;
+      rec.rev_word_count = m.rev_word_count;
+      rec.data.word_dir_scores = m.word_dir_scores;
+    }
+    return rec;
+  }
+
   function matchesFilter(rec, f) {
+    ensureMetrics(rec);
     if (f.size && rec.size !== f.size) return false;
     if (f.minMaxCount != null && rec.max_cell_count < f.minMaxCount) return false;
     if (f.maxMaxCount != null && rec.max_cell_count > f.maxMaxCount) return false;
@@ -129,6 +252,18 @@
     if (f.maxTargets != null && rec.target_count > f.maxTargets) return false;
     if (f.minExtras != null && rec.extra_count < f.minExtras) return false;
     if (f.maxExtras != null && rec.extra_count > f.maxExtras) return false;
+    if (f.minAvgLen != null && rec.avg_len < f.minAvgLen) return false;
+    if (f.maxAvgLen != null && rec.avg_len > f.maxAvgLen) return false;
+    if (f.minDirAvg != null && rec.dir_score_avg < f.minDirAvg) return false;
+    if (f.maxDirAvg != null && rec.dir_score_avg > f.maxDirAvg) return false;
+    if (f.minRevWords != null && rec.rev_word_count < f.minRevWords) return false;
+    if (f.maxRevWords != null && rec.rev_word_count > f.maxRevWords) return false;
+    if (f.dirTendency && f.dirTendency !== "all") {
+      if (f.dirTendency === "forward" && !(rec.dir_score_avg > 0)) return false;
+      if (f.dirTendency === "reverse" && !(rec.dir_score_avg < 0)) return false;
+      if (f.dirTendency === "all_forward" && rec.rev_word_count !== 0) return false;
+      if (f.dirTendency === "has_reverse" && !(rec.rev_word_count > 0)) return false;
+    }
     if (f.wordContains) {
       const targetUpper = f.wordContains;
       if (!rec.data.target_words.some((w) => w.includes(targetUpper))) return false;
@@ -237,5 +372,7 @@
     collectAllMatching,
     importText,
     computeSignature,
+    computeLevelMetrics,
+    scorePathDirection,
   };
 })();
