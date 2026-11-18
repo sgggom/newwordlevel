@@ -825,7 +825,7 @@
   </section>
 
   <!-- Local IndexedDB Level Database View -->
-  <section id="dbView" class="stats-container hidden">
+  <section id="dbView" class="stats-container hidden" style="max-width:none; padding:20px 28px;">
     <div class="stats-toolbar">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <strong style="font-size:15px;">🗄️ 本地关卡数据库（IndexedDB · 零下载原生内置）</strong>
@@ -944,7 +944,8 @@
               <th>平均词长</th>
               <th>正/逆向分 (正/逆词)</th>
               <th>路径均分</th>
-              <th>目标词预览 (含方向/路径分)</th>
+              <th>目标词（完整）</th>
+              <th>额外词（完整）</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -2388,14 +2389,15 @@
         const tr = document.createElement("tr");
         const scores = (rec.data && rec.data.word_dir_scores) || {};
         const pScores = (rec.data && rec.data.word_path_scores) || {};
-        const wordsPreview = (rec.data.target_words || []).slice(0, 5).map((w) => {
+        const targetWordsFull = (rec.data.target_words || []).map((w) => {
           const s = scores[w];
           const ps = pScores[w];
           const parts = [];
           if (typeof s === "number") parts.push(s > 0 ? "+" + s : String(s));
           if (typeof ps === "number") parts.push("路" + ps);
           return parts.length ? `${w}(${parts.join("/")})` : w;
-        }).join(", ") + ((rec.data.target_words || []).length > 5 ? " ..." : "");
+        }).join(", ");
+        const extraWordsFull = (rec.data.extra_words || []).join(", ") || "-";
         const dirText = rec.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${rec.dir_score_avg}</span>`
           : `<span style="color:var(--amber,#f59e0b); font-weight:700;">${rec.dir_score_avg}</span>`;
@@ -2408,8 +2410,9 @@
           <td>${typeof rec.avg_len === "number" ? rec.avg_len.toFixed(2) : "-"}</td>
           <td>${dirText} <span style="font-size:11px; color:var(--muted);">(${rec.fwd_word_count || 0}正/${rec.rev_word_count || 0}逆)</span></td>
           <td><strong>${typeof rec.path_score_avg === "number" ? rec.path_score_avg.toFixed(2) : "-"}</strong></td>
-          <td style="font-family:monospace;">${wordsPreview}</td>
-          <td><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
+          <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:220px;">${targetWordsFull}</td>
+          <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:200px; color:var(--muted);">${extraWordsFull}</td>
+          <td style="white-space:nowrap;"><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
         `;
         tbody.appendChild(tr);
       }
