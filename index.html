@@ -2377,20 +2377,13 @@
       return `<div style="display:inline-grid;grid-template-columns:repeat(${cols},20px);gap:2px;vertical-align:middle;">${cellsHtml}</div>`;
     }
 
-    function renderMiniWordShapeHtml(word, path, colorCls, colorHex) {
-      if (!path || !path.length) {
+    function renderMiniWordShapeHtml(word, board, path, colorCls, colorHex) {
+      if (!board || !board.length || !path || !path.length) {
         return `<span class="pill ${colorCls}" style="margin:2px; font-family:monospace;">${word}</span>`;
       }
-      let minR = Infinity, maxR = -Infinity, minC = Infinity, maxC = -Infinity;
-      for (const [r, c] of path) {
-        if (r < minR) minR = r;
-        if (r > maxR) maxR = r;
-        if (c < minC) minC = c;
-        if (c > maxC) maxC = c;
-      }
-      const rows = maxR - minR + 1;
-      const cols = maxC - minC + 1;
-      const cell = 16;
+      const rows = board.length;
+      const cols = board[0].length || 1;
+      const cell = 14;
       const gap = 2;
       const step = cell + gap;
       const totalW = cols * cell + (cols - 1) * gap;
@@ -2398,23 +2391,26 @@
 
       const posMap = new Map();
       path.forEach(([r, c], idx) => {
-        posMap.set(`${r - minR},${c - minC}`, { ch: word[idx] || "", idx });
+        posMap.set(`${r},${c}`, { ch: word[idx] || "", idx });
       });
 
-      const pts = path.map(([r, c]) => `${(c - minC) * step + cell / 2},${(r - minR) * step + cell / 2}`).join(" ");
-      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:4px;top:3px;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="2" stroke-opacity="0.55" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const pts = path.map(([r, c]) => `${c * step + cell / 2},${r * step + cell / 2}`).join(" ");
+      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:4px;top:3px;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="1.8" stroke-opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
       let cellsHtml = "";
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
+          const isVoid = Boolean(board[r][c] && board[r][c].void);
           const info = posMap.get(`${r},${c}`);
-          if (!info) {
+          if (isVoid) {
             cellsHtml += `<span style="width:${cell}px;height:${cell}px;display:inline-block;"></span>`;
-          } else {
+          } else if (info) {
             const isStart = info.idx === 0;
-            const bg = isStart ? `${colorHex}44` : `${colorHex}1a`;
-            const bd = isStart ? `1px solid ${colorHex}` : `1px solid ${colorHex}55`;
-            cellsHtml += `<span style="position:relative;z-index:1;width:${cell}px;height:${cell}px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;background:${bg};border:${bd};font-size:10px;font-weight:800;font-family:monospace;color:${colorHex};line-height:1;">${info.ch}</span>`;
+            const bg = isStart ? `${colorHex}44` : `${colorHex}1e`;
+            const bd = isStart ? `1px solid ${colorHex}` : `1px solid ${colorHex}66`;
+            cellsHtml += `<span style="position:relative;z-index:1;width:${cell}px;height:${cell}px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;background:${bg};border:${bd};font-size:9px;font-weight:800;font-family:monospace;color:${colorHex};line-height:1;">${info.ch}</span>`;
+          } else {
+            cellsHtml += `<span style="position:relative;z-index:1;width:${cell}px;height:${cell}px;display:inline-block;border-radius:3px;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.16);"></span>`;
           }
         }
       }
@@ -2458,7 +2454,7 @@
           const wPath = window.LevelDB && window.LevelDB.findWordPathOnBoard
             ? window.LevelDB.findWordPathOnBoard(rec.data.board, w)
             : null;
-          return renderMiniWordShapeHtml(w, wPath, cls, colorHex[cls] || "#38bdf8");
+          return renderMiniWordShapeHtml(w, rec.data.board, wPath, cls, colorHex[cls] || "#38bdf8");
         }).join("");
         const extraWordsFull = (rec.data.extra_words || []).join(", ") || "-";
         const dirText = rec.dir_score_avg >= 0
