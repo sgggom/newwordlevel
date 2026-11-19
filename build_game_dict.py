@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 WORKSPACE = Path(__file__).resolve().parent
-CORE_CSV = WORKSPACE / "BNC_COCA_常用英语词表_长度3-8_英美拼写版.csv"
+CORE_CSV = WORKSPACE / "四游戏词库_最新格式版.csv"
 ECDICT_CSV = Path("/tmp/dict_cache/ecdict.csv")
 KAIKKI_SLIM = Path("/tmp/dict_cache/kaikki_slim.jsonl")
 OUTPUT_JSON = WORKSPACE / "game_dictionary.json"
@@ -128,50 +128,102 @@ def load_ecdict() -> tuple[dict[str, dict[str, Any]], set[str]]:
     return by_word, cap_words
 
 
+def band_sort_key(band: str) -> tuple[int, int, str]:
+    """Order bands by frequency rank (1k..9k first, then 档位1..5)."""
+    b = (band or "").strip()
+    if b.endswith("k") and b[:-1].isdigit():
+        return (0, int(b[:-1]), b)
+    if b.startswith("档位") and b[2:].isdigit():
+        return (1, int(b[2:]), b)
+    return (2, 999, b)
+
+
 def build_dictionary() -> dict[str, Any]:
-    """Construct layered dictionary dictionary and write to OUTPUT_JSON."""
+    """Construct layered dictionary and write to OUTPUT_JSON."""
     ecdict_map, cap_words = load_ecdict()
 
     core_words: list[dict[str, Any]] = []
     core_set: set[str] = set()
+    core_tier_map: dict[str, int] = {}
+    tutorial_2: dict[str, dict[str, Any]] = {}
     removed_core = 0
     with CORE_CSV.open("r", encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
             word = row["单词 (Word)"].strip().lower()
-            if not word or not is_clean_word(word):
+            if not word:
+                continue
+            length = int(row.get("字母长度") or len(word))
+            role = (row.get("词条定位") or "目标词/候选词").strip()
+            rarity_tier = max(1, min(5, int(row.get("生僻档位") or 1)))
+            zh_clean = clean_text(row.get("中文注释", ""), max_lines=2)
+
+            if role == "引导词库" or length == 2:
+                if not word.isalpha() or len(word) != 2:
+                    continue
+                ec = ecdict_map.get(word, {})
+                ipa = (row.get("音标 (IPA)") or "").strip()
+                if not ipa and ec.get("phonetic"):
+                    ipa = f"/{ec['phonetic']}/"
+                tutorial_2[word] = {
+                    "word": word,
+                    "ipa": ipa,
+                    "zh": zh_clean or clean_text(ec.get("translation", ""), max_lines=1),
+                    "rarity_tier": rarity_tier,
+                }
+                continue
+
+            if not is_clean_word(word):
                 removed_core += 1
                 continue
-            zh_clean = clean_text(row["中文注释"], max_lines=2)
             if "abbr." in zh_clean.lower() and not POS_LINE_RE.search(zh_clean):
                 removed_core += 1
                 continue
-            role = (row.get("词条定位") or "目标词/候选词").strip()
             extra_only = role == "仅额外词"
+            whitelist = (row.get("是否白名单") or "").strip() == "是"
+            csv_id = int(row["序号"])
+            band = row["词频层级 (Band)"].strip()
             core_set.add(word)
+            core_tier_map[word] = rarity_tier
             core_words.append(
                 {
-                    "id": int(row["序号"]),
+                    "id": csv_id,
+                    "csv_id": csv_id,
                     "word": word,
-                    "length": int(row["字母长度"]),
-                    "band": row["词频层级 (Band)"].strip(),
+                    "length": length,
+                    "band": band,
                     "tier": row["分类 (Tier)"].strip(),
                     "spelling": row["拼写归属"].strip(),
                     "ipa": row["音标 (IPA)"].strip(),
                     "zh": zh_clean,
                     "role": role,
                     "extra_only": extra_only,
+                    "rarity_tier": rarity_tier,
+                    "whitelist": whitelist,
                 }
             )
 
-    # 1. Tutorial 2-letter words
-    tutorial_2: dict[str, dict[str, str]] = {}
+    # Sort by target eligibility, rarity_tier, band frequency, then alphabetically; reassign sequential id
+    core_words.sort(
+        key=lambda it: (
+            1 if it["extra_only"] else 0,
+            it["rarity_tier"],
+            band_sort_key(it["band"]),
+            it["word"],
+        )
+    )
+    for rank_idx, it in enumerate(core_words, start=1):
+        it["id"] = rank_idx
+
+    # 1. Tutorial 2-letter words fallback
     for w in TUTORIAL_2_LETTERS:
-        ec = ecdict_map.get(w, {})
-        tutorial_2[w] = {
-            "word": w,
-            "ipa": f"/{ec['phonetic']}/" if ec.get("phonetic") else "",
-            "zh": clean_text(ec.get("translation", ""), max_lines=1),
-        }
+        if w not in tutorial_2:
+            ec = ecdict_map.get(w, {})
+            tutorial_2[w] = {
+                "word": w,
+                "ipa": f"/{ec['phonetic']}/" if ec.get("phonetic") else "",
+                "zh": clean_text(ec.get("translation", ""), max_lines=1),
+                "rarity_tier": 1,
+            }
 
     # 2. Inflections from core_words' exchange fields
     inflections: dict[str, dict[str, Any]] = {}
@@ -190,6 +242,7 @@ def build_dictionary() -> dict[str, Any]:
                 "lemma": lemma,
                 "tags": [],
                 "zh": clean_text(ec_form.get("translation", ""), max_lines=1),
+                "rarity_tier": min(5, core_tier_map.get(lemma, 3) + 1),
             }
         existing_tags = inflections[form]["tags"]
         for code in tag_codes:
@@ -280,6 +333,7 @@ def build_dictionary() -> dict[str, Any]:
             "bnc": bnc,
             "frq": frq,
             "zh": zh,
+            "rarity_tier": 5,
         }
 
     # Format tag summary on inflections
@@ -295,7 +349,7 @@ def build_dictionary() -> dict[str, Any]:
             "core_count": len(core_words),
             "target_eligible_count": sum(1 for item in core_words if not item["extra_only"]),
             "extra_only_core_count": sum(1 for item in core_words if item["extra_only"]),
-            "default_target_max_rank": 6000,
+            "default_target_max_rank": 7000,
             "tutorial_2letter_count": len(tutorial_2),
             "inflection_count": len(inflections),
             "obscure_count": len(obscure_words),

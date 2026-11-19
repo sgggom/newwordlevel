@@ -561,7 +561,7 @@
       </div>
       <div class="field">
         <label>目标词词频上限</label>
-        <input type="number" id="cfgMaxRank" value="6000" min="200" max="7300" step="100" />
+        <input type="number" id="cfgMaxRank" value="6000" min="200" max="8500" step="100" />
       </div>
       <div class="field">
         <label>单格最大次数 / 死局标准</label>
@@ -745,7 +745,7 @@
         <div id="lenDistBox"></div>
       </div>
       <div class="card">
-        <div class="section-head"><span>目标词生僻度分布 (0~100分，越低越常用)</span></div>
+        <div class="section-head"><span>目标词生僻档位分布 (1档最常用 ~ 5档最生僻)</span></div>
         <div id="rarityDistBox"></div>
       </div>
     </div>
@@ -784,11 +784,25 @@
             <input type="number" id="poolMaxDirAvg" placeholder="10" step="0.5" style="width:62px;" />
           </div>
         </div>
+        <div class="field" style="min-width:140px;" title="max(0, 长度-3) * (生僻档位-1)">
+          <label>平均生僻分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinRarityAvg" placeholder="0" step="0.5" min="0" style="width:62px;" />
+            <input type="number" id="poolMaxRarityAvg" placeholder="30" step="0.5" min="0" style="width:62px;" />
+          </div>
+        </div>
         <div class="field" style="min-width:140px;" title="起步(右/下0,左/上1) + 拐弯(+1) + 折返(+1)">
           <label>平均路径分 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
             <input type="number" id="poolMinPathAvg" placeholder="0" step="0.5" min="0" style="width:62px;" />
             <input type="number" id="poolMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:62px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:140px;" title="单词难度分 = 生僻分 + 路径分">
+          <label>平均难度分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="poolMinDiffAvg" placeholder="0" step="0.5" min="0" style="width:62px;" />
+            <input type="number" id="poolMaxDiffAvg" placeholder="30" step="0.5" min="0" style="width:62px;" />
           </div>
         </div>
         <div class="field" style="min-width:140px;">
@@ -817,9 +831,10 @@
               <th>额外词数</th>
               <th>平均词长</th>
               <th>正/逆向均分 (正/逆词)</th>
+              <th>生僻均分</th>
               <th>路径均分</th>
-              <th>目标生僻度</th>
-              <th>额外生僻度</th>
+              <th>难度均分 (最高)</th>
+              <th>额外生僻均分</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -895,11 +910,25 @@
             <input type="number" id="dbMaxDirAvg" placeholder="10" step="0.5" style="width:64px;" />
           </div>
         </div>
+        <div class="field" style="min-width:145px;" title="max(0, 长度-3) * (生僻档位-1)">
+          <label>平均生僻分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinRarityAvg" placeholder="0" step="0.5" min="0" style="width:64px;" />
+            <input type="number" id="dbMaxRarityAvg" placeholder="30" step="0.5" min="0" style="width:64px;" />
+          </div>
+        </div>
         <div class="field" style="min-width:145px;" title="起步(右/下0,左/上1) + 拐弯(+1) + 折返(+1)">
           <label>平均路径分 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
             <input type="number" id="dbMinPathAvg" placeholder="0" step="0.5" min="0" style="width:64px;" />
             <input type="number" id="dbMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:64px;" />
+          </div>
+        </div>
+        <div class="field" style="min-width:145px;" title="单词难度分 = 生僻分 + 路径分">
+          <label>平均难度分 (Min ~ Max)</label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dbMinDiffAvg" placeholder="0" step="0.5" min="0" style="width:64px;" />
+            <input type="number" id="dbMaxDiffAvg" placeholder="30" step="0.5" min="0" style="width:64px;" />
           </div>
         </div>
         <div class="field" style="min-width:130px;">
@@ -931,7 +960,7 @@
 
     <div class="card">
       <div class="section-head">
-        <span>查询结果（每页 50 条 · 方向分规则：右/下 +1，左/上 -1，首步双倍）</span>
+        <span>查询结果（每页 50 条 · 难度分 = 生僻分[max(0,长度-3)×(档位-1)] + 路径分[起步+拐弯+折返]）</span>
         <div style="display:flex; gap:6px; align-items:center;">
           <button class="btn btn-sm" id="dbPrevPageBtn" onclick="changeDbPage(-1)">上一页</button>
           <span id="dbPageInfo" style="font-size:12px; color:var(--muted);">第 1 页</span>
@@ -950,7 +979,9 @@
               <th>额外词数</th>
               <th>平均词长</th>
               <th>正/逆向分 (正/逆词)</th>
+              <th>生僻均分</th>
               <th>路径均分</th>
+              <th>难度均分 (最高)</th>
               <th>目标词（绿0 / 蓝1 / 黄2 / 红&gt;2）</th>
               <th>额外词（完整）</th>
               <th>操作</th>
@@ -1500,14 +1531,26 @@
         maxExtras: fNum("poolMaxExtras"),
         minDirAvg: fNum("poolMinDirAvg"),
         maxDirAvg: fNum("poolMaxDirAvg"),
+        minRarityAvg: fNum("poolMinRarityAvg"),
+        maxRarityAvg: fNum("poolMaxRarityAvg"),
         minPathAvg: fNum("poolMinPathAvg"),
         maxPathAvg: fNum("poolMaxPathAvg"),
+        minDiffAvg: fNum("poolMinDiffAvg"),
+        maxDiffAvg: fNum("poolMaxDiffAvg"),
         dirTendency: (document.getElementById("poolDirTendency") || {}).value || "all",
       };
     }
 
     function resetPoolFilters() {
-      ["poolMinAvgLen", "poolMaxAvgLen", "poolMinTargets", "poolMaxTargets", "poolMinExtras", "poolMaxExtras", "poolMinDirAvg", "poolMaxDirAvg", "poolMinPathAvg", "poolMaxPathAvg"].forEach((id) => {
+      [
+        "poolMinAvgLen", "poolMaxAvgLen",
+        "poolMinTargets", "poolMaxTargets",
+        "poolMinExtras", "poolMaxExtras",
+        "poolMinDirAvg", "poolMaxDirAvg",
+        "poolMinRarityAvg", "poolMaxRarityAvg",
+        "poolMinPathAvg", "poolMaxPathAvg",
+        "poolMinDiffAvg", "poolMaxDiffAvg",
+      ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
       });
@@ -1527,8 +1570,12 @@
       if (f.maxExtras != null && ec > f.maxExtras) return false;
       if (f.minDirAvg != null && m.dir_score_avg < f.minDirAvg) return false;
       if (f.maxDirAvg != null && m.dir_score_avg > f.maxDirAvg) return false;
+      if (f.minRarityAvg != null && m.rarity_score_avg < f.minRarityAvg) return false;
+      if (f.maxRarityAvg != null && m.rarity_score_avg > f.maxRarityAvg) return false;
       if (f.minPathAvg != null && m.path_score_avg < f.minPathAvg) return false;
       if (f.maxPathAvg != null && m.path_score_avg > f.maxPathAvg) return false;
+      if (f.minDiffAvg != null && m.diff_score_avg < f.minDiffAvg) return false;
+      if (f.maxDiffAvg != null && m.diff_score_avg > f.maxDiffAvg) return false;
       if (f.dirTendency === "forward" && !(m.dir_score_avg > 0)) return false;
       if (f.dirTendency === "reverse" && !(m.dir_score_avg < 0)) return false;
       if (f.dirTendency === "all_forward" && m.rev_word_count !== 0) return false;
@@ -1539,7 +1586,9 @@
     function exportFilteredPool() {
       const pf = collectPoolFilters();
       const matched = levels.filter((lvl) => {
-        const m = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : { avg_len: 0, dir_score_avg: 0, rev_word_count: 0 };
+        const m = window.LevelDB
+          ? window.LevelDB.computeLevelMetrics(lvl)
+          : { avg_len: 0, dir_score_avg: 0, rarity_score_avg: 0, path_score_avg: 0, diff_score_avg: 0, rev_word_count: 0 };
         return matchesPoolFilter(lvl, m, pf);
       });
       if (!matched.length) {
@@ -1570,11 +1619,17 @@
       let sumTargets = 0, minT = Infinity, maxT = 0;
       let sumExtras = 0, minE = Infinity, maxE = 0;
       let targetChars = 0, extraChars = 0;
-      let targetRaritySum = 0, targetRarityCnt = 0;
       let extraRaritySum = 0, extraRarityCnt = 0;
-      let dirAvgSum = 0, pathAvgSum = 0;
+      let dirAvgSum = 0, rarityAvgSum = 0, pathAvgSum = 0, diffAvgSum = 0, diffMaxSum = 0;
       const lenCounts = {};
-      const rarBuckets = { "0-25 极常用": 0, "25-50 常见": 0, "50-75 进阶": 0, "75-100 生僻": 0 };
+      const rarBuckets = {
+        "1档 极高频": 0,
+        "2档 常见": 0,
+        "3档 进阶": 0,
+        "4档 偏生僻": 0,
+        "5档 高生僻": 0,
+      };
+      const tierBucketKeys = ["1档 极高频", "2档 常见", "3档 进阶", "4档 偏生僻", "5档 高生僻"];
       const pf = collectPoolFilters();
       let matchedPoolCount = 0;
 
@@ -1587,34 +1642,50 @@
         const ec = exs.length;
         const m = window.LevelDB
           ? window.LevelDB.computeLevelMetrics(lvl)
-          : { avg_len: tc ? (lvl.target_words || []).reduce((a, w) => a + w.length, 0) / tc : 0, dir_score_avg: 0, path_score_avg: 0, fwd_word_count: 0, rev_word_count: 0 };
+          : {
+              avg_len: tc ? (lvl.target_words || []).reduce((a, w) => a + w.length, 0) / tc : 0,
+              dir_score_avg: 0,
+              rarity_score_avg: 0,
+              path_score_avg: 0,
+              diff_score_avg: 0,
+              diff_score_max: 0,
+              fwd_word_count: 0,
+              rev_word_count: 0,
+              word_rarity_tiers: {},
+            };
 
         dirAvgSum += m.dir_score_avg;
+        rarityAvgSum += m.rarity_score_avg || 0;
         pathAvgSum += m.path_score_avg || 0;
+        diffAvgSum += m.diff_score_avg || 0;
+        diffMaxSum += m.diff_score_max || 0;
         sumTargets += tc; minT = Math.min(minT, tc); maxT = Math.max(maxT, tc);
         sumExtras += ec; minE = Math.min(minE, ec); maxE = Math.max(maxE, ec);
 
-        let lvlTChars = 0, lvlTRar = 0, lvlTRarN = 0;
-        (lvl.target_words || []).forEach(w => {
-          lvlTChars += w.length;
-          targetChars += w.length;
-          lenCounts[w.length] = (lenCounts[w.length] || 0) + 1;
+        const tdByWord = {};
+        tds.forEach((td) => {
+          if (td && td.word) tdByWord[String(td.word).toUpperCase()] = td;
         });
-        tds.forEach(td => {
-          const r = typeof td.rarity === "number" ? td.rarity : 50;
-          lvlTRar += r; lvlTRarN++;
-          targetRaritySum += r; targetRarityCnt++;
-          if (r < 25) rarBuckets["0-25 极常用"]++;
-          else if (r < 50) rarBuckets["25-50 常见"]++;
-          else if (r < 75) rarBuckets["50-75 进阶"]++;
-          else rarBuckets["75-100 生僻"]++;
+
+        (lvl.target_words || []).forEach(w => {
+          const wUp = String(w).toUpperCase();
+          targetChars += wUp.length;
+          lenCounts[wUp.length] = (lenCounts[wUp.length] || 0) + 1;
+          const td = tdByWord[wUp];
+          const rawTier = (td && td.rarity_tier != null)
+            ? td.rarity_tier
+            : ((m.word_rarity_tiers && m.word_rarity_tiers[wUp]) || (window.LevelDB ? window.LevelDB.getWordRarityTier(wUp) : 1));
+          const tierIdx = Math.max(1, Math.min(5, Math.round(Number(rawTier) || 1))) - 1;
+          rarBuckets[tierBucketKeys[tierIdx]]++;
         });
 
         let lvlERar = 0, lvlERarN = 0;
         exs.forEach(ex => {
           const ew = typeof ex === "string" ? ex : ex.word;
           extraChars += ew.length;
-          const r = (typeof ex === "object" && typeof ex.rarity === "number") ? ex.rarity : 60;
+          const r = (typeof ex === "object" && typeof ex.rarity === "number" && typeof ex.rarity_tier === "number")
+            ? ex.rarity
+            : (window.LevelDB ? window.LevelDB.scoreWordRarity(ew, typeof ex === "object" ? ex.rarity_tier : undefined) : 0);
           lvlERar += r; lvlERarN++;
           extraRaritySum += r; extraRarityCnt++;
         });
@@ -1623,8 +1694,8 @@
         matchedPoolCount++;
 
         const avgLenLvl = tc ? m.avg_len.toFixed(2) : "-";
-        const avgTRarLvl = lvlTRarN ? (lvlTRar / lvlTRarN).toFixed(1) : "-";
-        const avgERarLvl = lvlERarN ? (lvlERar / lvlERarN).toFixed(1) : "-";
+        const avgTRarLvl = typeof m.rarity_score_avg === "number" ? m.rarity_score_avg.toFixed(2) : "-";
+        const avgERarLvl = lvlERarN ? (lvlERar / lvlERarN).toFixed(2) : "-";
         const dirBadge = m.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${m.dir_score_avg}</span>`
           : `<span style="color:var(--amber,#f59e0b); font-weight:700;">${m.dir_score_avg}</span>`;
@@ -1642,8 +1713,9 @@
           <td>${ec}</td>
           <td>${avgLenLvl}</td>
           <td>${dirBadge} <span style="font-size:11px; color:var(--muted);">(${m.fwd_word_count}正/${m.rev_word_count}逆)</span></td>
-          <td><strong>${typeof m.path_score_avg === "number" ? m.path_score_avg : "-"}</strong></td>
           <td>${avgTRarLvl}</td>
+          <td><strong>${typeof m.path_score_avg === "number" ? m.path_score_avg.toFixed(2) : "-"}</strong></td>
+          <td><strong>${typeof m.diff_score_avg === "number" ? m.diff_score_avg.toFixed(2) : "-"}</strong> <span style="font-size:11px; color:var(--muted);">(高${m.diff_score_max ?? "-"})</span></td>
           <td>${avgERarLvl}</td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-sm" onclick="jumpToPoolLevel(${idx})">查看</button>
@@ -1661,12 +1733,12 @@
       const avgE = (sumExtras / n).toFixed(2);
       const avgTLen = sumTargets ? (targetChars / sumTargets).toFixed(2) : "0";
       const avgELen = sumExtras ? (extraChars / sumExtras).toFixed(2) : "0";
-      const avgTRar = targetRarityCnt ? (targetRaritySum / targetRarityCnt).toFixed(1) : "0";
-      const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(1) : "0";
+      const avgRarityScore = (rarityAvgSum / n).toFixed(2);
+      const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(2) : "0.00";
       const avgDir = (dirAvgSum / n).toFixed(2);
       const avgPathScore = (pathAvgSum / n).toFixed(2);
-      const rarNum = parseFloat(avgTRar);
-      const rarGrade = rarNum < 30 ? "大众高频" : (rarNum < 55 ? "中等进阶" : "偏生僻");
+      const avgDiffScore = (diffAvgSum / n).toFixed(2);
+      const avgDiffMax = (diffMaxSum / n).toFixed(2);
 
       kpiGrid.innerHTML = `
         <div class="kpi-card">
@@ -1685,19 +1757,24 @@
           <div class="kpi-sub">额外词平均词长：${avgELen} 字母</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">平均单词生僻度（目标词）</div>
-          <div class="kpi-val">${avgTRar} <span style="font-size:13px; font-weight:700; color:var(--accent);">${rarGrade}</span></div>
-          <div class="kpi-sub">额外词平均生僻度：${avgERar} / 100</div>
-        </div>
-        <div class="kpi-card">
           <div class="kpi-label">正/逆向方向均分</div>
           <div class="kpi-val">${Number(avgDir) >= 0 ? "+" + avgDir : avgDir}</div>
           <div class="kpi-sub">右/下+1，左/上-1，首步双倍</div>
         </div>
         <div class="kpi-card">
+          <div class="kpi-label">平均生僻分（目标词）</div>
+          <div class="kpi-val">${avgRarityScore}</div>
+          <div class="kpi-sub">max(0, 长度-3)×(档位-1) · 额外词均分 ${avgERar}</div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-label">平均路径分</div>
           <div class="kpi-val">${avgPathScore}</div>
           <div class="kpi-sub">起步(右/下0,左/上1)+拐弯+折返</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">平均单词难度分</div>
+          <div class="kpi-val">${avgDiffScore}</div>
+          <div class="kpi-sub">生僻分+路径分 · 单关最高均值 ${avgDiffMax}</div>
         </div>
       `;
 
@@ -2078,7 +2155,7 @@
       }
       const lvlMetrics = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : null;
       const dirSummary = lvlMetrics
-        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg} · 路径分 ${lvlMetrics.path_score_avg}`
+        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg} · 生僻分 ${lvlMetrics.rarity_score_avg} · 路径分 ${lvlMetrics.path_score_avg} · 难度分 ${lvlMetrics.diff_score_avg}`
         : "";
       document.getElementById("solverStats").textContent =
         `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×${dirSummary}`;
@@ -2116,10 +2193,19 @@
         const originTag = isInitial
           ? `<span class="pill pill-blue">初始</span>`
           : `<span class="pill pill-green">候选</span>`;
-        const wPathScore = (!masked && lvlMetrics && lvlMetrics.word_path_scores)
+        const wPathScore = (!masked && lvlMetrics && lvlMetrics.word_path_scores && lvlMetrics.word_path_scores[td.word] != null)
           ? lvlMetrics.word_path_scores[td.word]
-          : null;
-        const pathColorCls = (wPathScore !== null && wPathScore !== undefined)
+          : (td.path_score != null ? td.path_score : null);
+        const wTier = (!masked && td.rarity_tier != null)
+          ? td.rarity_tier
+          : ((!masked && lvlMetrics && lvlMetrics.word_rarity_tiers) ? lvlMetrics.word_rarity_tiers[td.word] : null);
+        const wRarity = (!masked && td.rarity_tier != null && td.rarity != null)
+          ? td.rarity
+          : ((!masked && lvlMetrics && lvlMetrics.word_rarity_scores) ? lvlMetrics.word_rarity_scores[td.word] : null);
+        const wDiffScore = (wRarity != null && wPathScore != null)
+          ? (wRarity + wPathScore)
+          : (td.diff_score != null ? td.diff_score : null);
+        const pathColorCls = (!masked && wPathScore !== null && wPathScore !== undefined)
           ? (wPathScore <= 0 ? "pill-green" : (wPathScore === 1 ? "pill-blue" : (wPathScore === 2 ? "pill-amber" : "pill-red")))
           : "";
         const pTag = (!masked && td.path_count > 1) ? `<span class="pill pill-amber">${td.path_count}路</span>` : "";
@@ -2127,9 +2213,12 @@
           ? `<button class="btn btn-sm" style="padding:1px 5px; font-size:10px;" title="移回候选/额外词（格次数-1）" onclick="event.stopPropagation(); toggleCandidate('${td.word}')">✕</button>`
           : "";
         const displayWord = masked ? `${"●".repeat(td.word.length)} (${td.word.length}字)` : `${isDone ? "✓ " : ""}${td.word}`;
+        const scoreMetaText = (wTier != null && wRarity != null && wPathScore != null)
+          ? `<span style="color:var(--accent);">档位${wTier} · 生僻${wRarity} + 路径${wPathScore} = 难度${wDiffScore}</span> · `
+          : "";
         const displayZh = masked
           ? `<span style="color:var(--muted);">找到后揭晓释义</span>`
-          : `${td.rarity != null ? `<span style="color:var(--accent);">生僻${td.rarity}</span> · ` : ""}${td.zh || td.band || ""}`;
+          : `${scoreMetaText}${td.zh || td.band || ""}`;
         card.innerHTML = `
           <div class="target-top">
             <span class="target-word ${pathColorCls ? "pill " + pathColorCls : ""}" style="${pathColorCls ? "font-size:13px; padding:1px 7px;" : ""}">${displayWord}</span>
@@ -2334,8 +2423,12 @@
         maxAvgLen: floatOrNull("dbMaxAvgLen"),
         minDirAvg: floatOrNull("dbMinDirAvg"),
         maxDirAvg: floatOrNull("dbMaxDirAvg"),
+        minRarityAvg: floatOrNull("dbMinRarityAvg"),
+        maxRarityAvg: floatOrNull("dbMaxRarityAvg"),
         minPathAvg: floatOrNull("dbMinPathAvg"),
         maxPathAvg: floatOrNull("dbMaxPathAvg"),
+        minDiffAvg: floatOrNull("dbMinDiffAvg"),
+        maxDiffAvg: floatOrNull("dbMaxDiffAvg"),
         minRevWords: intOrNull("dbMinRevWords"),
         maxRevWords: intOrNull("dbMaxRevWords"),
         dirTendency: (document.getElementById("dbDirTendency") || {}).value || "all",
@@ -2351,7 +2444,9 @@
         "dbMinExtras", "dbMaxExtras",
         "dbMinAvgLen", "dbMaxAvgLen",
         "dbMinDirAvg", "dbMaxDirAvg",
+        "dbMinRarityAvg", "dbMaxRarityAvg",
         "dbMinPathAvg", "dbMaxPathAvg",
+        "dbMinDiffAvg", "dbMaxDiffAvg",
         "dbMinRevWords", "dbMaxRevWords",
         "dbFilterWord",
       ].forEach((id) => {
@@ -2377,9 +2472,13 @@
       return `<div style="display:inline-grid;grid-template-columns:repeat(${cols},20px);gap:2px;vertical-align:middle;">${cellsHtml}</div>`;
     }
 
-    function renderMiniWordShapeHtml(word, board, path, colorCls, colorHex) {
+    function renderMiniWordShapeHtml(word, board, path, colorCls, colorHex, titleText, scoreLabel) {
+      const tip = titleText || word;
+      const labelHtml = scoreLabel
+        ? `<div style="margin-top:3px;font-size:10px;line-height:1.1;text-align:center;color:var(--muted);white-space:nowrap;font-family:system-ui,-apple-system,sans-serif;">${scoreLabel}</div>`
+        : "";
       if (!board || !board.length || !path || !path.length) {
-        return `<span class="pill ${colorCls}" style="margin:2px; font-family:monospace;">${word}</span>`;
+        return `<span title="${tip}" style="display:inline-flex;flex-direction:column;align-items:center;margin:2px;vertical-align:middle;"><span class="pill ${colorCls}" style="font-family:monospace;">${word}</span>${labelHtml}</span>`;
       }
       const rows = board.length;
       const cols = board[0].length || 1;
@@ -2395,7 +2494,7 @@
       });
 
       const pts = path.map(([r, c]) => `${c * step + cell / 2},${r * step + cell / 2}`).join(" ");
-      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:4px;top:3px;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="1.8" stroke-opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="1.8" stroke-opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
       let cellsHtml = "";
       for (let r = 0; r < rows; r++) {
@@ -2415,7 +2514,7 @@
         }
       }
 
-      return `<div title="${word}" style="position:relative;display:inline-grid;grid-template-columns:repeat(${cols},${cell}px);gap:${gap}px;padding:3px 4px;margin:2px;border-radius:6px;background:rgba(15,23,42,0.45);border:1px solid rgba(148,163,184,0.16);vertical-align:middle;">${svg}${cellsHtml}</div>`;
+      return `<div title="${tip}" style="display:inline-flex;flex-direction:column;align-items:center;padding:3px 4px;margin:2px;border-radius:6px;background:rgba(15,23,42,0.45);border:1px solid rgba(148,163,184,0.16);vertical-align:middle;"><div style="position:relative;display:grid;grid-template-columns:repeat(${cols},${cell}px);gap:${gap}px;">${svg}${cellsHtml}</div>${labelHtml}</div>`;
     }
 
     async function runDbQuery(page = 0) {
@@ -2445,16 +2544,33 @@
         const rec = res.items[i];
         const tr = document.createElement("tr");
         const pScores = (rec.data && rec.data.word_path_scores) || {};
+        const rTiers = (rec.data && rec.data.word_rarity_tiers) || {};
+        const rScores = (rec.data && rec.data.word_rarity_scores) || {};
+        const dScores = (rec.data && rec.data.word_diff_scores) || {};
+        const wPaths = (rec.data && rec.data.word_paths) || {};
         const colorHex = { "pill-green": "#4ade80", "pill-blue": "#38bdf8", "pill-amber": "#fbbf24", "pill-red": "#f87171" };
         const targetWordsFull = (rec.data.target_words || []).map((w) => {
-          const ps = pScores[w];
+          const wPath = wPaths[w] || (window.LevelDB && window.LevelDB.findWordPathOnBoard
+            ? window.LevelDB.findWordPathOnBoard(rec.data.board, w)
+            : null);
+          const ps = typeof pScores[w] === "number"
+            ? pScores[w]
+            : ((wPath && window.LevelDB && window.LevelDB.scoreWordPath) ? window.LevelDB.scoreWordPath(wPath) : null);
           const cls = typeof ps === "number"
             ? (ps <= 0 ? "pill-green" : (ps === 1 ? "pill-blue" : (ps === 2 ? "pill-amber" : "pill-red")))
             : "";
-          const wPath = window.LevelDB && window.LevelDB.findWordPathOnBoard
-            ? window.LevelDB.findWordPathOnBoard(rec.data.board, w)
-            : null;
-          return renderMiniWordShapeHtml(w, rec.data.board, wPath, cls, colorHex[cls] || "#38bdf8");
+          const tier = typeof rTiers[w] === "number"
+            ? rTiers[w]
+            : (window.LevelDB && window.LevelDB.getWordRarityTier ? window.LevelDB.getWordRarityTier(w) : 1);
+          const rScore = typeof rScores[w] === "number"
+            ? rScores[w]
+            : (window.LevelDB && window.LevelDB.scoreWordRarity ? window.LevelDB.scoreWordRarity(w, tier) : 0);
+          const pVal = ps != null ? ps : 0;
+          const hex = colorHex[cls] || "#38bdf8";
+          const dScore = typeof dScores[w] === "number" ? dScores[w] : (rScore + pVal);
+          const tip = `${w} (档位${tier} | 生僻${rScore} + 路径${pVal} = 难度${dScore})`;
+          const scoreLabel = `生${rScore}+路${pVal}=<strong style="color:${hex};">${dScore}</strong>`;
+          return renderMiniWordShapeHtml(w, rec.data.board, wPath, cls, hex, tip, scoreLabel);
         }).join("");
         const extraWordsFull = (rec.data.extra_words || []).map((ew) => {
           const wPath = window.LevelDB && window.LevelDB.findWordPathOnBoard
@@ -2466,7 +2582,14 @@
           const cls = typeof ps === "number"
             ? (ps <= 0 ? "pill-green" : (ps === 1 ? "pill-blue" : (ps === 2 ? "pill-amber" : "pill-red")))
             : "";
-          return renderMiniWordShapeHtml(ew, rec.data.board, wPath, cls, colorHex[cls] || "#38bdf8");
+          const hex = colorHex[cls] || "#38bdf8";
+          const tier = window.LevelDB && window.LevelDB.getWordRarityTier ? window.LevelDB.getWordRarityTier(ew) : 1;
+          const rScore = window.LevelDB && window.LevelDB.scoreWordRarity ? window.LevelDB.scoreWordRarity(ew, tier) : 0;
+          const pVal = ps != null ? ps : 0;
+          const dScore = rScore + pVal;
+          const tip = `${ew} (档位${tier} | 生僻${rScore} + 路径${pVal} = 难度${dScore})`;
+          const scoreLabel = `生${rScore}+路${pVal}=<strong style="color:${hex};">${dScore}</strong>`;
+          return renderMiniWordShapeHtml(ew, rec.data.board, wPath, cls, hex, tip, scoreLabel);
         }).join("") || "-";
         const dirText = rec.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${rec.dir_score_avg}</span>`
@@ -2480,7 +2603,9 @@
           <td>${rec.extra_count}</td>
           <td>${typeof rec.avg_len === "number" ? rec.avg_len.toFixed(2) : "-"}</td>
           <td>${dirText} <span style="font-size:11px; color:var(--muted);">(${rec.fwd_word_count || 0}正/${rec.rev_word_count || 0}逆)</span></td>
+          <td>${typeof rec.rarity_score_avg === "number" ? rec.rarity_score_avg.toFixed(2) : "-"}</td>
           <td><strong>${typeof rec.path_score_avg === "number" ? rec.path_score_avg.toFixed(2) : "-"}</strong></td>
+          <td><strong>${typeof rec.diff_score_avg === "number" ? rec.diff_score_avg.toFixed(2) : "-"}</strong> <span style="font-size:11px; color:var(--muted);">(高${rec.diff_score_max ?? "-"})</span></td>
           <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:220px;">${targetWordsFull}</td>
           <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:200px; color:var(--muted);">${extraWordsFull}</td>
           <td style="white-space:nowrap;"><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
@@ -2627,6 +2752,11 @@
         for (const [w, p] of Object.entries(lvl.selected_candidate_paths)) nextP[w] = xformPath(p);
         lvl.selected_candidate_paths = nextP;
       }
+      if (lvl.word_paths) {
+        const nextP = {};
+        for (const [w, p] of Object.entries(lvl.word_paths)) nextP[w] = xformPath(p);
+        lvl.word_paths = nextP;
+      }
       for (const key of ["extra_words", "other_candidates"]) {
         if (Array.isArray(lvl[key])) {
           lvl[key].forEach((item) => {
@@ -2653,7 +2783,29 @@
       const lvl = currentLevel();
       if (!lvl) return;
       if (mode === "auto") {
-        const modes = ["id", "flip_h", "flip_v", "rot180"];
+        const rows = Number(lvl.rows || (lvl.board ? lvl.board.length : 0));
+        const cols = Number(lvl.cols || (lvl.board && lvl.board[0] ? lvl.board[0].length : 0));
+        const fnMap = {
+          id: (r, c) => [r, c],
+          flip_h: (r, c) => [r, cols - 1 - c],
+          flip_v: (r, c) => [rows - 1 - r, c],
+          rot180: (r, c) => [rows - 1 - r, cols - 1 - c],
+        };
+        const modes = ["id"];
+        for (const mName of ["flip_h", "flip_v", "rot180"]) {
+          const fn = fnMap[mName];
+          let ok = true;
+          for (let r = 0; r < rows && ok; r++) {
+            for (let c = 0; c < cols; c++) {
+              const [nr, nc] = fn(r, c);
+              if (Boolean(lvl.board[r][c].void) !== Boolean(lvl.board[nr][nc].void)) {
+                ok = false;
+                break;
+              }
+            }
+          }
+          if (ok) modes.push(mName);
+        }
         let bestMode = "id";
         let bestKey = null;
         for (const mName of modes) {

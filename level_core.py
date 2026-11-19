@@ -66,10 +66,16 @@ class GameDictionary:
             w_up = item["word"].upper()
             item_up = dict(item)
             item_up["word_upper"] = w_up
+            item_up["rarity_tier"] = max(1, min(5, int(item_up.get("rarity_tier") or 1)))
             self.core_by_word[w_up] = item_up
 
         self.tutorial_by_word: dict[str, dict[str, Any]] = {
-            w.upper(): {**info, "word_upper": w.upper(), "length": 2}
+            w.upper(): {
+                **info,
+                "word_upper": w.upper(),
+                "length": 2,
+                "rarity_tier": max(1, min(5, int(info.get("rarity_tier") or 1))),
+            }
             for w, info in self.tutorial_2.items()
         }
 
@@ -116,6 +122,7 @@ class GameDictionary:
                     "zh": item["zh"],
                     "spelling": item["spelling"],
                     "extra_only": bool(item.get("extra_only", False)),
+                    "rarity_tier": max(1, min(5, int(item.get("rarity_tier") or 1))),
                 },
             )
         for w, info in self.inflections.items():
@@ -128,6 +135,7 @@ class GameDictionary:
                     "lemma": info["lemma"].upper(),
                     "tag_desc": info["tag_desc"],
                     "zh": info["zh"],
+                    "rarity_tier": max(1, min(5, int(info.get("rarity_tier") or 4))),
                 },
             )
         for w, info in self.obscure_words.items():
@@ -140,6 +148,7 @@ class GameDictionary:
                     "bnc": info["bnc"],
                     "frq": info["frq"],
                     "zh": info["zh"],
+                    "rarity_tier": max(1, min(5, int(info.get("rarity_tier") or 5))),
                 },
             )
         for w_up, info in self.tutorial_by_word.items():
@@ -150,6 +159,7 @@ class GameDictionary:
                     "source": "tutorial_2",
                     "ipa": info.get("ipa", ""),
                     "zh": info.get("zh", ""),
+                    "rarity_tier": max(1, min(5, int(info.get("rarity_tier") or 1))),
                 },
             )
 
@@ -294,30 +304,35 @@ class GameDictionary:
             out.sort(key=lambda w: usage_counts.get(w, 0))
         return out[:sample_limit]
 
-    def get_word_rarity(self, word_up: str) -> float:
-        """Compute word rarity score in [1.0, 100.0] (higher = rarer / more obscure)."""
+    def get_word_rarity_tier(self, word_up: str) -> int:
+        """Return integer rarity tier in [1, 5] (1 = easiest, 5 = rarest)."""
         w = word_up.upper()
         if w in self.core_by_word:
-            rank = int(self.core_by_word[w]["id"])
-            return round(max(1.0, min(95.0, (rank / 7300.0) * 95.0)), 1)
+            return max(1, min(5, int(self.core_by_word[w].get("rarity_tier") or 1)))
         if w in self.tutorial_by_word:
-            return 5.0
+            return max(1, min(5, int(self.tutorial_by_word[w].get("rarity_tier") or 1)))
         inf = self.inflections.get(w.lower())
         if inf:
+            if inf.get("rarity_tier") is not None:
+                return max(1, min(5, int(inf["rarity_tier"])))
             lemma_up = inf["lemma"].upper()
-            base_score = self.get_word_rarity(lemma_up) if lemma_up in self.core_by_word else 50.0
-            return round(min(96.0, base_score + 5.0), 1)
+            if lemma_up in self.core_by_word:
+                return min(5, self.get_word_rarity_tier(lemma_up) + 1)
+            return 4
         obs = self.obscure_words.get(w.lower())
         if obs:
-            ranks = [r for r in (obs.get("bnc", 0), obs.get("frq", 0)) if r > 0]
-            best_rank = min(ranks) if ranks else 20000
-            if best_rank <= 7300:
-                return round(max(10.0, (best_rank / 7300.0) * 80.0), 1)
-            return round(min(100.0, 80.0 + ((best_rank - 7300) / 12700.0) * 20.0), 1)
-        return 90.0
+            return max(1, min(5, int(obs.get("rarity_tier") or 5)))
+        return 5
+
+    def get_word_rarity(self, word_up: str) -> int:
+        """Compute word rarity score: max(0, len(w) - 3) * max(0, rarity_tier - 1)."""
+        w = word_up.upper()
+        tier = self.get_word_rarity_tier(w)
+        return max(0, len(w) - 3) * max(0, tier - 1)
 
     def lookup_word_meta(self, word_up: str) -> dict[str, Any]:
         w = word_up.upper()
+        rarity_tier = self.get_word_rarity_tier(w)
         rarity = self.get_word_rarity(w)
         if w in self.core_by_word:
             it = self.core_by_word[w]
@@ -329,6 +344,7 @@ class GameDictionary:
                 "spelling": it["spelling"],
                 "ipa": it["ipa"],
                 "zh": it["zh"],
+                "rarity_tier": rarity_tier,
                 "rarity": rarity,
                 "source": "core",
             }
@@ -342,6 +358,7 @@ class GameDictionary:
                 "spelling": "通用",
                 "ipa": it.get("ipa", ""),
                 "zh": it.get("zh", ""),
+                "rarity_tier": rarity_tier,
                 "rarity": rarity,
                 "source": "tutorial_2",
             }
@@ -353,6 +370,7 @@ class GameDictionary:
                 "lemma": inf["lemma"].upper(),
                 "tag_desc": inf["tag_desc"],
                 "zh": inf["zh"],
+                "rarity_tier": rarity_tier,
                 "rarity": rarity,
             }
         obs = self.obscure_words.get(w.lower())
@@ -363,9 +381,10 @@ class GameDictionary:
                 "bnc": obs["bnc"],
                 "frq": obs["frq"],
                 "zh": obs["zh"],
+                "rarity_tier": rarity_tier,
                 "rarity": rarity,
             }
-        return {"word": w, "source": "custom", "zh": "", "rarity": rarity}
+        return {"word": w, "source": "custom", "zh": "", "rarity_tier": rarity_tier, "rarity": rarity}
 
 
 # ==============================================================================
@@ -715,15 +734,24 @@ class LevelSolver:
         if zero_path_words:
             issues.append(f"以下目标词在初始棋盘上无合法路径: {zero_path_words}")
 
-        target_details = [
-            {
-                "word": w,
-                "path_count": len(initial_paths[w]),
-                "sample_paths": [[list(p) for p in path] for path in initial_paths[w][:8]],
-                **self.gdict.lookup_word_meta(w),
-            }
-            for w in targets
-        ]
+        init_paths_map = level_data.get("initial_word_paths") or {}
+        sel_paths_map = level_data.get("selected_candidate_paths") or {}
+        target_details = []
+        for w in targets:
+            primary_p = init_paths_map.get(w) or sel_paths_map.get(w) or (initial_paths[w][0] if initial_paths[w] else [])
+            dir_score, path_score = _score_path_dir_and_complexity(primary_p)
+            meta = self.gdict.lookup_word_meta(w)
+            target_details.append(
+                {
+                    "word": w,
+                    "path_count": len(initial_paths[w]),
+                    "sample_paths": [[list(p) for p in path] for path in initial_paths[w][:8]],
+                    "dir_score": dir_score,
+                    "path_score": path_score,
+                    "diff_score": meta["rarity"] + path_score,
+                    **meta,
+                }
+            )
 
         if issues or not targets:
             return {
@@ -1107,6 +1135,7 @@ class LevelSolver:
                     "tag_desc": meta.get("tag_desc", ""),
                     "rank": meta.get("rank"),
                     "band": meta.get("band"),
+                    "rarity_tier": self.gdict.get_word_rarity_tier(w),
                     "rarity": self.gdict.get_word_rarity(w),
                     "path_count": len(paths),
                     "sample_paths": [[list(p) for p in path] for path in paths[:6]],
@@ -1489,9 +1518,18 @@ def orient_level_forward(level_data: dict[str, Any], force_any_shape: bool = Fal
                     item["sample_paths"] = [xform_path(p) for p in item["sample_paths"]]
 
     if rep:
+        new_init = level_data.get("initial_word_paths") or {}
+        new_sel = level_data.get("selected_candidate_paths") or {}
         for td in rep.get("target_details") or []:
             if td.get("sample_paths"):
                 td["sample_paths"] = [xform_path(p) for p in td["sample_paths"]]
+            tw = str(td.get("word", "")).upper()
+            tp = new_init.get(tw) or new_sel.get(tw) or (td["sample_paths"][0] if td.get("sample_paths") else [])
+            ds, ps = _score_path_dir_and_complexity(tp)
+            td["dir_score"] = ds
+            td["path_score"] = ps
+            if td.get("rarity") is not None:
+                td["diff_score"] = td["rarity"] + ps
         if rep.get("winning_solution"):
             for step in rep["winning_solution"]:
                 if step.get("path"):
@@ -2370,8 +2408,16 @@ def run_tests() -> None:
     p_lvl = gen.generate_level(level_num=4, rows=4, cols=4, template="full", fill_mode="full_cover", rng_seed=42)
     assert p_lvl["target_words"] == p_lvl["initial_words"] + p_lvl["selected_candidates"]
     assert len(p_lvl["selected_candidates"]) >= 1, f"Expected >=1 promoted candidate, got {p_lvl}"
-    assert all("rarity" in td for td in p_lvl["solver_report"]["target_details"])
-    assert all("rarity" in ex for ex in p_lvl["extra_words"])
+    assert all("rarity" in td and "rarity_tier" in td and "path_score" in td and "diff_score" in td for td in p_lvl["solver_report"]["target_details"])
+    assert all("rarity" in ex and "rarity_tier" in ex for ex in p_lvl["extra_words"])
+    # Verify rarity tier & rarity score formula: max(0, len - 3) * max(0, tier - 1)
+    assert gdict.get_word_rarity("ACT") == 0  # 3-letter word always 0
+    assert gdict.get_word_rarity("ABLE") == 0  # tier 1 -> 0
+    for sample_w in ["ACNE", "ACORN", "ALIAS"]:
+        expected_r = max(0, len(sample_w) - 3) * max(0, gdict.get_word_rarity_tier(sample_w) - 1)
+        assert gdict.get_word_rarity(sample_w) == expected_r, f"{sample_w} rarity mismatch"
+    for td in p_lvl["solver_report"]["target_details"]:
+        assert td["diff_score"] == td["rarity"] + td["path_score"]
     init_sum = sum(c["count"] for row in p_lvl["board"] for c in row)
     # Demote first selected candidate -> counts drop by its length, word moves out of target_words
     cand_to_demote = p_lvl["selected_candidates"][0]
