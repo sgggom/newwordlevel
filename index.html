@@ -900,11 +900,11 @@
             <input type="number" id="poolMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:62px;" />
           </div>
         </div>
-        <div class="field" style="min-width:140px;" title="单词难度分 = 生僻分 + 路径分">
-          <label>平均难度分 (Min ~ Max)</label>
+        <div class="field" style="min-width:140px;" title="关卡难度分 = 所有目标词难度分之和">
+          <label>关卡难度分 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
-            <input type="number" id="poolMinDiffAvg" placeholder="0" step="0.5" min="0" style="width:62px;" />
-            <input type="number" id="poolMaxDiffAvg" placeholder="30" step="0.5" min="0" style="width:62px;" />
+            <input type="number" id="poolMinDiffTotal" placeholder="0" step="1" min="0" style="width:62px;" />
+            <input type="number" id="poolMaxDiffTotal" placeholder="100" step="1" min="0" style="width:62px;" />
           </div>
         </div>
         <div class="field" style="min-width:140px;">
@@ -935,7 +935,7 @@
               <th class="sortable-th" data-pool-sort="dir_score_avg" onclick="togglePoolSort('dir_score_avg')">正/逆向均分 (正/逆词)<span class="sort-ind">↕</span></th>
               <th class="sortable-th" data-pool-sort="rarity_score_avg" onclick="togglePoolSort('rarity_score_avg')">生僻均分<span class="sort-ind">↕</span></th>
               <th class="sortable-th" data-pool-sort="path_score_avg" onclick="togglePoolSort('path_score_avg')">路径均分<span class="sort-ind">↕</span></th>
-              <th class="sortable-th" data-pool-sort="diff_score_avg" onclick="togglePoolSort('diff_score_avg')">难度均分 (最高)<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="diff_score_total" onclick="togglePoolSort('diff_score_total')">关卡难度分 (均/高)<span class="sort-ind">↕</span></th>
               <th class="sortable-th" data-pool-sort="extra_rarity_avg" onclick="togglePoolSort('extra_rarity_avg')">额外生僻均分<span class="sort-ind">↕</span></th>
               <th>操作</th>
             </tr>
@@ -1026,11 +1026,11 @@
             <input type="number" id="dbMaxPathAvg" placeholder="20" step="0.5" min="0" style="width:64px;" />
           </div>
         </div>
-        <div class="field" style="min-width:145px;" title="单词难度分 = 生僻分 + 路径分">
-          <label>平均难度分 (Min ~ Max)</label>
+        <div class="field" style="min-width:145px;" title="关卡难度分 = 所有目标词难度分之和">
+          <label>关卡难度分 (Min ~ Max)</label>
           <div style="display:flex; gap:4px;">
-            <input type="number" id="dbMinDiffAvg" placeholder="0" step="0.5" min="0" style="width:64px;" />
-            <input type="number" id="dbMaxDiffAvg" placeholder="30" step="0.5" min="0" style="width:64px;" />
+            <input type="number" id="dbMinDiffTotal" placeholder="0" step="1" min="0" style="width:64px;" />
+            <input type="number" id="dbMaxDiffTotal" placeholder="100" step="1" min="0" style="width:64px;" />
           </div>
         </div>
         <div class="field" style="min-width:130px;">
@@ -1069,7 +1069,7 @@
         </div>
       </div>
       <div class="section-head">
-        <span>查询结果（每页 50 条 · 难度分 = 生僻分[max(0,长度-3)×(档位-1)] + 路径分[起步+拐弯+折返]）</span>
+        <span>查询结果（每页 50 条 · 关卡难度分 = 所有目标词难度分之和，单词难度 = 生僻分[max(0,长度-3)×(档位-1)] + 路径分[起步+拐弯+折返]）</span>
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
           <button class="btn btn-sm" id="dbPrevPageBtn" onclick="changeDbPage(-1)">上一页</button>
           <span id="dbPageInfo" style="font-size:12px; color:var(--muted);">第 1 页</span>
@@ -1092,7 +1092,7 @@
               <th class="sortable-th" data-db-sort="dir_score_avg" onclick="toggleDbSort('dir_score_avg')">正/逆向分 (正/逆词)<span class="sort-ind">↕</span></th>
               <th class="sortable-th" data-db-sort="rarity_score_avg" onclick="toggleDbSort('rarity_score_avg')">生僻均分<span class="sort-ind">↕</span></th>
               <th class="sortable-th" data-db-sort="path_score_avg" onclick="toggleDbSort('path_score_avg')">路径均分<span class="sort-ind">↕</span></th>
-              <th class="sortable-th" data-db-sort="diff_score_avg" onclick="toggleDbSort('diff_score_avg')">难度均分 (最高)<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="diff_score_total" onclick="toggleDbSort('diff_score_total')">关卡难度分 (均/高)<span class="sort-ind">↕</span></th>
               <th>目标词（绿0 / 蓝1 / 黄2 / 红&gt;2）</th>
               <th>额外词（完整）</th>
               <th>操作</th>
@@ -1201,7 +1201,7 @@
               <th>正逆向倾向 / 均分</th>
               <th>生僻均分</th>
               <th>路径均分</th>
-              <th>难度均分</th>
+              <th title="关卡难度 = 关卡所有单词的难度分之和">关卡难度分 (总和)</th>
               <th>最高单字难度</th>
               <th>必含词</th>
               <th>选关策略</th>
@@ -1772,8 +1772,8 @@
         maxRarityAvg: fNum("poolMaxRarityAvg"),
         minPathAvg: fNum("poolMinPathAvg"),
         maxPathAvg: fNum("poolMaxPathAvg"),
-        minDiffAvg: fNum("poolMinDiffAvg"),
-        maxDiffAvg: fNum("poolMaxDiffAvg"),
+        minDiffTotal: fNum("poolMinDiffTotal"),
+        maxDiffTotal: fNum("poolMaxDiffTotal"),
         dirTendency: (document.getElementById("poolDirTendency") || {}).value || "all",
       };
     }
@@ -1786,7 +1786,7 @@
         "poolMinDirAvg", "poolMaxDirAvg",
         "poolMinRarityAvg", "poolMaxRarityAvg",
         "poolMinPathAvg", "poolMaxPathAvg",
-        "poolMinDiffAvg", "poolMaxDiffAvg",
+        "poolMinDiffTotal", "poolMaxDiffTotal",
       ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
@@ -1811,8 +1811,8 @@
       if (f.maxRarityAvg != null && m.rarity_score_avg > f.maxRarityAvg) return false;
       if (f.minPathAvg != null && m.path_score_avg < f.minPathAvg) return false;
       if (f.maxPathAvg != null && m.path_score_avg > f.maxPathAvg) return false;
-      if (f.minDiffAvg != null && m.diff_score_avg < f.minDiffAvg) return false;
-      if (f.maxDiffAvg != null && m.diff_score_avg > f.maxDiffAvg) return false;
+      if (f.minDiffTotal != null && m.diff_score_total < f.minDiffTotal) return false;
+      if (f.maxDiffTotal != null && m.diff_score_total > f.maxDiffTotal) return false;
       if (f.dirTendency === "forward" && !(m.dir_score_avg > 0)) return false;
       if (f.dirTendency === "reverse" && !(m.dir_score_avg < 0)) return false;
       if (f.dirTendency === "all_forward" && m.rev_word_count !== 0) return false;
@@ -1870,7 +1870,7 @@
       levels.forEach((lvl, idx) => {
         const m = window.LevelDB
           ? window.LevelDB.computeLevelMetrics(lvl)
-          : { avg_len: 0, dir_score_avg: 0, rarity_score_avg: 0, path_score_avg: 0, diff_score_avg: 0, rev_word_count: 0 };
+          : { avg_len: 0, dir_score_avg: 0, rarity_score_avg: 0, path_score_avg: 0, diff_score_total: 0, diff_score_avg: 0, rev_word_count: 0 };
         if (!matchesPoolFilter(lvl, m, pf)) return;
         const rep = lvl.solver_report || {};
         const exs = lvl.extra_words || [];
@@ -1931,7 +1931,7 @@
       let sumExtras = 0, minE = Infinity, maxE = 0;
       let targetChars = 0, extraChars = 0;
       let extraRaritySum = 0, extraRarityCnt = 0;
-      let dirAvgSum = 0, rarityAvgSum = 0, pathAvgSum = 0, diffAvgSum = 0, diffMaxSum = 0;
+      let dirAvgSum = 0, rarityAvgSum = 0, pathAvgSum = 0, diffTotalSum = 0, diffAvgSum = 0, diffMaxSum = 0;
       const lenCounts = {};
       const rarBuckets = {
         "1档 极高频": 0,
@@ -1958,6 +1958,7 @@
               dir_score_avg: 0,
               rarity_score_avg: 0,
               path_score_avg: 0,
+              diff_score_total: 0,
               diff_score_avg: 0,
               diff_score_max: 0,
               fwd_word_count: 0,
@@ -1968,6 +1969,7 @@
         dirAvgSum += m.dir_score_avg;
         rarityAvgSum += m.rarity_score_avg || 0;
         pathAvgSum += m.path_score_avg || 0;
+        diffTotalSum += m.diff_score_total || 0;
         diffAvgSum += m.diff_score_avg || 0;
         diffMaxSum += m.diff_score_max || 0;
         sumTargets += tc; minT = Math.min(minT, tc); maxT = Math.max(maxT, tc);
@@ -2026,7 +2028,7 @@
           <td>${dirBadge} <span style="font-size:11px; color:var(--muted);">(${m.fwd_word_count}正/${m.rev_word_count}逆)</span></td>
           <td>${avgTRarLvl}</td>
           <td><strong>${typeof m.path_score_avg === "number" ? m.path_score_avg.toFixed(2) : "-"}</strong></td>
-          <td><strong>${typeof m.diff_score_avg === "number" ? m.diff_score_avg.toFixed(2) : "-"}</strong> <span style="font-size:11px; color:var(--muted);">(高${m.diff_score_max ?? "-"})</span></td>
+          <td><strong>${m.diff_score_total ?? 0}</strong> <span style="font-size:11px; color:var(--muted);">(均${typeof m.diff_score_avg === "number" ? m.diff_score_avg.toFixed(1) : "-"}/高${m.diff_score_max ?? "-"})</span></td>
           <td>${avgERarLvl}</td>
           <td style="display:flex; gap:6px;">
             <button class="btn btn-sm" onclick="jumpToPoolLevel(${idx})">查看</button>
@@ -2070,6 +2072,7 @@
       const avgERar = extraRarityCnt ? (extraRaritySum / extraRarityCnt).toFixed(2) : "0.00";
       const avgDir = (dirAvgSum / n).toFixed(2);
       const avgPathScore = (pathAvgSum / n).toFixed(2);
+      const avgLevelDiffScore = (diffTotalSum / n).toFixed(1);
       const avgDiffScore = (diffAvgSum / n).toFixed(2);
       const avgDiffMax = (diffMaxSum / n).toFixed(2);
 
@@ -2105,9 +2108,9 @@
           <div class="kpi-sub">起步(右/下0,左/上1)+拐弯+折返</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">平均单词难度分</div>
-          <div class="kpi-val">${avgDiffScore}</div>
-          <div class="kpi-sub">生僻分+路径分 · 单关最高均值 ${avgDiffMax}</div>
+          <div class="kpi-label">平均关卡难度分</div>
+          <div class="kpi-val">${avgLevelDiffScore}</div>
+          <div class="kpi-sub">所有单词难度分之和 · 单词均分 ${avgDiffScore} · 单词最高均值 ${avgDiffMax}</div>
         </div>
       `;
 
@@ -2488,7 +2491,7 @@
       }
       const lvlMetrics = window.LevelDB ? window.LevelDB.computeLevelMetrics(lvl) : null;
       const dirSummary = lvlMetrics
-        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg} · 生僻分 ${lvlMetrics.rarity_score_avg} · 路径分 ${lvlMetrics.path_score_avg} · 难度分 ${lvlMetrics.diff_score_avg}`
+        ? ` · 均长 ${lvlMetrics.avg_len} · 方向分 ${lvlMetrics.dir_score_avg >= 0 ? "+" + lvlMetrics.dir_score_avg : lvlMetrics.dir_score_avg} · 生僻总分 ${lvlMetrics.rarity_score_total} + 路径总分 ${lvlMetrics.path_score_total} = 关卡难度 ${lvlMetrics.diff_score_total} (均 ${lvlMetrics.diff_score_avg})`
         : "";
       document.getElementById("solverStats").textContent =
         `${rep.total_active_cells || 0} 格 · 总次数 ${rep.total_counts || 0} · 重叠 ${rep.avg_overlap || 0}×${dirSummary}`;
@@ -2781,8 +2784,8 @@
         maxRarityAvg: floatOrNull("dbMaxRarityAvg"),
         minPathAvg: floatOrNull("dbMinPathAvg"),
         maxPathAvg: floatOrNull("dbMaxPathAvg"),
-        minDiffAvg: floatOrNull("dbMinDiffAvg"),
-        maxDiffAvg: floatOrNull("dbMaxDiffAvg"),
+        minDiffTotal: floatOrNull("dbMinDiffTotal"),
+        maxDiffTotal: floatOrNull("dbMaxDiffTotal"),
         minRevWords: intOrNull("dbMinRevWords"),
         maxRevWords: intOrNull("dbMaxRevWords"),
         dirTendency: (document.getElementById("dbDirTendency") || {}).value || "all",
@@ -2801,7 +2804,7 @@
         "dbMinDirAvg", "dbMaxDirAvg",
         "dbMinRarityAvg", "dbMaxRarityAvg",
         "dbMinPathAvg", "dbMaxPathAvg",
-        "dbMinDiffAvg", "dbMaxDiffAvg",
+        "dbMinDiffTotal", "dbMaxDiffTotal",
         "dbMinRevWords", "dbMaxRevWords",
         "dbFilterWord",
       ].forEach((id) => {
@@ -3042,7 +3045,7 @@
           <td>${dirText} <span style="font-size:11px; color:var(--muted);">(${rec.fwd_word_count || 0}正/${rec.rev_word_count || 0}逆)</span></td>
           <td>${typeof rec.rarity_score_avg === "number" ? rec.rarity_score_avg.toFixed(2) : "-"}</td>
           <td><strong>${typeof rec.path_score_avg === "number" ? rec.path_score_avg.toFixed(2) : "-"}</strong></td>
-          <td><strong>${typeof rec.diff_score_avg === "number" ? rec.diff_score_avg.toFixed(2) : "-"}</strong> <span style="font-size:11px; color:var(--muted);">(高${rec.diff_score_max ?? "-"})</span></td>
+          <td><strong>${rec.diff_score_total ?? "-"}</strong> <span style="font-size:11px; color:var(--muted);">(均${typeof rec.diff_score_avg === "number" ? rec.diff_score_avg.toFixed(1) : "-"}/高${rec.diff_score_max ?? "-"})</span></td>
           <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:220px;">${targetWordsFull}</td>
           <td style="font-family:monospace; white-space:normal; word-break:break-word; min-width:200px; color:var(--muted);">${extraWordsFull}</td>
           <td style="white-space:nowrap;"><button class="btn btn-sm" onclick="loadDbLevelToBoard(${i})">👁️ 载入试玩</button></td>
@@ -3328,7 +3331,7 @@
     }
 
     // ==================== Level Config Table ====================
-    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v1";
+    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v2";
     const CFG_PAGE_SIZE = 50;
     let configRows = [];
     let configMatchResults = [];
@@ -3358,8 +3361,8 @@
         maxRarityAvg: null,
         minPathAvg: null,
         maxPathAvg: null,
-        minDiffAvg: null,
-        maxDiffAvg: null,
+        minDiffTotal: null,
+        maxDiffTotal: null,
         minDiffMax: null,
         maxDiffMax: null,
         wordContains: "",
@@ -3369,23 +3372,23 @@
 
     function buildDefaultConfigStarter() {
       return [
-        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", maxDiffAvg: 1.5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
-        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", maxDiffAvg: 2.0, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
-        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", minDiffAvg: 1.0, maxDiffAvg: 3.0, maxDiffMax: 5, sortBy: "random" },
-        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", minDiffAvg: 1.5, maxDiffAvg: 4.0, maxDiffMax: 6, sortBy: "random" },
-        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", minDiffAvg: 2.0, maxDiffAvg: 5.5, maxDiffMax: 8, sortBy: "random" },
+        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", minDiffTotal: 0, maxDiffTotal: 5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
+        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", minDiffTotal: 2, maxDiffTotal: 8, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
+        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", minDiffTotal: 5, maxDiffTotal: 14, maxDiffMax: 5, sortBy: "random" },
+        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", minDiffTotal: 8, maxDiffTotal: 20, maxDiffMax: 6, sortBy: "random" },
+        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", minDiffTotal: 12, maxDiffTotal: 28, maxDiffMax: 8, sortBy: "random" },
       ];
     }
 
     function buildConfigPreset2000Rows() {
       const rows = [];
-      // 1~5: 新手引导期
+      // 1~5: 新手引导期（关卡难度分 = 所有目标词难度分之和）
       const starters = [
-        { size: "2x4", minD: 0, maxD: 1.2, maxSingle: 3, maxR: 0.5, maxP: 1.2, maxCnt: 2, dir: "forward", sortBy: "diff_asc", role: "easy" },
-        { size: "2x4", minD: 0, maxD: 1.5, maxSingle: 3, maxR: 0.8, maxP: 1.5, maxCnt: 2, dir: "forward", sortBy: "random", role: "easy" },
-        { size: "3x3", minD: 0, maxD: 1.8, maxSingle: 4, maxR: 1.0, maxP: 1.8, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
-        { size: "3x3", minD: 0.5, maxD: 2.0, maxSingle: 4, maxR: null, maxP: null, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
-        { size: "2x5", minD: 0.8, maxD: 2.2, maxSingle: 5, maxR: null, maxP: null, maxCnt: 3, dir: "all", sortBy: "random", role: "normal" },
+        { size: "2x4", minT: 0, maxT: 5,  maxSingle: 3, maxR: 0.5, maxP: 1.2, maxCnt: 2, dir: "forward", sortBy: "diff_asc", role: "easy" },
+        { size: "2x4", minT: 2, maxT: 7,  maxSingle: 3, maxR: 0.8, maxP: 1.5, maxCnt: 2, dir: "forward", sortBy: "random", role: "easy" },
+        { size: "3x3", minT: 3, maxT: 9,  maxSingle: 4, maxR: 1.0, maxP: 1.8, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "3x3", minT: 4, maxT: 11, maxSingle: 4, maxR: null, maxP: null, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "2x5", minT: 5, maxT: 14, maxSingle: 5, maxR: null, maxP: null, maxCnt: 3, dir: "all", sortBy: "random", role: "normal" },
       ];
       starters.forEach((s, i) => {
         rows.push({
@@ -3398,8 +3401,8 @@
           dirTendency: s.dir,
           maxRarityAvg: s.maxR,
           maxPathAvg: s.maxP,
-          minDiffAvg: s.minD,
-          maxDiffAvg: s.maxD,
+          minDiffTotal: s.minT,
+          maxDiffTotal: s.maxT,
           maxDiffMax: s.maxSingle,
           sortBy: s.sortBy,
         });
@@ -3407,13 +3410,15 @@
 
       // 6~2000: 5关一组波浪尺寸 + 简/常/常/常/难 + 5大阶段梯度递增 + 每5关1异形(动态槽位)
       const SIZE_WAVE = ["2x4", "3x3", "2x5", "3x4", "3x5", "3x4", "2x5", "3x3"];
+      const SIZE_SCALE = { "2x4": 0.55, "3x3": 0.70, "2x5": 0.85, "3x4": 1.15, "3x5": 1.40 };
       const ROLE_CYCLE = ["easy", "normal", "normal", "normal", "hard"];
-      const r1 = (x) => Math.round(x * 10) / 10;
+      const sc = (base, scale) => Math.round(base * scale);
 
       for (let lv = 6; lv <= 2000; lv++) {
         const groupIdx = Math.floor((lv - 6) / 5);
         const posInGroup = (lv - 6) % 5;
         const size = SIZE_WAVE[groupIdx % SIZE_WAVE.length];
+        const scale = SIZE_SCALE[size] || 1.0;
         const role = ROLE_CYCLE[posInGroup];
 
         let stageLabel = "S5";
@@ -3421,40 +3426,43 @@
         if (lv <= 10) {
           stageLabel = "S1";
           band = {
-            easy:   { minD: 0.5, maxD: 1.6, minMax: null, maxMax: 4, maxCnt: 3 },
-            normal: { minD: 1.2, maxD: 2.2, minMax: null, maxMax: 5, maxCnt: 4 },
-            hard:   { minD: 2.0, maxD: 3.0, minMax: 4,    maxMax: 6, maxCnt: 5 },
+            easy:   { baseMin: 4,  baseMax: 10, minMax: null, maxMax: 4, maxCnt: 3 },
+            normal: { baseMin: 8,  baseMax: 16, minMax: null, maxMax: 5, maxCnt: 4 },
+            hard:   { baseMin: 14, baseMax: 24, minMax: 3,    maxMax: 7, maxCnt: 5 },
           }[role];
         } else if (lv <= 20) {
           stageLabel = "S2";
           band = {
-            easy:   { minD: 0.8, maxD: 1.8, minMax: null, maxMax: 4, maxCnt: 4 },
-            normal: { minD: 1.5, maxD: 2.6, minMax: null, maxMax: 6, maxCnt: 5 },
-            hard:   { minD: 2.4, maxD: 3.5, minMax: 5,    maxMax: 7, maxCnt: 6 },
+            easy:   { baseMin: 6,  baseMax: 13, minMax: null, maxMax: 4, maxCnt: 4 },
+            normal: { baseMin: 11, baseMax: 20, minMax: null, maxMax: 6, maxCnt: 5 },
+            hard:   { baseMin: 17, baseMax: 29, minMax: 4,    maxMax: 8, maxCnt: 6 },
           }[role];
         } else if (lv <= 50) {
           stageLabel = "S3";
           band = {
-            easy:   { minD: 1.0, maxD: 2.1, minMax: null, maxMax: 5, maxCnt: 5 },
-            normal: { minD: 1.8, maxD: 3.0, minMax: null, maxMax: 7, maxCnt: 6 },
-            hard:   { minD: 2.8, maxD: 4.2, minMax: 5,    maxMax: 9, maxCnt: 7 },
+            easy:   { baseMin: 8,  baseMax: 16, minMax: null, maxMax: 5, maxCnt: 5 },
+            normal: { baseMin: 14, baseMax: 24, minMax: null, maxMax: 7, maxCnt: 6 },
+            hard:   { baseMin: 21, baseMax: 35, minMax: 5,    maxMax: 9, maxCnt: 7 },
           }[role];
         } else if (lv <= 100) {
           stageLabel = "S4";
           band = {
-            easy:   { minD: 1.2, maxD: 2.3, minMax: null, maxMax: 5,  maxCnt: 6 },
-            normal: { minD: 2.1, maxD: 3.5, minMax: null, maxMax: 8,  maxCnt: 8 },
-            hard:   { minD: 3.2, maxD: 5.0, minMax: 6,    maxMax: 11, maxCnt: 9 },
+            easy:   { baseMin: 10, baseMax: 18, minMax: null, maxMax: 6,  maxCnt: 6 },
+            normal: { baseMin: 16, baseMax: 28, minMax: null, maxMax: 8,  maxCnt: 8 },
+            hard:   { baseMin: 25, baseMax: 42, minMax: 6,    maxMax: 11, maxCnt: 9 },
           }[role];
         } else {
           stageLabel = "S5";
-          const step = Math.floor((lv - 101) / 250) * 0.1;
+          const step = Math.floor((lv - 101) / 300);
           band = {
-            easy:   { minD: r1(1.4 + step * 0.4), maxD: r1(2.5 + step * 0.5), minMax: null, maxMax: 6,                        maxCnt: 7 },
-            normal: { minD: r1(2.4 + step * 0.7), maxD: r1(4.0 + step * 0.8), minMax: null, maxMax: 9 + Math.floor(step * 2), maxCnt: 9 },
-            hard:   { minD: r1(3.6 + step * 0.9), maxD: r1(6.5 + step * 1.2), minMax: 7,    maxMax: 14,                       maxCnt: 10 },
+            easy:   { baseMin: 11 + step * 0.5, baseMax: 20 + step * 1.0, minMax: null, maxMax: 6,                       maxCnt: 7 },
+            normal: { baseMin: 17 + step * 1.0, baseMax: 30 + step * 1.5, minMax: null, maxMax: 9 + Math.floor(step / 2), maxCnt: 9 },
+            hard:   { baseMin: 26 + step * 1.5, baseMax: 45 + step * 2.5, minMax: 7,    maxMax: 14,                      maxCnt: 10 },
           }[role];
         }
+
+        const minDiffTotal = sc(band.baseMin, scale);
+        const maxDiffTotal = Math.max(minDiffTotal + 3, sc(band.baseMax, scale));
 
         rows.push({
           ...createEmptyConfigRow(lv),
@@ -3464,8 +3472,8 @@
           shapeType: "group_auto_1of5",
           maxMaxCount: band.maxCnt,
           dirTendency: lv <= 10 && role === "easy" ? "forward" : "all",
-          minDiffAvg: band.minD,
-          maxDiffAvg: band.maxD,
+          minDiffTotal,
+          maxDiffTotal,
           minDiffMax: band.minMax,
           maxDiffMax: band.maxMax,
           sortBy: "random",
@@ -3693,7 +3701,7 @@
                     <span style="color:var(--muted);">候选 ${mr.matchedCount.toLocaleString()}</span>
                   </div>
                   <div style="color:var(--text);">
-                    均长 ${rec.avg_len.toFixed(1)} · 向 ${rec.dir_score_avg >= 0 ? "+" + rec.dir_score_avg : rec.dir_score_avg} · 生 ${rec.rarity_score_avg.toFixed(1)} · 路 ${rec.path_score_avg.toFixed(1)} · <strong>难 ${rec.diff_score_avg.toFixed(1)}</strong>(高${rec.diff_score_max})
+                    均长 ${rec.avg_len.toFixed(1)} · 向 ${rec.dir_score_avg >= 0 ? "+" + rec.dir_score_avg : rec.dir_score_avg} · 生${rec.rarity_score_total ?? 0}+路${rec.path_score_total ?? 0}=<strong>关卡难度 ${rec.diff_score_total ?? "-"}</strong>(均${rec.diff_score_avg.toFixed(1)}/高${rec.diff_score_max})
                   </div>
                   <div style="color:var(--muted); font-family:monospace; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(rec.data.target_words || []).join(", ")}">${targetsPreview}</div>
                 </div>
@@ -3718,7 +3726,7 @@
           <td><div style="display:flex; flex-direction:column; gap:3px;">${makeSel(dirOpts, row.dirTendency || "all", `updateConfigField(${idx}, 'dirTendency', this.value)`)}<div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="-10" value="${valStr(row.minDirAvg)}" onchange="updateConfigField(${idx}, 'minDirAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="10" value="${valStr(row.maxDirAvg)}" onchange="updateConfigField(${idx}, 'maxDirAvg', this.value, false, true)" /></div></div></td>
           <td><div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minRarityAvg)}" onchange="updateConfigField(${idx}, 'minRarityAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="30" value="${valStr(row.maxRarityAvg)}" onchange="updateConfigField(${idx}, 'maxRarityAvg', this.value, false, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minPathAvg)}" onchange="updateConfigField(${idx}, 'minPathAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="20" value="${valStr(row.maxPathAvg)}" onchange="updateConfigField(${idx}, 'maxPathAvg', this.value, false, true)" /></div></td>
-          <td><div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minDiffAvg)}" onchange="updateConfigField(${idx}, 'minDiffAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="30" value="${valStr(row.maxDiffAvg)}" onchange="updateConfigField(${idx}, 'maxDiffAvg', this.value, false, true)" /></div></td>
+          <td><div class="cfg-range"><input type="number" step="1" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minDiffTotal)}" onchange="updateConfigField(${idx}, 'minDiffTotal', this.value, true)" />~<input type="number" step="1" class="cfg-inp cfg-num" placeholder="100" value="${valStr(row.maxDiffTotal)}" onchange="updateConfigField(${idx}, 'maxDiffTotal', this.value, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" step="1" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minDiffMax)}" onchange="updateConfigField(${idx}, 'minDiffMax', this.value, false, true)" />~<input type="number" step="1" class="cfg-inp cfg-num" placeholder="30" value="${valStr(row.maxDiffMax)}" onchange="updateConfigField(${idx}, 'maxDiffMax', this.value, false, true)" /></div></td>
           <td><input type="text" class="cfg-inp" style="width:68px; text-transform:uppercase;" placeholder="可选" value="${valStr(row.wordContains)}" onchange="updateConfigField(${idx}, 'wordContains', this.value)" /></td>
           <td>${makeSel(sortOpts, row.sortBy || "random", `updateConfigField(${idx}, 'sortBy', this.value)`)}</td>
@@ -3774,20 +3782,20 @@
     function applyConfigPreset20() {
       const rows = [];
       for (let i = 1; i <= 20; i++) {
-        let size = "3x4", minD = 1.0, maxD = 3.5, maxSingle = 6;
-        if (i <= 2) { size = "2x4"; minD = 0; maxD = 1.5; maxSingle = 3; }
-        else if (i <= 5) { size = "3x3"; minD = 0.5; maxD = 2.5; maxSingle = 4; }
-        else if (i <= 9) { size = "2x5"; minD = 1.0; maxD = 3.5; maxSingle = 6; }
-        else if (i <= 14) { size = "3x4"; minD = 1.5; maxD = 5.0; maxSingle = 8; }
-        else { size = "3x5"; minD = 2.5; maxD = 7.0; maxSingle = 11; }
+        let size = "3x4", minTotal = 8, maxTotal = 22, maxSingle = 6;
+        if (i <= 2) { size = "2x4"; minTotal = 0; maxTotal = 7; maxSingle = 3; }
+        else if (i <= 5) { size = "3x3"; minTotal = 3; maxTotal = 12; maxSingle = 4; }
+        else if (i <= 9) { size = "2x5"; minTotal = 6; maxTotal = 18; maxSingle = 6; }
+        else if (i <= 14) { size = "3x4"; minTotal = 12; maxTotal = 30; maxSingle = 8; }
+        else { size = "3x5"; minTotal = 18; maxTotal = 45; maxSingle = 11; }
         rows.push({
           ...createEmptyConfigRow(i),
           stageLabel: i <= 5 ? "新手" : (i <= 10 ? "S1" : "S2"),
           role: i <= 5 ? "easy" : ((i - 6) % 5 === 4 ? "hard" : ((i - 6) % 5 === 0 ? "easy" : "normal")),
           size,
           shapeType: i <= 5 ? "full" : "group_auto_1of5",
-          minDiffAvg: minD,
-          maxDiffAvg: maxD,
+          minDiffTotal: minTotal,
+          maxDiffTotal: maxTotal,
           maxDiffMax: maxSingle,
           dirTendency: i <= 5 ? "forward" : "all",
           sortBy: "random",
@@ -3993,7 +4001,7 @@
         "levelNum", "stageLabel", "role", "size", "shapeType", "minMaxCount", "maxMaxCount", "minTargets", "maxTargets",
         "minExtras", "maxExtras", "minAvgLen", "maxAvgLen", "dirTendency",
         "minDirAvg", "maxDirAvg", "minRarityAvg", "maxRarityAvg", "minPathAvg", "maxPathAvg",
-        "minDiffAvg", "maxDiffAvg", "minDiffMax", "maxDiffMax", "wordContains", "sortBy",
+        "minDiffTotal", "maxDiffTotal", "minDiffMax", "maxDiffMax", "wordContains", "sortBy",
       ];
       const lines = [cols.join(",")];
       configRows.forEach((r) => {
@@ -4031,7 +4039,8 @@
             const numFields = new Set([
               "levelNum", "minMaxCount", "maxMaxCount", "minTargets", "maxTargets",
               "minExtras", "maxExtras", "minAvgLen", "maxAvgLen", "minDirAvg", "maxDirAvg",
-              "minRarityAvg", "maxRarityAvg", "minPathAvg", "maxPathAvg", "minDiffAvg", "maxDiffAvg",
+              "minRarityAvg", "maxRarityAvg", "minPathAvg", "maxPathAvg",
+              "minDiffTotal", "maxDiffTotal", "minDiffAvg", "maxDiffAvg",
               "minDiffMax", "maxDiffMax",
             ]);
             for (let i = 1; i < lines.length; i++) {
@@ -4039,7 +4048,7 @@
               const obj = createEmptyConfigRow(i);
               headers.forEach((h, hi) => {
                 const raw = (vals[hi] || "").trim();
-                if (!(h in obj)) return;
+                if (!(h in obj) && h !== "minDiffAvg" && h !== "maxDiffAvg") return;
                 if (numFields.has(h)) obj[h] = raw === "" ? null : Number(raw);
                 else obj[h] = raw;
               });

@@ -753,6 +753,12 @@ class LevelSolver:
                 }
             )
 
+        rarity_score_total = sum(int(td.get("rarity", 0)) for td in target_details)
+        path_score_total = sum(int(td.get("path_score", 0)) for td in target_details)
+        diff_score_total = sum(int(td.get("diff_score", 0)) for td in target_details)
+        diff_score_avg = round(diff_score_total / len(target_details), 2) if target_details else 0.0
+        diff_score_max = max((int(td.get("diff_score", 0)) for td in target_details), default=0)
+
         if issues or not targets:
             return {
                 "safety_level": "UNSOLVABLE",
@@ -765,6 +771,11 @@ class LevelSolver:
                 "total_counts": total_counts,
                 "target_char_sum": target_char_sum,
                 "avg_overlap": round(total_counts / active_cells, 2) if active_cells else 0.0,
+                "rarity_score_total": rarity_score_total,
+                "path_score_total": path_score_total,
+                "diff_score_total": diff_score_total,
+                "diff_score_avg": diff_score_avg,
+                "diff_score_max": diff_score_max,
                 "explored_states": 0,
                 "truncated": False,
                 "target_details": target_details,
@@ -797,6 +808,11 @@ class LevelSolver:
                     "total_counts": total_counts,
                     "target_char_sum": target_char_sum,
                     "avg_overlap": round(total_counts / active_cells, 2) if active_cells else 0.0,
+                    "rarity_score_total": rarity_score_total,
+                    "path_score_total": path_score_total,
+                    "diff_score_total": diff_score_total,
+                    "diff_score_avg": diff_score_avg,
+                    "diff_score_max": diff_score_max,
                     "explored_states": 1,
                     "truncated": False,
                     "target_details": target_details,
@@ -1002,6 +1018,11 @@ class LevelSolver:
             "total_counts": total_counts,
             "target_char_sum": target_char_sum,
             "avg_overlap": round(total_counts / active_cells, 2) if active_cells else 0.0,
+            "rarity_score_total": rarity_score_total,
+            "path_score_total": path_score_total,
+            "diff_score_total": diff_score_total,
+            "diff_score_avg": diff_score_avg,
+            "diff_score_max": diff_score_max,
             "explored_states": len(memo_can_win),
             "truncated": truncated,
             "target_details": target_details,

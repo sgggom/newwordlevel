@@ -391,6 +391,7 @@
     const wordRarityTiers = {};
     const wordRarityScores = {};
     const wordDiffScores = {};
+    let pathTotal = 0;
     let rarityTotal = 0;
     let diffTotal = 0;
     let diffMax = 0;
@@ -404,12 +405,14 @@
       wordRarityTiers[w] = tier;
       wordRarityScores[w] = rScore;
       wordDiffScores[w] = dScore;
+      pathTotal += pScore;
       rarityTotal += rScore;
       diffTotal += dScore;
       if (dScore > diffMax) diffMax = dScore;
     }
 
     const n = targets.length;
+    if (rec.path_score_total == null) rec.path_score_total = pathTotal;
     rec.rarity_score_total = rarityTotal;
     rec.rarity_score_avg = n ? Math.round((rarityTotal / n) * 100) / 100 : 0;
     rec.diff_score_total = diffTotal;
@@ -431,6 +434,9 @@
 
     if (hasCorePathMetrics) {
       if (
+        rec.rarity_score_total == null ||
+        rec.path_score_total == null ||
+        rec.diff_score_total == null ||
         rec.rarity_score_avg == null ||
         rec.diff_score_avg == null ||
         rec.diff_score_max == null ||
@@ -484,6 +490,10 @@
     const extras = ((rec.data && rec.data.extra_words) || [])
       .map((ex) => (typeof ex === "string" ? ex.toUpperCase() : String((ex && ex.word) || "").toUpperCase()))
       .filter(Boolean);
+    const tCount = rec.target_count != null ? rec.target_count : targets.length;
+    const diffTotal = rec.diff_score_total != null
+      ? rec.diff_score_total
+      : Math.round((rec.diff_score_avg || 0) * tCount);
     return {
       id: rec.id,
       size: rec.size || `${rows}x${cols}`,
@@ -491,12 +501,15 @@
       void_count: voidCount,
       has_void: hasVoid,
       max_cell_count: rec.max_cell_count || 0,
-      target_count: rec.target_count != null ? rec.target_count : targets.length,
+      target_count: tCount,
       extra_count: rec.extra_count != null ? rec.extra_count : extras.length,
       avg_len: rec.avg_len || 0,
       dir_score_avg: rec.dir_score_avg || 0,
+      path_score_total: rec.path_score_total || 0,
       path_score_avg: rec.path_score_avg || 0,
+      rarity_score_total: rec.rarity_score_total || 0,
       rarity_score_avg: rec.rarity_score_avg || 0,
+      diff_score_total: diffTotal,
       diff_score_avg: rec.diff_score_avg || 0,
       diff_score_max: rec.diff_score_max || 0,
       fwd_word_count: rec.fwd_word_count || 0,
@@ -524,6 +537,8 @@
     if (f.maxPathAvg != null && entry.path_score_avg > f.maxPathAvg) return false;
     if (f.minRarityAvg != null && entry.rarity_score_avg < f.minRarityAvg) return false;
     if (f.maxRarityAvg != null && entry.rarity_score_avg > f.maxRarityAvg) return false;
+    if (f.minDiffTotal != null && entry.diff_score_total < f.minDiffTotal) return false;
+    if (f.maxDiffTotal != null && entry.diff_score_total > f.maxDiffTotal) return false;
     if (f.minDiffAvg != null && entry.diff_score_avg < f.minDiffAvg) return false;
     if (f.maxDiffAvg != null && entry.diff_score_avg > f.maxDiffAvg) return false;
     if (f.minDiffMax != null && entry.diff_score_max < f.minDiffMax) return false;
@@ -738,7 +753,12 @@
       pen += (state.targetCount.get(u) || 0) * 6 + (state.extraCount.get(u) || 0) * 3;
     }
 
-    if (row && (row.minDiffAvg != null || row.maxDiffAvg != null)) {
+    if (row && (row.minDiffTotal != null || row.maxDiffTotal != null)) {
+      const lo = row.minDiffTotal != null ? row.minDiffTotal : 0;
+      const hi = row.maxDiffTotal != null ? row.maxDiffTotal : (lo + 10);
+      const mid = (lo + hi) * 0.5;
+      pen += Math.abs(entry.diff_score_total - mid) * 0.15;
+    } else if (row && (row.minDiffAvg != null || row.maxDiffAvg != null)) {
       const lo = row.minDiffAvg != null ? row.minDiffAvg : 0;
       const hi = row.maxDiffAvg != null ? row.maxDiffAvg : (lo + 2);
       const mid = (lo + hi) * 0.5;
@@ -804,10 +824,10 @@
     }
 
     const sortComparators = {
-      diff_asc: (a, b) => (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
-      diff_desc: (a, b) => (b.diff_score_avg - a.diff_score_avg) || (a.id - b.id),
-      path_asc: (a, b) => (a.path_score_avg - b.path_score_avg) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
-      rarity_asc: (a, b) => (a.rarity_score_avg - b.rarity_score_avg) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
+      diff_asc: (a, b) => (a.diff_score_total - b.diff_score_total) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
+      diff_desc: (a, b) => (b.diff_score_total - a.diff_score_total) || (b.diff_score_avg - a.diff_score_avg) || (a.id - b.id),
+      path_asc: (a, b) => (a.path_score_avg - b.path_score_avg) || (a.diff_score_total - b.diff_score_total) || (a.id - b.id),
+      rarity_asc: (a, b) => (a.rarity_score_avg - b.rarity_score_avg) || (a.diff_score_total - b.diff_score_total) || (a.id - b.id),
       rarity_desc: (a, b) => (b.rarity_score_avg - a.rarity_score_avg) || (a.id - b.id),
       dir_desc: (a, b) => (b.dir_score_avg - a.dir_score_avg) || (a.path_score_avg - b.path_score_avg) || (a.id - b.id),
       id_asc: (a, b) => a.id - b.id,
@@ -828,6 +848,8 @@
       const effectiveShape = shapeOverride || (row.shapeType && row.shapeType !== "group_auto_1of5" ? row.shapeType : "any");
       const effRow = { ...row, shapeType: effectiveShape === "any" ? "" : effectiveShape };
       if (relaxLevel === 1) {
+        if (effRow.minDiffTotal != null) effRow.minDiffTotal = Math.max(0, effRow.minDiffTotal - 6);
+        if (effRow.maxDiffTotal != null) effRow.maxDiffTotal = effRow.maxDiffTotal + 10;
         if (effRow.minDiffAvg != null) effRow.minDiffAvg = Math.max(0, effRow.minDiffAvg - 1.0);
         if (effRow.maxDiffAvg != null) effRow.maxDiffAvg = effRow.maxDiffAvg + 1.5;
         if (effRow.minDiffMax != null) effRow.minDiffMax = Math.max(0, effRow.minDiffMax - 2);
@@ -835,6 +857,8 @@
         if (effRow.maxMaxCount != null) effRow.maxMaxCount = effRow.maxMaxCount + 3;
         if (effRow.dirTendency === "forward") effRow.dirTendency = "all";
       } else if (relaxLevel >= 2) {
+        delete effRow.minDiffTotal;
+        delete effRow.maxDiffTotal;
         delete effRow.minDiffAvg;
         delete effRow.maxDiffAvg;
         delete effRow.minDiffMax;
@@ -857,6 +881,7 @@
         effRow.dirTendency || "all",
         effRow.minRarityAvg ?? "", effRow.maxRarityAvg ?? "",
         effRow.minPathAvg ?? "", effRow.maxPathAvg ?? "",
+        effRow.minDiffTotal ?? "", effRow.maxDiffTotal ?? "",
         effRow.minDiffAvg ?? "", effRow.maxDiffAvg ?? "",
         effRow.minDiffMax ?? "", effRow.maxDiffMax ?? "",
         effRow.wordContains || "",
@@ -1301,8 +1326,11 @@
             res.changed ||
             rec.avg_len == null ||
             rec.dir_score_avg == null ||
+            rec.path_score_total == null ||
             rec.path_score_avg == null ||
+            rec.rarity_score_total == null ||
             rec.rarity_score_avg == null ||
+            rec.diff_score_total == null ||
             rec.diff_score_avg == null ||
             rec.diff_score_max == null ||
             !rec.data.word_path_scores ||
