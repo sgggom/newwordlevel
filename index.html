@@ -505,6 +505,26 @@
       font-weight: 700;
       font-size: 11px;
     }
+    table.pool-table th.sortable-th {
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s;
+    }
+    table.pool-table th.sortable-th:hover {
+      color: var(--text);
+    }
+    table.pool-table th.sortable-th.sort-active {
+      color: var(--accent);
+    }
+    .sort-ind {
+      display: inline-block;
+      margin-left: 3px;
+      font-size: 10px;
+      opacity: 0.55;
+    }
+    table.pool-table th.sortable-th.sort-active .sort-ind {
+      opacity: 1;
+    }
     table.pool-table tr:hover td {
       background: rgba(56, 189, 248, 0.06);
     }
@@ -832,17 +852,17 @@
           <thead>
             <tr>
               <th>棋盘预览</th>
-              <th>池序号</th>
-              <th>尺寸</th>
-              <th>安全状态</th>
-              <th>目标词数</th>
-              <th>额外词数</th>
-              <th>平均词长</th>
-              <th>正/逆向均分 (正/逆词)</th>
-              <th>生僻均分</th>
-              <th>路径均分</th>
-              <th>难度均分 (最高)</th>
-              <th>额外生僻均分</th>
+              <th class="sortable-th" data-pool-sort="idx" onclick="togglePoolSort('idx')">池序号<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="size" onclick="togglePoolSort('size')">尺寸<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="safety" onclick="togglePoolSort('safety')">安全状态<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="target_count" onclick="togglePoolSort('target_count')">目标词数<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="extra_count" onclick="togglePoolSort('extra_count')">额外词数<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="avg_len" onclick="togglePoolSort('avg_len')">平均词长<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="dir_score_avg" onclick="togglePoolSort('dir_score_avg')">正/逆向均分 (正/逆词)<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="rarity_score_avg" onclick="togglePoolSort('rarity_score_avg')">生僻均分<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="path_score_avg" onclick="togglePoolSort('path_score_avg')">路径均分<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="diff_score_avg" onclick="togglePoolSort('diff_score_avg')">难度均分 (最高)<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-pool-sort="extra_rarity_avg" onclick="togglePoolSort('extra_rarity_avg')">额外生僻均分<span class="sort-ind">↕</span></th>
               <th>操作</th>
             </tr>
           </thead>
@@ -980,16 +1000,16 @@
           <thead>
             <tr>
               <th>棋盘预览</th>
-              <th>ID</th>
-              <th>尺寸</th>
-              <th>最大层数</th>
-              <th>目标词数</th>
-              <th>额外词数</th>
-              <th>平均词长</th>
-              <th>正/逆向分 (正/逆词)</th>
-              <th>生僻均分</th>
-              <th>路径均分</th>
-              <th>难度均分 (最高)</th>
+              <th class="sortable-th" data-db-sort="id" onclick="toggleDbSort('id')">ID<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="size" onclick="toggleDbSort('size')">尺寸<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="max_cell_count" onclick="toggleDbSort('max_cell_count')">最大层数<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="target_count" onclick="toggleDbSort('target_count')">目标词数<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="extra_count" onclick="toggleDbSort('extra_count')">额外词数<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="avg_len" onclick="toggleDbSort('avg_len')">平均词长<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="dir_score_avg" onclick="toggleDbSort('dir_score_avg')">正/逆向分 (正/逆词)<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="rarity_score_avg" onclick="toggleDbSort('rarity_score_avg')">生僻均分<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="path_score_avg" onclick="toggleDbSort('path_score_avg')">路径均分<span class="sort-ind">↕</span></th>
+              <th class="sortable-th" data-db-sort="diff_score_avg" onclick="toggleDbSort('diff_score_avg')">难度均分 (最高)<span class="sort-ind">↕</span></th>
               <th>目标词（绿0 / 蓝1 / 黄2 / 红&gt;2）</th>
               <th>额外词（完整）</th>
               <th>操作</th>
@@ -1011,6 +1031,8 @@
     let dbPage = 0;
     let dbLastTotal = 0;
     let dbCurrentItems = [];
+    let poolSort = { field: null, dir: null };
+    let dbSort = { field: null, dir: null };
     let hideWords = false;
     let editMode = false;
     let selectedCell = null;
@@ -1591,19 +1613,92 @@
       return true;
     }
 
+    function nextSortState(cur, field, ascFirstFields) {
+      const firstDir = ascFirstFields.has(field) ? "asc" : "desc";
+      const secondDir = firstDir === "asc" ? "desc" : "asc";
+      if (cur.field !== field) return { field, dir: firstDir };
+      if (cur.dir === firstDir) return { field, dir: secondDir };
+      return { field: null, dir: null };
+    }
+
+    function updateSortHeaderIndicators(attrName, sortState) {
+      document.querySelectorAll(`th[${attrName}]`).forEach((th) => {
+        const f = th.getAttribute(attrName);
+        const ind = th.querySelector(".sort-ind");
+        const active = sortState.field === f && sortState.dir;
+        th.classList.toggle("sort-active", Boolean(active));
+        if (ind) {
+          ind.textContent = active ? (sortState.dir === "asc" ? "▲" : "▼") : "↕";
+        }
+      });
+    }
+
+    function togglePoolSort(field) {
+      poolSort = nextSortState(poolSort, field, new Set(["idx", "size"]));
+      updateSortHeaderIndicators("data-pool-sort", poolSort);
+      renderStatsView();
+    }
+
+    function toggleDbSort(field) {
+      dbSort = nextSortState(dbSort, field, new Set(["id", "size"]));
+      updateSortHeaderIndicators("data-db-sort", dbSort);
+      runDbQuery(0);
+    }
+
+    function getPoolSortVal(rowObj, field) {
+      if (field === "idx") return rowObj.idx;
+      if (field === "size") return (Number(rowObj.lvl.rows || 0) * 100) + Number(rowObj.lvl.cols || 0);
+      if (field === "safety") return rowObj.safetyRank;
+      if (field === "target_count") return rowObj.tc;
+      if (field === "extra_count") return rowObj.ec;
+      if (field === "extra_rarity_avg") return rowObj.avgERarVal;
+      const v = rowObj.m[field];
+      return typeof v === "number" ? v : -Infinity;
+    }
+
     function exportFilteredPool() {
       const pf = collectPoolFilters();
-      const matched = levels.filter((lvl) => {
+      const matchedRows = [];
+      levels.forEach((lvl, idx) => {
         const m = window.LevelDB
           ? window.LevelDB.computeLevelMetrics(lvl)
           : { avg_len: 0, dir_score_avg: 0, rarity_score_avg: 0, path_score_avg: 0, diff_score_avg: 0, rev_word_count: 0 };
-        return matchesPoolFilter(lvl, m, pf);
+        if (!matchesPoolFilter(lvl, m, pf)) return;
+        const rep = lvl.solver_report || {};
+        const exs = lvl.extra_words || [];
+        let lvlERar = 0, lvlERarN = 0;
+        exs.forEach((ex) => {
+          const ew = typeof ex === "string" ? ex : ex.word;
+          const r = (typeof ex === "object" && typeof ex.rarity === "number" && typeof ex.rarity_tier === "number")
+            ? ex.rarity
+            : (window.LevelDB ? window.LevelDB.scoreWordRarity(ew, typeof ex === "object" ? ex.rarity_tier : undefined) : 0);
+          lvlERar += r; lvlERarN++;
+        });
+        matchedRows.push({
+          idx,
+          lvl,
+          m,
+          tc: (lvl.target_words || []).length,
+          ec: exs.length,
+          avgERarVal: lvlERarN ? lvlERar / lvlERarN : -1,
+          safetyRank: rep.zero_deadlock ? (rep.path_unique ? 3 : 2) : 1,
+        });
       });
-      if (!matched.length) {
+      if (!matchedRows.length) {
         setStatus("⚠️ 当前筛选条件下没有可导出的关卡", "st-err");
         return;
       }
-      downloadJson(matched, `levels_filtered_${matched.length}.json`);
+      if (poolSort.field) {
+        const mult = poolSort.dir === "asc" ? 1 : -1;
+        matchedRows.sort((a, b) => {
+          const va = getPoolSortVal(a, poolSort.field);
+          const vb = getPoolSortVal(b, poolSort.field);
+          if (va < vb) return -1 * mult;
+          if (va > vb) return 1 * mult;
+          return a.idx - b.idx;
+        });
+      }
+      downloadJson(matchedRows.map((r) => r.lvl), `levels_filtered_${matchedRows.length}.json`);
     }
 
     function renderStatsView() {
@@ -1639,7 +1734,7 @@
       };
       const tierBucketKeys = ["1档 极高频", "2档 常见", "3档 进阶", "4档 偏生僻", "5档 高生僻"];
       const pf = collectPoolFilters();
-      let matchedPoolCount = 0;
+      const matchedPoolRows = [];
 
       tbody.innerHTML = "";
       levels.forEach((lvl, idx) => {
@@ -1699,11 +1794,11 @@
         });
 
         if (!matchesPoolFilter(lvl, m, pf)) return;
-        matchedPoolCount++;
 
         const avgLenLvl = tc ? m.avg_len.toFixed(2) : "-";
         const avgTRarLvl = typeof m.rarity_score_avg === "number" ? m.rarity_score_avg.toFixed(2) : "-";
-        const avgERarLvl = lvlERarN ? (lvlERar / lvlERarN).toFixed(2) : "-";
+        const avgERarVal = lvlERarN ? (lvlERar / lvlERarN) : -1;
+        const avgERarLvl = lvlERarN ? avgERarVal.toFixed(2) : "-";
         const dirBadge = m.dir_score_avg >= 0
           ? `<span style="color:var(--green,#22c55e); font-weight:700;">+${m.dir_score_avg}</span>`
           : `<span style="color:var(--amber,#f59e0b); font-weight:700;">${m.dir_score_avg}</span>`;
@@ -1730,8 +1825,30 @@
             <button class="btn btn-sm" onclick="removeLevelFromPool(${idx})">移除</button>
           </td>
         `;
-        tbody.appendChild(tr);
+        matchedPoolRows.push({
+          idx,
+          lvl,
+          m,
+          tc,
+          ec,
+          avgERarVal,
+          safetyRank: rep.zero_deadlock ? (rep.path_unique ? 3 : 2) : 1,
+          tr,
+        });
       });
+
+      if (poolSort.field) {
+        const mult = poolSort.dir === "asc" ? 1 : -1;
+        matchedPoolRows.sort((a, b) => {
+          const va = getPoolSortVal(a, poolSort.field);
+          const vb = getPoolSortVal(b, poolSort.field);
+          if (va < vb) return -1 * mult;
+          if (va > vb) return 1 * mult;
+          return a.idx - b.idx;
+        });
+      }
+      matchedPoolRows.forEach((row) => tbody.appendChild(row.tr));
+      const matchedPoolCount = matchedPoolRows.length;
 
       if (sumEl) {
         sumEl.textContent = `显示 ${matchedPoolCount} / ${n} 关`;
@@ -2534,7 +2651,7 @@
       const statusEl = document.getElementById("dbStatusText");
       if (statusEl) statusEl.textContent = "⏳ 正在查询本地库...";
       const t0 = performance.now();
-      const res = await window.LevelDB.queryLevels(filters, limit, offset);
+      const res = await window.LevelDB.queryLevels(filters, limit, offset, dbSort.field ? dbSort : null);
       const dt = (performance.now() - t0).toFixed(1);
 
       dbLastTotal = res.totalMatched;
@@ -2683,7 +2800,7 @@
       if (statusEl) statusEl.textContent = "⏳ 正在导出筛选结果...";
       const lines = await window.LevelDB.collectAllMatching(filters, (scanned, matched) => {
         if (statusEl) statusEl.textContent = `⏳ 已扫描 ${scanned} 条，匹配 ${matched} 条...`;
-      });
+      }, dbSort.field ? dbSort : null);
       if (!lines.length) {
         if (statusEl) statusEl.textContent = "⚠️ 当前筛选条件下没有可导出的关卡";
         return;

@@ -434,7 +434,15 @@
     return true;
   }
 
-  async function queryLevels(filters = {}, limit = 50, offset = 0) {
+  function getSortValue(rec, field) {
+    if (field === "size") {
+      return (Number(rec.rows || 0) * 100) + Number(rec.cols || 0);
+    }
+    const v = rec[field];
+    return typeof v === "number" ? v : (v == null ? -Infinity : String(v));
+  }
+
+  async function queryLevels(filters = {}, limit = 50, offset = 0, sort = null) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readonly");
@@ -443,21 +451,42 @@
         ? store.index("size").openCursor(IDBKeyRange.only(filters.size))
         : store.openCursor();
 
+      const hasSort = Boolean(sort && sort.field);
       const items = [];
+      const matchedAll = hasSort ? [] : null;
       let totalMatched = 0;
 
       source.onsuccess = (ev) => {
         const cursor = ev.target.result;
         if (!cursor) {
-          resolve({ totalMatched, items });
+          if (hasSort) {
+            const mult = sort.dir === "asc" ? 1 : -1;
+            matchedAll.sort((a, b) => {
+              const va = getSortValue(a, sort.field);
+              const vb = getSortValue(b, sort.field);
+              if (va < vb) return -1 * mult;
+              if (va > vb) return 1 * mult;
+              return (a.id || 0) - (b.id || 0);
+            });
+            resolve({
+              totalMatched: matchedAll.length,
+              items: matchedAll.slice(offset, offset + limit),
+            });
+          } else {
+            resolve({ totalMatched, items });
+          }
           return;
         }
         const rec = cursor.value;
         if (matchesFilter(rec, filters)) {
-          if (totalMatched >= offset && items.length < limit) {
-            items.push(rec);
+          if (hasSort) {
+            matchedAll.push(rec);
+          } else {
+            if (totalMatched >= offset && items.length < limit) {
+              items.push(rec);
+            }
+            totalMatched++;
           }
-          totalMatched++;
         }
         cursor.continue();
       };
@@ -465,7 +494,7 @@
     });
   }
 
-  async function collectAllMatching(filters = {}, onProgress) {
+  async function collectAllMatching(filters = {}, onProgress, sort = null) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readonly");
@@ -474,22 +503,40 @@
         ? store.index("size").openCursor(IDBKeyRange.only(filters.size))
         : store.openCursor();
 
+      const hasSort = Boolean(sort && sort.field);
+      const matchedRecs = hasSort ? [] : null;
       const lines = [];
       let scanned = 0;
 
       source.onsuccess = (ev) => {
         const cursor = ev.target.result;
         if (!cursor) {
-          resolve(lines);
+          if (hasSort) {
+            const mult = sort.dir === "asc" ? 1 : -1;
+            matchedRecs.sort((a, b) => {
+              const va = getSortValue(a, sort.field);
+              const vb = getSortValue(b, sort.field);
+              if (va < vb) return -1 * mult;
+              if (va > vb) return 1 * mult;
+              return (a.id || 0) - (b.id || 0);
+            });
+            resolve(matchedRecs.map((r) => JSON.stringify(r.data)));
+          } else {
+            resolve(lines);
+          }
           return;
         }
         scanned++;
         const rec = cursor.value;
         if (matchesFilter(rec, filters)) {
-          lines.push(JSON.stringify(rec.data));
+          if (hasSort) {
+            matchedRecs.push(rec);
+          } else {
+            lines.push(JSON.stringify(rec.data));
+          }
         }
         if (onProgress && scanned % 5000 === 0) {
-          onProgress(scanned, lines.length);
+          onProgress(scanned, hasSort ? matchedRecs.length : lines.length);
         }
         cursor.continue();
       };
