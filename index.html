@@ -480,11 +480,13 @@
       border-radius: 999px;
     }
     .pool-table-wrap {
-      overflow-x: auto;
+      overflow: auto;
+      max-height: 70vh;
     }
     table.pool-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       font-size: 12px;
     }
     table.pool-table th, table.pool-table td {
@@ -493,6 +495,12 @@
       border-bottom: 1px solid var(--border);
     }
     table.pool-table th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--panel);
+      box-shadow: 0 1px 0 var(--border);
+      white-space: nowrap;
       color: var(--muted);
       font-weight: 700;
       font-size: 11px;
