@@ -194,6 +194,10 @@ def dispatch_api(path, body_str):
                     continue
 
                 target_wc = int(body["word_count"]) if body.get("word_count") else None
+                rem_c3 = sum(1 for c in unique_elig if c["length"] == 3)
+                rem_c4 = sum(1 for c in unique_elig if c["length"] == 4)
+                rem_c5p = sum(1 for c in unique_elig if c["length"] >= 5)
+                keep_len3 = ((start_num + idx + attempts) % 5) != 4
                 rem_order = sorted(
                     range(len(unique_elig)),
                     key=lambda i: (-GENERATOR.target_usage[unique_elig[i]["word"]], unique_elig[i]["length"], unique_elig[i]["word"]),
@@ -204,11 +208,24 @@ def dispatch_api(path, body_str):
                     cur_wc = len(unique_elig) - len(removed_words)
                     if cur_max <= max_cell_count and (target_wc is None or cur_wc <= target_wc):
                         break
+                    w_len = unique_elig[i]["length"]
+                    if w_len >= 5 and rem_c5p <= 1:
+                        continue
+                    if w_len == 4 and rem_c4 <= 1:
+                        continue
+                    if keep_len3 and w_len == 3 and rem_c3 <= 1:
+                        continue
                     path = unique_elig[i]["sample_paths"][0]
                     if all(counts[r][col] >= 2 for r, col in path):
                         for r, col in path:
                             counts[r][col] -= 1
                         removed_words.add(unique_elig[i]["word"])
+                        if w_len >= 5:
+                            rem_c5p -= 1
+                        elif w_len == 4:
+                            rem_c4 -= 1
+                        elif w_len == 3:
+                            rem_c3 -= 1
 
                 if max(counts[r][col] for r in range(rows) for col in range(cols)) > max_cell_count:
                     continue

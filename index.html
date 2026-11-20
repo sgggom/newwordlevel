@@ -920,6 +920,15 @@
             <option value="has_reverse">含逆向词 (≥1逆向)</option>
           </select>
         </div>
+        <div class="field" style="min-width:165px;">
+          <label>词长组合</label>
+          <select id="poolLenRule">
+            <option value="all">全部</option>
+            <option value="3_4_5p">必含 3+4+5⁺字 (标准)</option>
+            <option value="4_5p_opt3">必含 4+5⁺字 (3字可选·难关)</option>
+            <option value="4_5p_no3">仅 4+5⁺字 (无3字)</option>
+          </select>
+        </div>
         <button class="btn btn-sm btn-primary" onclick="renderStatsView()">🔍 筛选</button>
         <button class="btn btn-sm" onclick="resetPoolFilters()">🔄 重置</button>
         <button class="btn btn-sm" onclick="exportFilteredPool()">📤 导出筛选结果 JSON</button>
@@ -1051,6 +1060,15 @@
             <option value="reverse">整体偏逆向 (均分&lt;0)</option>
             <option value="all_forward">全正向词 (0逆向)</option>
             <option value="has_reverse">含逆向词 (≥1逆向)</option>
+          </select>
+        </div>
+        <div class="field" style="min-width:170px;">
+          <label>词长组合</label>
+          <select id="dbLenRule">
+            <option value="all">全部</option>
+            <option value="3_4_5p">必含 3+4+5⁺字 (标准)</option>
+            <option value="4_5p_opt3">必含 4+5⁺字 (3字可选·难关)</option>
+            <option value="4_5p_no3">仅 4+5⁺字 (无3字)</option>
           </select>
         </div>
         <div class="field" style="min-width:130px;">
@@ -1200,7 +1218,7 @@
               <th>最大层数</th>
               <th>目标词数</th>
               <th>额外词数</th>
-              <th>平均词长</th>
+              <th title="标准关必含3/4/5+字母词；困难关必含4/5+字母词(可无3字母词)">词长组合 / 均长</th>
               <th>正逆向倾向 / 均分</th>
               <th>生僻均分</th>
               <th>路径均分</th>
@@ -1780,6 +1798,7 @@
         minDiffTotal: fNum("poolMinDiffTotal"),
         maxDiffTotal: fNum("poolMaxDiffTotal"),
         dirTendency: (document.getElementById("poolDirTendency") || {}).value || "all",
+        lenRule: (document.getElementById("poolLenRule") || {}).value || "all",
       };
     }
 
@@ -1798,6 +1817,8 @@
       });
       const sel = document.getElementById("poolDirTendency");
       if (sel) sel.value = "all";
+      const lrSel = document.getElementById("poolLenRule");
+      if (lrSel) lrSel.value = "all";
       renderStatsView();
     }
 
@@ -1822,6 +1843,15 @@
       if (f.dirTendency === "reverse" && !(m.dir_score_avg < 0)) return false;
       if (f.dirTendency === "all_forward" && m.rev_word_count !== 0) return false;
       if (f.dirTendency === "has_reverse" && !(m.rev_word_count > 0)) return false;
+      if (f.lenRule && f.lenRule !== "all") {
+        const words = (lvl.target_words || []).map((w) => String(w));
+        const has3 = words.some((w) => w.length === 3);
+        const has4 = words.some((w) => w.length === 4);
+        const has5p = words.some((w) => w.length >= 5);
+        if (f.lenRule === "3_4_5p" && !(has3 && has4 && has5p)) return false;
+        if (f.lenRule === "4_5p_opt3" && !(has4 && has5p)) return false;
+        if (f.lenRule === "4_5p_no3" && !(!has3 && has4 && has5p)) return false;
+      }
       return true;
     }
 
@@ -2794,6 +2824,7 @@
         minRevWords: intOrNull("dbMinRevWords"),
         maxRevWords: intOrNull("dbMaxRevWords"),
         dirTendency: (document.getElementById("dbDirTendency") || {}).value || "all",
+        lenRule: (document.getElementById("dbLenRule") || {}).value || "all",
         wordContains: document.getElementById("dbFilterWord").value.trim().toUpperCase(),
       };
     }
@@ -2818,6 +2849,8 @@
       });
       const sel = document.getElementById("dbDirTendency");
       if (sel) sel.value = "all";
+      const lrSel = document.getElementById("dbLenRule");
+      if (lrSel) lrSel.value = "all";
       runDbQuery(0);
     }
 
@@ -3336,7 +3369,7 @@
     }
 
     // ==================== Level Config Table ====================
-    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v3";
+    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v4";
     const CFG_PAGE_SIZE = 50;
     let configRows = [];
     let configMatchResults = [];
@@ -3357,6 +3390,7 @@
         maxTargets: null,
         minExtras: null,
         maxExtras: null,
+        lenRule: "3_4_5p",
         minAvgLen: null,
         maxAvgLen: null,
         minDirAvg: null,
@@ -3377,11 +3411,11 @@
 
     function buildDefaultConfigStarter() {
       return [
-        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", minTargets: 2, maxTargets: 4, minDiffTotal: 0, maxDiffTotal: 5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
-        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", minTargets: 3, maxTargets: 5, minDiffTotal: 2, maxDiffTotal: 8, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
-        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", minTargets: 4, maxTargets: 7, minDiffTotal: 5, maxDiffTotal: 14, maxDiffMax: 5, sortBy: "random" },
-        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", minTargets: 5, maxTargets: 9, minDiffTotal: 8, maxDiffTotal: 20, maxDiffMax: 6, sortBy: "random" },
-        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", minTargets: 7, maxTargets: 12, minDiffTotal: 12, maxDiffTotal: 28, maxDiffMax: 8, sortBy: "random" },
+        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 2, maxTargets: 4, minDiffTotal: 0, maxDiffTotal: 5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
+        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", lenRule: "3_4_5p", minTargets: 3, maxTargets: 5, minDiffTotal: 2, maxDiffTotal: 8, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
+        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", lenRule: "3_4_5p", minTargets: 4, maxTargets: 7, minDiffTotal: 5, maxDiffTotal: 14, maxDiffMax: 5, sortBy: "random" },
+        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 5, maxTargets: 9, minDiffTotal: 8, maxDiffTotal: 20, maxDiffMax: 6, sortBy: "random" },
+        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", lenRule: "3_4_5p", minTargets: 7, maxTargets: 12, minDiffTotal: 12, maxDiffTotal: 28, maxDiffMax: 8, sortBy: "random" },
       ];
     }
 
@@ -3405,6 +3439,7 @@
           maxMaxCount: s.maxCnt,
           minTargets: s.minWords,
           maxTargets: s.maxWords,
+          lenRule: s.role === "hard" ? "4_5p_opt3" : "3_4_5p",
           dirTendency: s.dir,
           maxRarityAvg: s.maxR,
           maxPathAvg: s.maxP,
@@ -3485,6 +3520,7 @@
           maxMaxCount: band.maxCnt,
           minTargets,
           maxTargets,
+          lenRule: role === "hard" ? "4_5p_opt3" : "3_4_5p",
           dirTendency: lv <= 10 && role === "easy" ? "forward" : "all",
           minDiffTotal,
           maxDiffTotal,
@@ -3658,6 +3694,12 @@
         ["full", "标准满格"],
         ["custom", "异形镂空"],
       ];
+      const lenRuleOpts = [
+        ["3_4_5p", "必含 3+4+5⁺字"],
+        ["4_5p_opt3", "必含 4+5⁺字 (3字可选)"],
+        ["4_5p_no3", "仅 4+5⁺字 (无3字)"],
+        ["all", "词长不限"],
+      ];
       const dirOpts = [
         ["all", "全部"],
         ["forward", "偏正向(>0)"],
@@ -3697,7 +3739,15 @@
         if (mr) {
           if (mr.record) {
             const rec = mr.record;
-            const targetsPreview = (rec.data.target_words || []).slice(0, 6).join(", ") + ((rec.data.target_words || []).length > 6 ? "…" : "");
+            const tList = rec.data.target_words || [];
+            const targetsPreview = tList.slice(0, 6).join(", ") + (tList.length > 6 ? "…" : "");
+            let c3 = 0, c4 = 0, c5p = 0;
+            tList.forEach((w) => {
+              const L = String(w).length;
+              if (L === 3) c3++;
+              else if (L === 4) c4++;
+              else if (L >= 5) c5p++;
+            });
             const shapeBadge = mr.isCustom
               ? `<span class="pill" style="background:rgba(192,132,252,0.2);color:#e9d5ff;">🧩 异形</span>`
               : (mr.shapeFallback ? `<span class="pill pill-amber" title="本地库暂无该尺寸异形关，已回退标准满格">异形回退</span>` : "");
@@ -3715,9 +3765,9 @@
                     <span style="color:var(--muted);">候选 ${mr.matchedCount.toLocaleString()}</span>
                   </div>
                   <div style="color:var(--text);">
-                    均长 ${rec.avg_len.toFixed(1)} · 向 ${rec.dir_score_avg >= 0 ? "+" + rec.dir_score_avg : rec.dir_score_avg} · 生${rec.rarity_score_total ?? 0}+路${rec.path_score_total ?? 0}=<strong>关卡难度 ${rec.diff_score_total ?? "-"}</strong>(均${rec.diff_score_avg.toFixed(1)}/高${rec.diff_score_max})
+                    3字×${c3}·4字×${c4}·5⁺字×${c5p} · 均长 ${rec.avg_len.toFixed(1)} · 向 ${rec.dir_score_avg >= 0 ? "+" + rec.dir_score_avg : rec.dir_score_avg} · 生${rec.rarity_score_total ?? 0}+路${rec.path_score_total ?? 0}=<strong>关卡难度 ${rec.diff_score_total ?? "-"}</strong>(均${rec.diff_score_avg.toFixed(1)}/高${rec.diff_score_max})
                   </div>
-                  <div style="color:var(--muted); font-family:monospace; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${(rec.data.target_words || []).join(", ")}">${targetsPreview}</div>
+                  <div style="color:var(--muted); font-family:monospace; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${tList.join(", ")}">${targetsPreview}</div>
                 </div>
               </div>`;
           } else {
@@ -3736,7 +3786,7 @@
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="1" value="${valStr(row.minMaxCount)}" onchange="updateConfigField(${idx}, 'minMaxCount', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="10" value="${valStr(row.maxMaxCount)}" onchange="updateConfigField(${idx}, 'maxMaxCount', this.value, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="1" value="${valStr(row.minTargets)}" onchange="updateConfigField(${idx}, 'minTargets', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="99" value="${valStr(row.maxTargets)}" onchange="updateConfigField(${idx}, 'maxTargets', this.value, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minExtras)}" onchange="updateConfigField(${idx}, 'minExtras', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="99" value="${valStr(row.maxExtras)}" onchange="updateConfigField(${idx}, 'maxExtras', this.value, true)" /></div></td>
-          <td><div class="cfg-range"><input type="number" step="0.1" class="cfg-inp cfg-num" placeholder="2" value="${valStr(row.minAvgLen)}" onchange="updateConfigField(${idx}, 'minAvgLen', this.value, false, true)" />~<input type="number" step="0.1" class="cfg-inp cfg-num" placeholder="8" value="${valStr(row.maxAvgLen)}" onchange="updateConfigField(${idx}, 'maxAvgLen', this.value, false, true)" /></div></td>
+          <td><div style="display:flex; flex-direction:column; gap:3px;">${makeSel(lenRuleOpts, row.lenRule || "all", `updateConfigField(${idx}, 'lenRule', this.value)`)}<div class="cfg-range"><input type="number" step="0.1" class="cfg-inp cfg-num" placeholder="2" value="${valStr(row.minAvgLen)}" onchange="updateConfigField(${idx}, 'minAvgLen', this.value, false, true)" />~<input type="number" step="0.1" class="cfg-inp cfg-num" placeholder="8" value="${valStr(row.maxAvgLen)}" onchange="updateConfigField(${idx}, 'maxAvgLen', this.value, false, true)" /></div></div></td>
           <td><div style="display:flex; flex-direction:column; gap:3px;">${makeSel(dirOpts, row.dirTendency || "all", `updateConfigField(${idx}, 'dirTendency', this.value)`)}<div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="-10" value="${valStr(row.minDirAvg)}" onchange="updateConfigField(${idx}, 'minDirAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="10" value="${valStr(row.maxDirAvg)}" onchange="updateConfigField(${idx}, 'maxDirAvg', this.value, false, true)" /></div></div></td>
           <td><div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minRarityAvg)}" onchange="updateConfigField(${idx}, 'minRarityAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="30" value="${valStr(row.maxRarityAvg)}" onchange="updateConfigField(${idx}, 'maxRarityAvg', this.value, false, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minPathAvg)}" onchange="updateConfigField(${idx}, 'minPathAvg', this.value, false, true)" />~<input type="number" step="0.5" class="cfg-inp cfg-num" placeholder="20" value="${valStr(row.maxPathAvg)}" onchange="updateConfigField(${idx}, 'maxPathAvg', this.value, false, true)" /></div></td>
@@ -3802,14 +3852,16 @@
         else if (i <= 9) { size = "2x5"; minW = 4; maxW = 8; minTotal = 6; maxTotal = 18; maxSingle = 6; }
         else if (i <= 14) { size = "3x4"; minW = 6; maxW = 11; minTotal = 12; maxTotal = 30; maxSingle = 8; }
         else { size = "3x5"; minW = 8; maxW = 15; minTotal = 18; maxTotal = 45; maxSingle = 11; }
+        const role = i <= 5 ? "easy" : ((i - 6) % 5 === 4 ? "hard" : ((i - 6) % 5 === 0 ? "easy" : "normal"));
         rows.push({
           ...createEmptyConfigRow(i),
           stageLabel: i <= 5 ? "新手" : (i <= 10 ? "S1" : "S2"),
-          role: i <= 5 ? "easy" : ((i - 6) % 5 === 4 ? "hard" : ((i - 6) % 5 === 0 ? "easy" : "normal")),
+          role,
           size,
           shapeType: i <= 5 ? "full" : "group_auto_1of5",
           minTargets: minW,
           maxTargets: maxW,
+          lenRule: role === "hard" ? "4_5p_opt3" : "3_4_5p",
           minDiffTotal: minTotal,
           maxDiffTotal: maxTotal,
           maxDiffMax: maxSingle,
@@ -4015,7 +4067,7 @@
     function exportConfigCsv() {
       const cols = [
         "levelNum", "stageLabel", "role", "size", "shapeType", "minMaxCount", "maxMaxCount", "minTargets", "maxTargets",
-        "minExtras", "maxExtras", "minAvgLen", "maxAvgLen", "dirTendency",
+        "minExtras", "maxExtras", "lenRule", "minAvgLen", "maxAvgLen", "dirTendency",
         "minDirAvg", "maxDirAvg", "minRarityAvg", "maxRarityAvg", "minPathAvg", "maxPathAvg",
         "minDiffTotal", "maxDiffTotal", "minDiffMax", "maxDiffMax", "wordContains", "sortBy",
       ];

@@ -491,6 +491,13 @@
       .map((ex) => (typeof ex === "string" ? ex.toUpperCase() : String((ex && ex.word) || "").toUpperCase()))
       .filter(Boolean);
     const tCount = rec.target_count != null ? rec.target_count : targets.length;
+    let cntLen3 = 0, cntLen4 = 0, cntLen5p = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const L = targets[i].length;
+      if (L === 3) cntLen3++;
+      else if (L === 4) cntLen4++;
+      else if (L >= 5) cntLen5p++;
+    }
     const diffTotal = rec.diff_score_total != null
       ? rec.diff_score_total
       : Math.round((rec.diff_score_avg || 0) * tCount);
@@ -502,6 +509,9 @@
       has_void: hasVoid,
       max_cell_count: rec.max_cell_count || 0,
       target_count: tCount,
+      cnt_len3: cntLen3,
+      cnt_len4: cntLen4,
+      cnt_len5p: cntLen5p,
       extra_count: rec.extra_count != null ? rec.extra_count : extras.length,
       avg_len: rec.avg_len || 0,
       dir_score_avg: rec.dir_score_avg || 0,
@@ -553,6 +563,15 @@
     }
     if (f.wordContains) {
       if (!entry.targets_str.includes(f.wordContains)) return false;
+    }
+    if (f.lenRule && f.lenRule !== "all") {
+      if (f.lenRule === "3_4_5p") {
+        if (!(entry.cnt_len3 >= 1 && entry.cnt_len4 >= 1 && entry.cnt_len5p >= 1)) return false;
+      } else if (f.lenRule === "4_5p_opt3") {
+        if (!(entry.cnt_len4 >= 1 && entry.cnt_len5p >= 1)) return false;
+      } else if (f.lenRule === "4_5p_no3") {
+        if (!(entry.cnt_len3 === 0 && entry.cnt_len4 >= 1 && entry.cnt_len5p >= 1)) return false;
+      }
     }
     return true;
   }
@@ -770,6 +789,9 @@
       const midT = (loT + hiT) * 0.5;
       pen += Math.abs(entry.target_count - midT) * 0.3;
     }
+    if (row && (row.role === "hard" || row.lenRule === "4_5p_opt3") && entry.cnt_len3 === 0) {
+      pen -= 0.35;
+    }
     return pen;
   }
 
@@ -879,6 +901,13 @@
         delete effRow.maxPathAvg;
         delete effRow.maxMaxCount;
         effRow.dirTendency = "all";
+        if (relaxLevel === 2) {
+          if (effRow.lenRule === "3_4_5p" || effRow.lenRule === "4_5p_no3") {
+            effRow.lenRule = "4_5p_opt3";
+          }
+        } else {
+          effRow.lenRule = "all";
+        }
       }
 
       const keyObj = [
@@ -886,6 +915,7 @@
         effRow.minMaxCount ?? "", effRow.maxMaxCount ?? "",
         effRow.minTargets ?? "", effRow.maxTargets ?? "",
         effRow.minExtras ?? "", effRow.maxExtras ?? "",
+        effRow.lenRule || "all",
         effRow.minAvgLen ?? "", effRow.maxAvgLen ?? "",
         effRow.minDirAvg ?? "", effRow.maxDirAvg ?? "",
         effRow.dirTendency || "all",
@@ -980,19 +1010,16 @@
       let bestPriority = -1;
       for (let k = idx; k < end; k++) {
         const rk = configRows[k] || {};
-        let cnt = matcher.queryRowPool(rk, "custom", 0).length;
+        let cnt = 0;
         let relax = 0;
-        if (cnt === 0) {
-          cnt = matcher.queryRowPool(rk, "custom", 1).length;
-          relax = 1;
-        }
-        if (cnt === 0) {
-          cnt = matcher.queryRowPool(rk, "custom", 2).length;
-          relax = 2;
+        for (let rTry = 0; rTry <= 3; rTry++) {
+          cnt = matcher.queryRowPool(rk, "custom", rTry).length;
+          relax = rTry;
+          if (cnt > 0) break;
         }
         if (cnt > 0) {
           const roleBonus = rk.role === "normal" ? 300 : (rk.role === "hard" ? 200 : 100);
-          const prio = (2 - relax) * 10000 + roleBonus + Math.min(cnt, 99);
+          const prio = (3 - relax) * 10000 + roleBonus + Math.min(cnt, 99);
           if (prio > bestPriority) {
             bestPriority = prio;
             bestK = k;
@@ -1023,7 +1050,7 @@
       let picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
 
       if (!picked) {
-        for (let relax = 1; relax <= 2 && !picked; relax++) {
+        for (let relax = 1; relax <= 3 && !picked; relax++) {
           pool = matcher.queryRowPool(row, desiredShape, relax);
           picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
           if (picked) diffRelaxed = true;
@@ -1032,7 +1059,7 @@
 
       if (!picked && desiredShape === "custom") {
         shapeFallback = true;
-        for (let relax = 0; relax <= 2 && !picked; relax++) {
+        for (let relax = 0; relax <= 3 && !picked; relax++) {
           pool = matcher.queryRowPool(row, "full", relax);
           picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
           if (picked && relax > 0) diffRelaxed = true;
@@ -1147,7 +1174,7 @@
     let picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
 
     if (!picked) {
-      for (let relax = 1; relax <= 2 && !picked; relax++) {
+      for (let relax = 1; relax <= 3 && !picked; relax++) {
         pool = matcher.queryRowPool(row, desiredShape, relax);
         picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
         if (picked) diffRelaxed = true;
@@ -1155,7 +1182,7 @@
     }
     if (!picked && desiredShape === "custom") {
       shapeFallback = true;
-      for (let relax = 0; relax <= 2 && !picked; relax++) {
+      for (let relax = 0; relax <= 3 && !picked; relax++) {
         pool = matcher.queryRowPool(row, "full", relax);
         picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
         if (picked && relax > 0) diffRelaxed = true;

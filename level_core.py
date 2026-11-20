@@ -1670,14 +1670,13 @@ class LevelGenerator:
             min_chars = non_void_total if fill_mode == "full_cover" else 5
             max_chars = min(non_void_total * max_cell_count, max(min_chars + 2, int(non_void_total * 1.25)))
         else:
-            # Prefer 4+ letter initial words on >=10-cell boards to avoid 3-letter bottleneck islands
-            min_len = 4 if non_void_total >= 10 else 3
+            min_len = 3
             if non_void_total <= 9:
                 max_len = min(5, non_void_total)
-                default_wc = rng.choice([2, 3])
+                default_wc = 3 if (non_void_total >= 6 and max_cell_count <= 2) else (rng.choice([3, 3, 4]) if non_void_total >= 6 else 2)
             elif non_void_total <= 16:
                 max_len = min(6, non_void_total)
-                default_wc = rng.choice([3, 3, 4])
+                default_wc = rng.choice([3, 4, 4])
             elif non_void_total <= 25:
                 max_len = min(7, non_void_total)
                 default_wc = rng.choice([4, 4, 5])
@@ -1686,13 +1685,14 @@ class LevelGenerator:
                 default_wc = rng.choice([5, 5, 6])
 
             wc = word_count if word_count is not None else default_wc
+            budget_floor = 12 if (non_void_total >= 6 and max_cell_count >= 2) else non_void_total
             if fill_mode == "full_cover":
-                # Keep initial overlap low (1.0x ~ 1.25x) so Stage 3 has headroom to promote candidates
+                # Allow headroom so [3, 4, 5+] initial plans fit within char budget
                 min_chars = non_void_total
-                max_chars = min(non_void_total * max_cell_count, max(non_void_total + 1, int(non_void_total * 1.28)))
+                max_chars = min(non_void_total * max_cell_count, max(budget_floor, non_void_total + 4, int(non_void_total * 1.55)))
             else:
                 min_chars = max(5, int(non_void_total * 0.55))
-                max_chars = min(non_void_total * max_cell_count, int(non_void_total * 1.15) + 1)
+                max_chars = min(non_void_total * max_cell_count, max(budget_floor, int(non_void_total * 1.35) + 1))
 
         wc = max(seed_n, wc)
         rem_n = wc - seed_n
@@ -1705,8 +1705,48 @@ class LevelGenerator:
             rem_n -= 1
 
         chosen = [rng.randint(min_len, max_len) for _ in range(rem_n)]
-        if level_num == 1 and 2 not in seed_lengths and 2 not in chosen:
-            chosen[0] = 2
+        if level_num == 1:
+            if 2 not in seed_lengths and 2 not in chosen:
+                chosen[0] = 2
+        else:
+            # Ensure initial lengths cover >=5, ==4, and (80% of the time) ==3
+            allow_no3 = non_void_total >= 9 and rng.random() < 0.20
+            need_ge5 = non_void_total >= 5 and max_len >= 5 and not any(L >= 5 for L in seed_lengths)
+            need_eq4 = non_void_total >= 4 and max_len >= 4 and not any(L == 4 for L in seed_lengths)
+            need_eq3 = (not allow_no3) and not any(L == 3 for L in seed_lengths)
+
+            fixed_indices: set[int] = set()
+            free_slots = list(range(rem_n))
+            rng.shuffle(free_slots)
+
+            if need_ge5 and free_slots and seed_sum + 5 <= max_chars:
+                idx = next((i for i in free_slots if chosen[i] >= 5), free_slots[0])
+                free_slots.remove(idx)
+                if chosen[idx] < 5:
+                    chosen[idx] = 5
+                fixed_indices.add(idx)
+            if need_eq4 and free_slots:
+                idx = next((i for i in free_slots if chosen[i] == 4), free_slots[0])
+                free_slots.remove(idx)
+                chosen[idx] = 4
+                fixed_indices.add(idx)
+            if need_eq3 and free_slots:
+                idx = next((i for i in free_slots if chosen[i] == 3), free_slots[0])
+                free_slots.remove(idx)
+                chosen[idx] = 3
+                fixed_indices.add(idx)
+
+            for _ in range(40):
+                tot = seed_sum + sum(chosen)
+                if min_chars <= tot <= max_chars:
+                    break
+                adjustable = [i for i in range(rem_n) if i not in fixed_indices] or list(range(rem_n))
+                idx = rng.choice(adjustable)
+                if tot < min_chars and chosen[idx] < max_len:
+                    chosen[idx] += 1
+                elif tot > max_chars and chosen[idx] > min_len:
+                    chosen[idx] -= 1
+            return chosen
 
         for _ in range(40):
             tot = seed_sum + sum(chosen)
@@ -2124,21 +2164,42 @@ class LevelGenerator:
                 if strictness == "path_unique":
                     promotable = [c for c in promotable if c["path_count"] == 1]
 
-                # Shuffle first for tie-breaking, then sort to prefer 4+ letters & least-used words
+                # Shuffle first for tie-breaking, then fill missing length buckets before general promotion
                 rng.shuffle(promotable)
-                promotable.sort(
-                    key=lambda c: (
-                        0 if c["path_count"] == 1 else 1,
-                        0 if c["length"] >= 4 else 1,
-                        self.target_usage.get(c["word"], 0),
-                        -c["length"],
-                    )
+                base_sort_key = lambda c: (
+                    0 if c["path_count"] == 1 else 1,
+                    0 if c["length"] >= 4 else 1,
+                    self.target_usage.get(c["word"], 0),
+                    -c["length"],
                 )
+                promotable.sort(key=base_sort_key)
+
+                has_init_5p = any(len(w) >= 5 for w in init_words)
+                has_init_4 = any(len(w) == 4 for w in init_words)
+                has_init_3 = any(len(w) == 3 for w in init_words)
+                priority_cands: list[dict[str, Any]] = []
+                used_in_prio: set[str] = set()
+                if not has_init_5p:
+                    c5 = next((c for c in promotable if c["length"] >= 5), None)
+                    if c5:
+                        priority_cands.append(c5)
+                        used_in_prio.add(c5["word"])
+                if not has_init_4:
+                    c4 = next((c for c in promotable if c["length"] == 4 and c["word"] not in used_in_prio), None)
+                    if c4:
+                        priority_cands.append(c4)
+                        used_in_prio.add(c4["word"])
+                if not has_init_3 and not (non_void_total >= 9 and rng.random() < 0.20):
+                    c3 = next((c for c in promotable if c["length"] == 3 and c["word"] not in used_in_prio), None)
+                    if c3:
+                        priority_cands.append(c3)
+                        used_in_prio.add(c3["word"])
+                ordered_promotable = priority_cands + [c for c in promotable if c["word"] not in used_in_prio]
 
                 # Promote ALL eligible target-pool candidates (unless word_count explicitly caps total)
-                desired_promote = len(promotable) if word_count is None else max(0, word_count - len(init_words))
+                desired_promote = len(ordered_promotable) if word_count is None else max(0, word_count - len(init_words))
 
-                for cand in promotable:
+                for cand in ordered_promotable:
                     if len(selected_cands) >= desired_promote:
                         break
                     cw = cand["word"]
@@ -2182,12 +2243,19 @@ class LevelGenerator:
 
             # Layout avoidance check: avoid boards that form hot/over-repeated extra words
             collision_cnt = sum(1 for ex in level_candidate["extra_words"] if ex["word"] in hot_avoid)
+            final_t = level_candidate["target_words"]
+            missing_req_len = 0
+            if level_num >= 2 and non_void_total >= 5:
+                if not any(len(w) >= 5 for w in final_t):
+                    missing_req_len += 1
+                if non_void_total >= 4 and not any(len(w) == 4 for w in final_t):
+                    missing_req_len += 1
             need_promote_penalty = (
                 1 if (explicit_lengths is None and max_cell_count >= 2 and len(selected_cands) == 0) else 0
             )
-            quality_key = (collision_cnt, need_promote_penalty)
+            quality_key = (missing_req_len, collision_cnt, need_promote_penalty)
 
-            if quality_key != (0, 0) and restart < 10:
+            if quality_key != (0, 0, 0) and restart < 10:
                 if best_fallback is None or quality_key < best_fallback[0]:
                     best_fallback = (quality_key, level_candidate)
                 continue
