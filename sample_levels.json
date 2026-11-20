@@ -11,29 +11,29 @@
           "r": 0,
           "c": 0,
           "void": false,
-          "letter": "C",
-          "count": 1
+          "letter": "T",
+          "count": 3
         },
         {
           "r": 0,
           "c": 1,
           "void": false,
-          "letter": "H",
-          "count": 1
+          "letter": "I",
+          "count": 3
         },
         {
           "r": 0,
           "c": 2,
           "void": false,
-          "letter": "S",
-          "count": 2
+          "letter": "E",
+          "count": 3
         },
         {
           "r": 0,
           "c": 3,
           "void": false,
-          "letter": "A",
-          "count": 1
+          "letter": "S",
+          "count": 2
         }
       ],
       [
@@ -41,39 +41,63 @@
           "r": 1,
           "c": 0,
           "void": false,
-          "letter": "T",
-          "count": 1
+          "letter": "B",
+          "count": 2
         },
         {
           "r": 1,
           "c": 1,
           "void": false,
-          "letter": "E",
+          "letter": "U",
           "count": 2
         },
         {
           "r": 1,
           "c": 2,
           "void": false,
-          "letter": "S",
-          "count": 2
+          "letter": "R",
+          "count": 3
         },
         {
           "r": 1,
           "c": 3,
           "void": false,
-          "letter": "T",
-          "count": 2
+          "letter": "C",
+          "count": 1
         }
       ]
     ],
     "initial_words": [
-      "CHESS",
-      "TEST",
-      "SAT"
+      "SCRUB",
+      "TIER",
+      "TIES",
+      "TIE",
+      "RUB"
     ],
     "initial_word_paths": {
-      "CHESS": [
+      "SCRUB": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "TIER": [
         [
           0,
           0
@@ -83,349 +107,82 @@
           1
         ],
         [
-          1,
-          1
-        ],
-        [
-          1,
+          0,
           2
         ],
         [
-          0,
+          1,
           2
         ]
       ],
-      "TEST": [
+      "TIES": [
         [
-          1,
+          0,
           0
         ],
         [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "TIE": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "RUB": [
+        [
+          1,
+          2
+        ],
+        [
           1,
           1
         ],
         [
           1,
-          2
-        ],
-        [
-          1,
-          3
-        ]
-      ],
-      "SAT": [
-        [
-          0,
-          2
-        ],
-        [
-          0,
-          3
-        ],
-        [
-          1,
-          3
+          0
         ]
       ]
     },
     "selected_candidates": [],
     "selected_candidate_paths": {},
     "target_words": [
-      "CHESS",
-      "TEST",
-      "SAT"
+      "SCRUB",
+      "TIER",
+      "TIES",
+      "TIE",
+      "RUB"
     ],
-    "extra_words": [
-      {
-        "word": "TASSE",
-        "length": 5,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. (盔甲的)腿甲；腿罩",
-        "tag_desc": "",
-        "rank": 11247,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 8,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "SAT"
-        ]
-      },
-      {
-        "word": "TESTA",
-        "length": 5,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 种皮, 外种皮(植物); 壳, 甲壳, 介壳(虾、蟹、蛤、昆虫等的)",
-        "tag_desc": "",
-        "rank": 11270,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 8,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "TEST",
-          "SAT"
-        ]
-      },
-      {
-        "word": "HEST",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. <古>命令；训谕",
-        "tag_desc": "",
-        "rank": 10559,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 4,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS"
-        ]
-      },
-      {
-        "word": "SATS",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "abbr. short airfield for tactical support 缺乏战术支持机场",
-        "tag_desc": "sat 的复数/第三人称单数",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 2,
-        "rarity": 1,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              1,
-              3
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "SAT"
-        ]
-      },
-      {
-        "word": "TASS",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 塔斯社",
-        "tag_desc": "",
-        "rank": 9927,
-        "band": "档位4",
-        "rarity_tier": 4,
-        "rarity": 3,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "SAT"
-        ]
-      },
-      {
-        "word": "STASH",
-        "length": 5,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "vt. 藏起来",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 5,
-        "rarity": 8,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS",
-          "SAT"
-        ]
-      }
-    ],
+    "extra_words": [],
     "other_candidates": [
       {
-        "word": "ASHES",
-        "length": 5,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
+        "word": "IT",
+        "length": 2,
+        "category": "tutorial_2",
+        "category_label": "两字母引导词",
         "eligible_for_target": true,
-        "zh": "n. 骨灰",
+        "zh": "pron. 它",
         "tag_desc": "",
-        "rank": 4609,
-        "band": "档位2",
-        "rarity_tier": 2,
-        "rarity": 2,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS",
-          "SAT"
-        ]
-      },
-      {
-        "word": "ASSET",
-        "length": 5,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 资产；有益的东西",
-        "tag_desc": "",
-        "rank": 1611,
-        "band": "3k",
+        "rank": null,
+        "band": null,
         "rarity_tier": 1,
         "rarity": 0,
         "path_count": 1,
@@ -433,95 +190,31 @@
           [
             [
               0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
               1
             ],
             [
-              1,
+              0,
               0
             ]
           ]
         ],
-        "expiration_triggers": [
-          "TEST",
-          "SAT"
-        ]
+        "expiration_triggers": []
       },
       {
-        "word": "CHEST",
-        "length": 5,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
+        "word": "TI",
+        "length": 2,
+        "category": "tutorial_2",
+        "category_label": "两字母引导词",
         "eligible_for_target": true,
-        "zh": "n. 胸；胸部；衣柜；箱子",
+        "zh": "n. 终端接口, 得州仪器公司, 变换实现；钛(22号元素)",
         "tag_desc": "",
-        "rank": 1026,
-        "band": "2k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS"
-        ]
-      },
-      {
-        "word": "ETCH",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "v. 蚀刻；蚀镂；施行蚀刻法 | n. 腐蚀剂",
-        "tag_desc": "",
-        "rank": 5282,
-        "band": "6k",
+        "rank": null,
+        "band": null,
         "rarity_tier": 3,
-        "rarity": 2,
+        "rarity": 0,
         "path_count": 1,
         "sample_paths": [
           [
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              0
-            ],
             [
               0,
               0
@@ -532,243 +225,7 @@
             ]
           ]
         ],
-        "expiration_triggers": [
-          "CHESS",
-          "TEST"
-        ]
-      },
-      {
-        "word": "ASH",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 灰；灰烬",
-        "tag_desc": "",
-        "rank": 3377,
-        "band": "4k",
-        "rarity_tier": 2,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS",
-          "SAT"
-        ]
-      },
-      {
-        "word": "SET",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 日落；同伙；组合；集合；装置 | v. 放；安置；放置；设定；使凝结；点燃；确定；点缀；使就位；树立；分配；调整；日落；凝固；定型；搁住；结果；适合",
-        "tag_desc": "",
-        "rank": 660,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "TEST"
-        ]
-      },
-      {
-        "word": "SHE",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "pron. 她",
-        "tag_desc": "",
-        "rank": 667,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS"
-        ]
-      },
-      {
-        "word": "AS",
-        "length": 2,
-        "category": "tutorial_2",
-        "category_label": "两字母引导词",
-        "eligible_for_target": true,
-        "zh": "adv. 同样地；例如 | prep. 做为；当作",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "SAT"
-        ]
-      },
-      {
-        "word": "AT",
-        "length": 2,
-        "category": "tutorial_2",
-        "category_label": "两字母引导词",
-        "eligible_for_target": true,
-        "zh": "prep. 在；向；对",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              3
-            ],
-            [
-              1,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "SAT"
-        ]
-      },
-      {
-        "word": "HE",
-        "length": 2,
-        "category": "tutorial_2",
-        "category_label": "两字母引导词",
-        "eligible_for_target": true,
-        "zh": "pron. 他 | n. 男孩；男人；雄性动物",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "CHESS"
-        ]
-      },
-      {
-        "word": "TASSET",
-        "length": 6,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. (盔甲的)腿甲；腿罩",
-        "tag_desc": "",
-        "rank": 11248,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 12,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "TEST",
-          "SAT"
-        ]
+        "expiration_triggers": []
       }
     ],
     "solver_report": {
@@ -779,77 +236,114 @@
       "path_unique": true,
       "issues": [],
       "total_active_cells": 8,
-      "total_counts": 12,
-      "target_char_sum": 12,
-      "avg_overlap": 1.5,
-      "rarity_score_total": 0,
-      "path_score_total": 8,
-      "diff_score_total": 8,
-      "diff_score_avg": 2.67,
-      "diff_score_max": 5,
+      "total_counts": 19,
+      "target_char_sum": 19,
+      "avg_overlap": 2.38,
+      "rarity_score_total": 3,
+      "path_score_total": 3,
+      "diff_score_total": 6,
+      "diff_score_avg": 1.2,
+      "diff_score_max": 3,
       "explored_states": 1,
       "truncated": false,
       "target_details": [
         {
-          "word": "CHESS",
+          "word": "SCRUB",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
+                3
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
                 0
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                1,
-                2
-              ],
-              [
-                0,
-                2
               ]
             ]
           ],
-          "dir_score": 3,
-          "path_score": 4,
-          "diff_score": 4,
-          "rank": 2117,
-          "band": "6k",
+          "dir_score": -1,
+          "path_score": 1,
+          "diff_score": 3,
+          "rank": 4108,
+          "band": "5k",
           "tier": "中频进阶词 (4k-9k)",
           "spelling": "通用",
-          "ipa": "/t͡ʃɛs/",
-          "zh": "n. 国际象棋",
-          "rarity_tier": 1,
-          "rarity": 0,
+          "ipa": "/skɹʌb/",
+          "zh": "n. 用力擦洗；矮树；矮人；渺小之物 | v. 用力擦洗；擦掉；摩擦；擦洗干净；进行手臂消毒",
+          "rarity_tier": 2,
+          "rarity": 2,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "TEST",
+          "word": "TIER",
           "path_count": 1,
           "sample_paths": [
             [
               [
-                1,
+                0,
                 0
               ],
               [
-                1,
+                0,
                 1
               ],
               [
-                1,
+                0,
                 2
               ],
               [
                 1,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 4,
+          "path_score": 1,
+          "diff_score": 2,
+          "rank": 4440,
+          "band": "6k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/ˈtaɪ.ə/",
+          "zh": "n. 排；层；等级",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "TIES",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                0,
                 3
               ]
             ]
@@ -857,45 +351,78 @@
           "dir_score": 4,
           "path_score": 0,
           "diff_score": 0,
-          "rank": 774,
-          "band": "1k",
-          "tier": "核心高频词 (1k-3k)",
+          "rank": 2983,
+          "band": "档位1",
+          "tier": "扩展词库 (档位1)",
           "spelling": "通用",
-          "ipa": "/tɛst/",
-          "zh": "n. 测试；试验；化验；检验；考验；甲壳 | v. 测试；试验；化验；接受测验；进行测试",
+          "ipa": "/taɪz/",
+          "zh": "n. 结",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "SAT",
+          "word": "TIE",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
-                2
+                0
               ],
               [
                 0,
-                3
+                1
               ],
               [
-                1,
-                3
+                0,
+                2
               ]
             ]
           ],
           "dir_score": 3,
+          "path_score": 0,
+          "diff_score": 0,
+          "rank": 794,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/taɪ/",
+          "zh": "n. 带子；线；鞋带；领带；领结；关系；束缚；平局；不分胜负 | v. 系；打结；扎；约束；与...成平局；结合；不分胜负",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "RUB",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ]
+          ],
+          "dir_score": -3,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 2847,
-          "band": "档位1",
-          "tier": "扩展词库 (档位1)",
+          "rank": 1415,
+          "band": "2k",
+          "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/sæt/",
-          "zh": "n. 饱和度",
+          "ipa": "/ɹʌb/",
+          "zh": "n. 摩擦；困难；障碍；磨损处 | v. 擦；搓；摩擦；惹怒；擦破",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
@@ -904,7 +431,32 @@
       ],
       "winning_solution": [
         {
-          "word": "CHESS",
+          "word": "SCRUB",
+          "path": [
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        },
+        {
+          "word": "TIER",
           "path": [
             [
               0,
@@ -915,62 +467,75 @@
               1
             ],
             [
-              1,
-              1
-            ],
-            [
-              1,
+              0,
               2
             ],
             [
-              0,
+              1,
               2
             ]
           ]
         },
         {
-          "word": "TEST",
+          "word": "TIES",
           "path": [
             [
-              1,
+              0,
               0
             ],
             [
-              1,
+              0,
               1
             ],
             [
-              1,
+              0,
               2
             ],
             [
-              1,
+              0,
               3
             ]
           ]
         },
         {
-          "word": "SAT",
+          "word": "TIE",
           "path": [
             [
               0,
-              2
+              0
             ],
             [
               0,
-              3
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "RUB",
+          "path": [
+            [
+              1,
+              2
             ],
             [
               1,
-              3
+              1
+            ],
+            [
+              1,
+              0
             ]
           ]
         }
       ],
       "deadlock_witness": null
     },
-    "generation_ms": 2.9,
-    "orientation_applied": "flip_h"
+    "generation_ms": 3.2,
+    "orientation_applied": "id"
   },
   {
     "level_num": 2,
@@ -6051,29 +5616,29 @@
           "r": 0,
           "c": 0,
           "void": false,
-          "letter": "B",
+          "letter": "A",
           "count": 2
         },
         {
           "r": 0,
           "c": 1,
           "void": false,
-          "letter": "A",
-          "count": 2
+          "letter": "I",
+          "count": 4
         },
         {
           "r": 0,
           "c": 2,
           "void": false,
-          "letter": "R",
-          "count": 3
+          "letter": "B",
+          "count": 4
         },
         {
           "r": 0,
           "c": 3,
           "void": false,
-          "letter": "O",
-          "count": 1
+          "letter": "R",
+          "count": 4
         }
       ],
       [
@@ -6081,79 +5646,65 @@
           "r": 1,
           "c": 0,
           "void": false,
-          "letter": "Y",
-          "count": 3
+          "letter": "M",
+          "count": 1
         },
         {
           "r": 1,
           "c": 1,
           "void": false,
-          "letter": "E",
+          "letter": "D",
           "count": 3
         },
         {
           "r": 1,
           "c": 2,
           "void": false,
-          "letter": "N",
+          "letter": "B",
           "count": 3
         },
         {
           "r": 1,
           "c": 3,
           "void": false,
-          "letter": "B",
-          "count": 1
+          "letter": "A",
+          "count": 4
         }
       ]
     ],
     "initial_words": [
-      "YEARN",
-      "BORN",
-      "BAR"
+      "RABBI",
+      "MAID",
+      "BID"
     ],
     "initial_word_paths": {
-      "YEARN": [
+      "RABBI": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ]
+      ],
+      "MAID": [
         [
           1,
           0
         ],
-        [
-          1,
-          1
-        ],
-        [
-          0,
-          1
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          1,
-          2
-        ]
-      ],
-      "BORN": [
-        [
-          1,
-          3
-        ],
-        [
-          0,
-          3
-        ],
-        [
-          0,
-          2
-        ],
-        [
-          1,
-          2
-        ]
-      ],
-      "BAR": [
         [
           0,
           0
@@ -6163,97 +5714,112 @@
           1
         ],
         [
+          1,
+          1
+        ]
+      ],
+      "BID": [
+        [
           0,
           2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
         ]
       ]
     },
     "selected_candidates": [
-      "BYE",
-      "YEN"
+      "BARB",
+      "AID",
+      "BAR",
+      "BRA"
     ],
     "selected_candidate_paths": {
-      "BYE": [
+      "BARB": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "AID": [
         [
           0,
           0
         ],
         [
-          1,
-          0
+          0,
+          1
         ],
         [
           1,
           1
         ]
       ],
-      "YEN": [
-        [
-          1,
-          0
-        ],
-        [
-          1,
-          1
-        ],
+      "BAR": [
         [
           1,
           2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "BRA": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
         ]
       ]
     },
     "target_words": [
-      "YEARN",
-      "BORN",
+      "RABBI",
+      "MAID",
+      "BID",
+      "BARB",
+      "AID",
       "BAR",
-      "BYE",
-      "YEN"
+      "BRA"
     ],
     "extra_words": [
       {
-        "word": "ABYE",
+        "word": "DIAM",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "v. 赎(罪)；偿",
+        "zh": "n. 直径",
         "tag_desc": "",
-        "rank": 10022,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 4,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "BORA",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 布拉风(亚德里亚海及其沿岸的一种干冷东北风)",
-        "tag_desc": "",
-        "rank": 10164,
+        "rank": 10339,
         "band": "档位5",
         "rarity_tier": 5,
         "rarity": 4,
@@ -6262,36 +5828,36 @@
           [
             [
               1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
+              1
             ],
             [
               0,
               1
+            ],
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
             ]
           ]
         ],
         "expiration_triggers": [
-          "BORN"
+          "MAID"
         ]
       },
       {
-        "word": "YEA",
+        "word": "DIB",
         "length": 3,
         "category": "obscure_base",
         "category_label": "低频 / 生僻词",
         "eligible_for_target": false,
-        "zh": "n. 肯定, 赞成, 赞成票",
+        "zh": "v. 将饵在水面轻轻地上下拉动",
         "tag_desc": "",
-        "rank": null,
-        "band": null,
+        "rank": 8045,
+        "band": "档位5",
         "rarity_tier": 5,
         "rarity": 0,
         "path_count": 1,
@@ -6299,311 +5865,22 @@
           [
             [
               1,
-              0
-            ],
-            [
-              1,
               1
             ],
             [
               0,
               1
+            ],
+            [
+              0,
+              2
             ]
           ]
         ],
         "expiration_triggers": []
       }
     ],
-    "other_candidates": [
-      {
-        "word": "BORNE",
-        "length": 5,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "v. 忍受；负荷；结果实；生子女（bear的过去分词）",
-        "tag_desc": "",
-        "rank": 2242,
-        "band": "档位1",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BORN"
-        ]
-      },
-      {
-        "word": "BARN",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 谷仓",
-        "tag_desc": "",
-        "rank": 3387,
-        "band": "4k",
-        "rarity_tier": 2,
-        "rarity": 1,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "EARN",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "v. 赚得；获得；博得",
-        "tag_desc": "",
-        "rank": 1111,
-        "band": "2k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "NEAR",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "adj. 近的；近亲的；近似的 | adv. 接近；亲近",
-        "tag_desc": "",
-        "rank": 499,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "YEAR",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 年；年度；年龄",
-        "tag_desc": "",
-        "rank": 895,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "EAR",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 耳朵；倾听；听觉；穗 | v. 抽穗",
-        "tag_desc": "",
-        "rank": 220,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      },
-      {
-        "word": "ROB",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "v. 抢夺；抢掠；剥夺",
-        "tag_desc": "",
-        "rank": 1408,
-        "band": "2k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              1,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BORN"
-        ]
-      },
-      {
-        "word": "BARNEY",
-        "length": 6,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "n. [口]大吵大闹；拉曳器",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 5,
-        "rarity": 12,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": []
-      }
-    ],
+    "other_candidates": [],
     "solver_report": {
       "safety_level": "PATH_UNIQUE_ZERO_DEADLOCK",
       "safety_label": "路径唯一 · 绝对零死局",
@@ -6612,19 +5889,60 @@
       "path_unique": true,
       "issues": [],
       "total_active_cells": 8,
-      "total_counts": 18,
-      "target_char_sum": 18,
-      "avg_overlap": 2.25,
-      "rarity_score_total": 2,
-      "path_score_total": 12,
-      "diff_score_total": 14,
-      "diff_score_avg": 2.8,
-      "diff_score_max": 7,
+      "total_counts": 25,
+      "target_char_sum": 25,
+      "avg_overlap": 3.12,
+      "rarity_score_total": 7,
+      "path_score_total": 16,
+      "diff_score_total": 23,
+      "diff_score_avg": 3.29,
+      "diff_score_max": 8,
       "explored_states": 1,
       "truncated": false,
       "target_details": [
         {
-          "word": "YEARN",
+          "word": "RABBI",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          "dir_score": -1,
+          "path_score": 4,
+          "diff_score": 8,
+          "rank": 5633,
+          "band": "7k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/ˈræbaɪ/",
+          "zh": "n. 拉比(犹太教圣职人员)；大师(对犹太学者的尊称)",
+          "rarity_tier": 3,
+          "rarity": 4,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "MAID",
           "path_count": 1,
           "sample_paths": [
             [
@@ -6633,76 +5951,105 @@
                 0
               ],
               [
-                1,
-                1
+                0,
+                0
               ],
               [
                 0,
                 1
               ],
+              [
+                1,
+                1
+              ]
+            ]
+          ],
+          "dir_score": 0,
+          "path_score": 4,
+          "diff_score": 5,
+          "rank": 3997,
+          "band": "5k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/meɪd/",
+          "zh": "n. 少女；未婚女子；女仆",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "BID",
+          "path_count": 1,
+          "sample_paths": [
+            [
               [
                 0,
                 2
               ],
               [
+                0,
+                1
+              ],
+              [
                 1,
+                1
+              ]
+            ]
+          ],
+          "dir_score": -1,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 1625,
+          "band": "3k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/bɪd/",
+          "zh": "n. 出价 | v. 命令；吩咐；请求；表示；宣布；投标",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "BARB",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                0,
                 2
               ]
             ]
           ],
-          "dir_score": 3,
-          "path_score": 4,
-          "diff_score": 6,
-          "rank": 4461,
+          "dir_score": 0,
+          "path_score": 3,
+          "diff_score": 5,
+          "rank": 5236,
           "band": "6k",
           "tier": "中频进阶词 (4k-9k)",
           "spelling": "通用",
-          "ipa": "/jɜːn/",
-          "zh": "v. 渴望；想念；怀念；同情",
-          "rarity_tier": 2,
+          "ipa": "/bɑː(ɹ)b/",
+          "zh": "n. 倒钩 | v. 装倒钩于",
+          "rarity_tier": 3,
           "rarity": 2,
           "source": "core",
-          "origin": "initial"
+          "origin": "candidate"
         },
         {
-          "word": "BORN",
-          "path_count": 1,
-          "sample_paths": [
-            [
-              [
-                1,
-                3
-              ],
-              [
-                0,
-                3
-              ],
-              [
-                0,
-                2
-              ],
-              [
-                1,
-                2
-              ]
-            ]
-          ],
-          "dir_score": -2,
-          "path_score": 4,
-          "diff_score": 4,
-          "rank": 99,
-          "band": "1k",
-          "tier": "核心高频词 (1k-3k)",
-          "spelling": "通用",
-          "ipa": "/bɔːn/",
-          "zh": "adj. 天生的",
-          "rarity_tier": 1,
-          "rarity": 0,
-          "source": "core",
-          "origin": "initial"
-        },
-        {
-          "word": "BAR",
+          "word": "AID",
           "path_count": 1,
           "sample_paths": [
             [
@@ -6713,39 +6060,6 @@
               [
                 0,
                 1
-              ],
-              [
-                0,
-                2
-              ]
-            ]
-          ],
-          "dir_score": 3,
-          "path_score": 0,
-          "diff_score": 0,
-          "rank": 60,
-          "band": "1k",
-          "tier": "核心高频词 (1k-3k)",
-          "spelling": "通用",
-          "ipa": "/bɑː/",
-          "zh": "n. 条；棒；酒吧；栅；障碍物 | v. 禁止；阻挡；妨碍",
-          "rarity_tier": 1,
-          "rarity": 0,
-          "source": "core",
-          "origin": "initial"
-        },
-        {
-          "word": "BYE",
-          "path_count": 1,
-          "sample_paths": [
-            [
-              [
-                0,
-                0
-              ],
-              [
-                1,
-                0
               ],
               [
                 1,
@@ -6756,45 +6070,78 @@
           "dir_score": 3,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 2254,
-          "band": "档位1",
-          "tier": "扩展词库 (档位1)",
+          "rank": 915,
+          "band": "2k",
+          "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/baɪ/",
-          "zh": "interj. 再会；回头见",
+          "ipa": "/eɪd/",
+          "zh": "n. 帮助；外援；助手 | v. 援助；帮助；有助于",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
           "origin": "candidate"
         },
         {
-          "word": "YEN",
+          "word": "BAR",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 1,
-                0
-              ],
-              [
-                1,
-                1
-              ],
-              [
-                1,
                 2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                3
+              ]
+            ]
+          ],
+          "dir_score": 1,
+          "path_score": 1,
+          "diff_score": 1,
+          "rank": 60,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/bɑː/",
+          "zh": "n. 条；棒；酒吧；栅；障碍物 | v. 禁止；阻挡；妨碍",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "candidate"
+        },
+        {
+          "word": "BRA",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                3
               ]
             ]
           ],
           "dir_score": 3,
-          "path_score": 0,
-          "diff_score": 0,
-          "rank": 4462,
-          "band": "6k",
-          "tier": "中频进阶词 (4k-9k)",
+          "path_score": 1,
+          "diff_score": 1,
+          "rank": 4645,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
           "spelling": "通用",
-          "ipa": "/jɛn/",
-          "zh": "n. 日元(日本货币单位)；渴望；嗜好 | v. 渴望",
+          "ipa": "/bɹɑː/",
+          "zh": "n. 奶罩",
           "rarity_tier": 2,
           "rarity": 0,
           "source": "core",
@@ -6803,48 +6150,103 @@
       ],
       "winning_solution": [
         {
-          "word": "YEARN",
+          "word": "RABBI",
+          "path": [
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        {
+          "word": "MAID",
           "path": [
             [
               1,
               0
             ],
             [
-              1,
-              1
+              0,
+              0
             ],
             [
               0,
               1
             ],
+            [
+              1,
+              1
+            ]
+          ]
+        },
+        {
+          "word": "BID",
+          "path": [
             [
               0,
               2
             ],
             [
+              0,
+              1
+            ],
+            [
               1,
+              1
+            ]
+          ]
+        },
+        {
+          "word": "BARB",
+          "path": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
               2
             ]
           ]
         },
         {
-          "word": "BORN",
+          "word": "AID",
           "path": [
             [
-              1,
-              3
+              0,
+              0
             ],
             [
               0,
-              3
-            ],
-            [
-              0,
-              2
+              1
             ],
             [
               1,
-              2
+              1
             ]
           ]
         },
@@ -6852,58 +6254,41 @@
           "word": "BAR",
           "path": [
             [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
+              1,
               2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              0,
+              3
             ]
           ]
         },
         {
-          "word": "BYE",
+          "word": "BRA",
           "path": [
             [
               0,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        },
-        {
-          "word": "YEN",
-          "path": [
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
               2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
             ]
           ]
         }
       ],
       "deadlock_witness": null
     },
-    "generation_ms": 3.1,
-    "orientation_applied": "flip_h"
+    "generation_ms": 2.9,
+    "orientation_applied": "id"
   },
   {
     "level_num": 7,
@@ -8223,35 +7608,35 @@
           "r": 0,
           "c": 0,
           "void": false,
-          "letter": "P",
-          "count": 1
+          "letter": "L",
+          "count": 2
         },
         {
           "r": 0,
           "c": 1,
           "void": false,
-          "letter": "A",
-          "count": 3
+          "letter": "O",
+          "count": 2
         },
         {
           "r": 0,
           "c": 2,
           "void": false,
-          "letter": "L",
-          "count": 3
+          "letter": "E",
+          "count": 4
         },
         {
           "r": 0,
           "c": 3,
           "void": false,
-          "letter": "S",
+          "letter": "D",
           "count": 2
         },
         {
           "r": 0,
           "c": 4,
           "void": false,
-          "letter": "C",
+          "letter": "P",
           "count": 2
         }
       ],
@@ -8260,57 +7645,62 @@
           "r": 1,
           "c": 0,
           "void": false,
-          "letter": "G",
-          "count": 2
+          "letter": "L",
+          "count": 1
         },
         {
           "r": 1,
           "c": 1,
           "void": false,
           "letter": "O",
-          "count": 2
+          "count": 3
         },
         {
           "r": 1,
           "c": 2,
           "void": false,
-          "letter": "M",
-          "count": 1
+          "letter": "S",
+          "count": 4
         },
         {
           "r": 1,
           "c": 3,
           "void": false,
-          "letter": "T",
-          "count": 2
+          "letter": "G",
+          "count": 3
         },
         {
           "r": 1,
           "c": 4,
           "void": false,
-          "letter": "U",
-          "count": 2
+          "letter": "E",
+          "count": 3
         }
       ]
     ],
     "initial_words": [
-      "GOALS",
-      "PALM",
-      "CUT"
+      "LOOSED",
+      "PEGS",
+      "LOSE",
+      "PEG"
     ],
     "initial_word_paths": {
-      "GOALS": [
+      "LOOSED": [
         [
-          1,
+          0,
           0
-        ],
-        [
-          1,
-          1
         ],
         [
           0,
           1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
         ],
         [
           0,
@@ -8321,25 +7711,43 @@
           3
         ]
       ],
-      "PALM": [
+      "PEGS": [
         [
           0,
-          0
+          4
         ],
         [
-          0,
-          1
+          1,
+          4
         ],
         [
-          0,
-          2
+          1,
+          3
         ],
         [
           1,
           2
         ]
       ],
-      "CUT": [
+      "LOSE": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "PEG": [
         [
           0,
           4
@@ -8355,233 +7763,181 @@
       ]
     },
     "selected_candidates": [
-      "GOAL",
-      "CUTS"
+      "LOOSE",
+      "EDGE"
     ],
     "selected_candidate_paths": {
-      "GOAL": [
+      "LOOSE": [
         [
-          1,
+          0,
           0
-        ],
-        [
-          1,
-          1
         ],
         [
           0,
           1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
         ],
         [
           0,
           2
         ]
       ],
-      "CUTS": [
+      "EDGE": [
         [
           0,
-          4
+          2
         ],
         [
-          1,
-          4
+          0,
+          3
         ],
         [
           1,
           3
         ],
         [
-          0,
-          3
+          1,
+          4
         ]
       ]
     },
     "target_words": [
-      "GOALS",
-      "PALM",
-      "CUT",
-      "GOAL",
-      "CUTS"
+      "LOOSED",
+      "PEGS",
+      "LOSE",
+      "PEG",
+      "LOOSE",
+      "EDGE"
     ],
     "extra_words": [
       {
-        "word": "SCUT",
+        "word": "LOOS",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "n. 短尾；可鄙的家伙",
+        "zh": "n. 损耗；洗手间（loo复数形式）",
         "tag_desc": "",
-        "rank": 11099,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 4,
+        "rank": 9109,
+        "band": "档位3",
+        "rarity_tier": 3,
+        "rarity": 2,
         "path_count": 1,
         "sample_paths": [
           [
             [
               0,
-              3
+              0
             ],
             [
               0,
-              4
+              1
             ],
             [
               1,
-              4
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "SEDGE",
+        "length": 5,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. 莎草；蓑衣草",
+        "tag_desc": "",
+        "rank": 7772,
+        "band": "档位4",
+        "rarity_tier": 4,
+        "rarity": 6,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
             ],
             [
               1,
               3
+            ],
+            [
+              1,
+              4
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "LOO",
+        "length": 3,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. 卢牌戏",
+        "tag_desc": "",
+        "rank": null,
+        "band": null,
+        "rarity_tier": 5,
+        "rarity": 0,
+        "path_count": 2,
+        "sample_paths": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
             ]
           ]
         ],
         "expiration_triggers": []
       }
     ],
-    "other_candidates": [
-      {
-        "word": "PALS",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. pal 的复数：n. 朋友；伙伴；同志；同谋",
-        "tag_desc": "",
-        "rank": 4915,
-        "band": "档位2",
-        "rarity_tier": 2,
-        "rarity": 1,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "PALM"
-        ]
-      },
-      {
-        "word": "SLAP",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 掴；掌击；侮辱；拍击声 | v. 拍击；惩罚",
-        "tag_desc": "",
-        "rank": 3723,
-        "band": "4k",
-        "rarity_tier": 2,
-        "rarity": 1,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "PALM"
-        ]
-      },
-      {
-        "word": "LAP",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 膝盖；舔；一圈；下摆；衣兜；山坳 | v. 重叠；围住；轻拍；舔；包围；抱...在膝上；使重叠；拍打；泼溅",
-        "tag_desc": "",
-        "rank": 3607,
-        "band": "4k",
-        "rarity_tier": 2,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "PALM"
-        ]
-      },
-      {
-        "word": "PAL",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 朋友；伙伴；同志；同谋 | v. 交友；结伴",
-        "tag_desc": "",
-        "rank": 4043,
-        "band": "5k",
-        "rarity_tier": 2,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "PALM"
-        ]
-      }
-    ],
+    "other_candidates": [],
     "solver_report": {
       "safety_level": "PATH_UNIQUE_ZERO_DEADLOCK",
       "safety_label": "路径唯一 · 绝对零死局",
@@ -8590,33 +7946,37 @@
       "path_unique": true,
       "issues": [],
       "total_active_cells": 10,
-      "total_counts": 20,
-      "target_char_sum": 20,
-      "avg_overlap": 2.0,
-      "rarity_score_total": 0,
-      "path_score_total": 9,
-      "diff_score_total": 9,
-      "diff_score_avg": 1.8,
-      "diff_score_max": 3,
+      "total_counts": 26,
+      "target_char_sum": 26,
+      "avg_overlap": 2.6,
+      "rarity_score_total": 1,
+      "path_score_total": 14,
+      "diff_score_total": 15,
+      "diff_score_avg": 2.5,
+      "diff_score_max": 5,
       "explored_states": 1,
       "truncated": false,
       "target_details": [
         {
-          "word": "GOALS",
+          "word": "LOOSED",
           "path_count": 1,
           "sample_paths": [
             [
               [
-                1,
+                0,
                 0
-              ],
-              [
-                1,
-                1
               ],
               [
                 0,
                 1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
               ],
               [
                 0,
@@ -8628,36 +7988,36 @@
               ]
             ]
           ],
-          "dir_score": 3,
-          "path_score": 2,
-          "diff_score": 2,
-          "rank": 2462,
+          "dir_score": 4,
+          "path_score": 5,
+          "diff_score": 5,
+          "rank": 2614,
           "band": "档位1",
           "tier": "扩展词库 (档位1)",
           "spelling": "通用",
-          "ipa": "/ɡəʊlz/",
-          "zh": "n. 目标；目的；进球；射中次数",
+          "ipa": "/luːst/",
+          "zh": "v. 释放( loose的过去式和过去分词 )；不受约束地表达；松开；射出（子弹、箭等）",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "PALM",
+          "word": "PEGS",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
-                0
+                4
               ],
               [
-                0,
-                1
+                1,
+                4
               ],
               [
-                0,
-                2
+                1,
+                3
               ],
               [
                 1,
@@ -8665,22 +8025,59 @@
               ]
             ]
           ],
-          "dir_score": 4,
+          "dir_score": 0,
+          "path_score": 1,
+          "diff_score": 2,
+          "rank": 4921,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
+          "spelling": "通用",
+          "ipa": "/pɛɡz/",
+          "zh": "n. 衣夹( peg的名词复数 )；挂钉；系帐篷的桩；弦钮 | v. 用夹子或钉子固定( peg的第三人称单数 )；使固定在某水平",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "LOSE",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 2,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 1819,
-          "band": "3k",
+          "rank": 444,
+          "band": "1k",
           "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/pɑːm/",
-          "zh": "n. 手掌；棕榈；胜利 | v. 与...握手；藏...于掌中",
+          "ipa": "/luːz/",
+          "zh": "v. 遗失；损失；丢失；使失去；错过；浪费；迷失；使迷路；输去；使沉溺于；受损失；失败",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "CUT",
+          "word": "PEG",
           "path_count": 1,
           "sample_paths": [
             [
@@ -8701,33 +8098,37 @@
           "dir_score": 1,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 184,
-          "band": "1k",
-          "tier": "核心高频词 (1k-3k)",
+          "rank": 4384,
+          "band": "6k",
+          "tier": "中频进阶词 (4k-9k)",
           "spelling": "通用",
-          "ipa": "/kʌt/",
-          "zh": "n. 切口；割伤；降低；切；割；砍；削；伤口；削减；缩短；删节；通路 | adj. 经切割的；缩减的",
-          "rarity_tier": 1,
+          "ipa": "/ˈpɛɡ/",
+          "zh": "n. 钉；桩；栓；藉口；销子；借口 | v. 钉木钉；固定；限制；使受约束；坚持不懈地奋力于；疾行",
+          "rarity_tier": 2,
           "rarity": 0,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "GOAL",
+          "word": "LOOSE",
           "path_count": 1,
           "sample_paths": [
             [
               [
-                1,
+                0,
                 0
-              ],
-              [
-                1,
-                1
               ],
               [
                 0,
                 1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
               ],
               [
                 0,
@@ -8735,52 +8136,52 @@
               ]
             ]
           ],
-          "dir_score": 2,
-          "path_score": 2,
-          "diff_score": 2,
-          "rank": 1179,
+          "dir_score": 3,
+          "path_score": 4,
+          "diff_score": 4,
+          "rank": 1249,
           "band": "2k",
           "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/ɡəʊl/",
-          "zh": "n. 目标；终点；得分；球门；守门员 | v. 攻门；射门得分",
+          "ipa": "/luːs/",
+          "zh": "n. 发射；放任；放纵 | adj. 宽松的；松的；宽的；不牢固的；散漫的；自由的；不精确的",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
           "origin": "candidate"
         },
         {
-          "word": "CUTS",
+          "word": "EDGE",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
-                4
-              ],
-              [
-                1,
-                4
-              ],
-              [
-                1,
-                3
+                2
               ],
               [
                 0,
                 3
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                4
               ]
             ]
           ],
-          "dir_score": 0,
-          "path_score": 3,
-          "diff_score": 3,
-          "rank": 2314,
-          "band": "档位1",
-          "tier": "扩展词库 (档位1)",
+          "dir_score": 4,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 226,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/kʌts/",
-          "zh": "n. （分摊到的）份额；切口；近路（cut的复数）",
+          "ipa": "/ɛd͡ʒ/",
+          "zh": "n. 边缘；尖锐；刀刃；优势 | v. 使锐利；挤进；镶边；缓缓移动",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
@@ -8789,32 +8190,7 @@
       ],
       "winning_solution": [
         {
-          "word": "GOALS",
-          "path": [
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              3
-            ]
-          ]
-        },
-        {
-          "word": "PALM",
+          "word": "LOOSED",
           "path": [
             [
               0,
@@ -8825,17 +8201,25 @@
               1
             ],
             [
-              0,
-              2
+              1,
+              1
             ],
             [
               1,
               2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
             ]
           ]
         },
         {
-          "word": "CUT",
+          "word": "PEGS",
           "path": [
             [
               0,
@@ -8848,11 +8232,15 @@
             [
               1,
               3
+            ],
+            [
+              1,
+              2
             ]
           ]
         },
         {
-          "word": "GOAL",
+          "word": "LOSE",
           "path": [
             [
               1,
@@ -8863,8 +8251,8 @@
               1
             ],
             [
-              0,
-              1
+              1,
+              2
             ],
             [
               0,
@@ -8873,7 +8261,7 @@
           ]
         },
         {
-          "word": "CUTS",
+          "word": "PEG",
           "path": [
             [
               0,
@@ -8886,17 +8274,59 @@
             [
               1,
               3
+            ]
+          ]
+        },
+        {
+          "word": "LOOSE",
+          "path": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "EDGE",
+          "path": [
+            [
+              0,
+              2
             ],
             [
               0,
               3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
             ]
           ]
         }
       ],
       "deadlock_witness": null
     },
-    "generation_ms": 3.6,
+    "generation_ms": 1.9,
     "orientation_applied": "id"
   },
   {
@@ -13616,86 +13046,107 @@
           "r": 0,
           "c": 0,
           "void": false,
-          "letter": "M",
-          "count": 1
-        },
-        {
-          "r": 0,
-          "c": 1,
-          "void": false,
-          "letter": "O",
-          "count": 1
-        },
-        {
-          "r": 0,
-          "c": 2,
-          "void": false,
-          "letter": "H",
-          "count": 1
-        }
-      ],
-      [
-        {
-          "r": 1,
-          "c": 0,
-          "void": false,
-          "letter": "A",
-          "count": 2
-        },
-        {
-          "r": 1,
-          "c": 1,
-          "void": false,
-          "letter": "S",
-          "count": 2
-        },
-        {
-          "r": 1,
-          "c": 2,
-          "void": false,
-          "letter": "T",
-          "count": 1
-        }
-      ],
-      [
-        {
-          "r": 2,
-          "c": 0,
-          "void": false,
           "letter": "C",
           "count": 1
         },
         {
+          "r": 0,
+          "c": 1,
+          "void": false,
+          "letter": "P",
+          "count": 5
+        },
+        {
+          "r": 0,
+          "c": 2,
+          "void": false,
+          "letter": "S",
+          "count": 2
+        }
+      ],
+      [
+        {
+          "r": 1,
+          "c": 0,
+          "void": false,
+          "letter": "H",
+          "count": 4
+        },
+        {
+          "r": 1,
+          "c": 1,
+          "void": false,
+          "letter": "E",
+          "count": 8
+        },
+        {
+          "r": 1,
+          "c": 2,
+          "void": false,
+          "letter": "E",
+          "count": 5
+        }
+      ],
+      [
+        {
+          "r": 2,
+          "c": 0,
+          "void": false,
+          "letter": "S",
+          "count": 4
+        },
+        {
           "r": 2,
           "c": 1,
           "void": false,
-          "letter": "H",
-          "count": 2
+          "letter": "A",
+          "count": 6
         },
         {
           "r": 2,
           "c": 2,
           "void": false,
-          "letter": "E",
-          "count": 2
+          "letter": "R",
+          "count": 8
         }
       ]
     ],
     "initial_words": [
-      "ETHOS",
-      "MASH",
-      "ACHE"
+      "CHEER",
+      "SPEAR",
+      "SHEER",
+      "RASH",
+      "HEAR",
+      "SEEP",
+      "PEAR",
+      "PEAS",
+      "PEER",
+      "ERAS"
     ],
     "initial_word_paths": {
-      "ETHOS": [
+      "CHEER": [
         [
-          2,
-          2
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
         ],
         [
           1,
           2
         ],
+        [
+          2,
+          2
+        ]
+      ],
+      "SPEAR": [
         [
           0,
           2
@@ -13706,35 +13157,101 @@
         ],
         [
           1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "SHEER": [
+        [
+          2,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "RASH": [
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "HEAR": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "SEEP": [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          0,
           1
         ]
       ],
-      "MASH": [
+      "PEAR": [
         [
           0,
-          0
-        ],
-        [
-          1,
-          0
+          1
         ],
         [
           1,
           1
-        ],
-        [
-          2,
-          1
-        ]
-      ],
-      "ACHE": [
-        [
-          1,
-          0
-        ],
-        [
-          2,
-          0
         ],
         [
           2,
@@ -13743,27 +13260,88 @@
         [
           2,
           2
+        ]
+      ],
+      "PEAS": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
+        ]
+      ],
+      "PEER": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "ERAS": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          0
         ]
       ]
     },
     "selected_candidates": [],
     "selected_candidate_paths": {},
     "target_words": [
-      "ETHOS",
-      "MASH",
-      "ACHE"
+      "CHEER",
+      "SPEAR",
+      "SHEER",
+      "RASH",
+      "HEAR",
+      "SEEP",
+      "PEAR",
+      "PEAS",
+      "PEER",
+      "ERAS"
     ],
     "extra_words": [
       {
-        "word": "CAMOS",
+        "word": "SAREE",
         "length": 5,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "[计] 计算机辅助车间操作系统",
-        "tag_desc": "camo 的复数",
-        "rank": null,
-        "band": null,
+        "zh": "n. 莎丽服",
+        "tag_desc": "",
+        "rank": 11089,
+        "band": "档位5",
         "rarity_tier": 5,
         "rarity": 8,
         "path_count": 1,
@@ -13774,160 +13352,34 @@
               0
             ],
             [
-              1,
-              0
-            ],
-            [
-              0,
-              0
-            ],
-            [
-              0,
+              2,
               1
             ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH",
-          "ACHE"
-        ]
-      },
-      {
-        "word": "CASTE",
-        "length": 5,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 印度的种姓制度；(排他的)社会团体",
-        "tag_desc": "",
-        "rank": 8879,
-        "band": "7k",
-        "rarity_tier": 3,
-        "rarity": 4,
-        "path_count": 1,
-        "sample_paths": [
-          [
             [
               2,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
+              2
             ],
             [
               1,
               2
             ],
             [
-              2,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "ACHE"
-        ]
-      },
-      {
-        "word": "MACHS",
-        "length": 5,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "(Mach 的复数) n. 马赫数, 马赫",
-        "tag_desc": "mach 的复数",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 5,
-        "rarity": 8,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              2,
-              0
-            ],
-            [
-              2,
-              1
-            ],
-            [
               1,
               1
             ]
           ]
         ],
-        "expiration_triggers": [
-          "MASH",
-          "ACHE"
-        ]
+        "expiration_triggers": []
       },
       {
-        "word": "AMOS",
+        "word": "ARES",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "n. 阿摩司(<<圣经>>人物)",
+        "zh": "n. 战神阿瑞斯",
         "tag_desc": "",
-        "rank": 9331,
-        "band": "档位4",
-        "rarity_tier": 4,
-        "rarity": 3,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              0
-            ],
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH"
-        ]
-      },
-      {
-        "word": "HETH",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 希伯来文第八个字母",
-        "tag_desc": "",
-        "rank": 10560,
+        "rank": 10089,
         "band": "档位5",
         "rarity_tier": 5,
         "rarity": 4,
@@ -13952,19 +13404,17 @@
             ]
           ]
         ],
-        "expiration_triggers": [
-          "ETHOS"
-        ]
+        "expiration_triggers": []
       },
       {
-        "word": "MACH",
+        "word": "SERA",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "n. 马赫数；马赫",
+        "zh": "n. 浆液；血清",
         "tag_desc": "",
-        "rank": 9662,
+        "rank": 9864,
         "band": "档位4",
         "rarity_tier": 4,
         "rarity": 3,
@@ -13973,15 +13423,15 @@
           [
             [
               0,
-              0
+              2
             ],
             [
               1,
-              0
+              2
             ],
             [
               2,
-              0
+              2
             ],
             [
               2,
@@ -13989,20 +13439,17 @@
             ]
           ]
         ],
-        "expiration_triggers": [
-          "MASH",
-          "ACHE"
-        ]
+        "expiration_triggers": []
       },
       {
-        "word": "MOSH",
+        "word": "SHEA",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "v. [俚]狂舞",
+        "zh": "n. [植]非洲酪脂树",
         "tag_desc": "",
-        "rank": 10785,
+        "rank": 11126,
         "band": "档位5",
         "rarity_tier": 5,
         "rarity": 4,
@@ -14010,12 +13457,12 @@
         "sample_paths": [
           [
             [
-              0,
+              2,
               0
             ],
             [
-              0,
-              1
+              1,
+              0
             ],
             [
               1,
@@ -14027,219 +13474,27 @@
             ]
           ]
         ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH"
-        ]
-      },
-      {
-        "word": "SOMA",
-        "length": 4,
-        "category": "inflection",
-        "category_label": "词形变化（复数/时态等）",
-        "eligible_for_target": false,
-        "zh": "n. 身体；肉体；身体细胞",
-        "tag_desc": "",
-        "rank": 11169,
-        "band": "档位5",
-        "rarity_tier": 5,
-        "rarity": 4,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              1
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              0,
-              0
-            ],
-            [
-              1,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH"
-        ]
-      },
-      {
-        "word": "CAMO",
-        "length": 4,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "n. 迷彩服；保护色",
-        "tag_desc": "",
-        "rank": 7185,
-        "band": "档位4",
-        "rarity_tier": 4,
-        "rarity": 3,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              2,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              0,
-              0
-            ],
-            [
-              0,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH",
-          "ACHE"
-        ]
+        "expiration_triggers": []
       }
     ],
     "other_candidates": [
       {
-        "word": "CASH",
-        "length": 4,
+        "word": "SHEAR",
+        "length": 5,
         "category": "unselected_common",
         "category_label": "候选常用词",
         "eligible_for_target": true,
-        "zh": "n. 现金 | v. 兑现",
+        "zh": "n. 修剪；剪下的东西；大剪刀；切变；剪切机；切 | v. 修剪；割；剥夺；横越；削剪；剪；剪羊毛；切断",
         "tag_desc": "",
-        "rank": 1010,
-        "band": "2k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              2,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              2,
-              1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ACHE"
-        ]
-      },
-      {
-        "word": "CAST",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 演员阵容；投掷；铸件；预测；特性 | v. 投；掷；抛；脱落；铸；使弯曲；计算；浇铸成型",
-        "tag_desc": "",
-        "rank": 1011,
-        "band": "2k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              2,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS",
-          "ACHE"
-        ]
-      },
-      {
-        "word": "HOST",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 主人；旅馆老板；节目主持人 | v. 当主人招待；作...节目主持人",
-        "tag_desc": "",
-        "rank": 1755,
-        "band": "3k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "ETHOS"
-        ]
-      },
-      {
-        "word": "MAST",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 桅；桅杆；杆 | v. 装桅杆于",
-        "tag_desc": "",
-        "rank": 5593,
-        "band": "7k",
-        "rarity_tier": 3,
+        "rank": 4415,
+        "band": "6k",
+        "rarity_tier": 2,
         "rarity": 2,
         "path_count": 1,
         "sample_paths": [
           [
             [
-              0,
+              2,
               0
             ],
             [
@@ -14251,42 +13506,39 @@
               1
             ],
             [
-              1,
+              2,
+              1
+            ],
+            [
+              2,
               2
             ]
           ]
         ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH"
-        ]
+        "expiration_triggers": []
       },
       {
-        "word": "MOST",
-        "length": 4,
+        "word": "ARE",
+        "length": 3,
         "category": "unselected_common",
         "category_label": "候选常用词",
         "eligible_for_target": true,
-        "zh": "n. 最多；最大 | adj. 大多数的；几乎全部的；最多的",
+        "zh": "v. be的现在时复数或第二人称单数",
         "tag_desc": "",
-        "rank": 487,
-        "band": "1k",
-        "rarity_tier": 1,
+        "rank": 4607,
+        "band": "档位2",
+        "rarity_tier": 2,
         "rarity": 0,
         "path_count": 1,
         "sample_paths": [
           [
             [
-              0,
-              0
-            ],
-            [
-              0,
+              2,
               1
             ],
             [
-              1,
-              1
+              2,
+              2
             ],
             [
               1,
@@ -14294,10 +13546,7 @@
             ]
           ]
         ],
-        "expiration_triggers": [
-          "ETHOS",
-          "MASH"
-        ]
+        "expiration_triggers": []
       },
       {
         "word": "ASH",
@@ -14315,8 +13564,101 @@
         "sample_paths": [
           [
             [
+              2,
+              1
+            ],
+            [
+              2,
+              0
+            ],
+            [
               1,
               0
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "EAR",
+        "length": 3,
+        "category": "unselected_common",
+        "category_label": "候选常用词",
+        "eligible_for_target": true,
+        "zh": "n. 耳朵；倾听；听觉；穗 | v. 抽穗",
+        "tag_desc": "",
+        "rank": 220,
+        "band": "1k",
+        "rarity_tier": 1,
+        "rarity": 0,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "ERA",
+        "length": 3,
+        "category": "unselected_common",
+        "category_label": "候选常用词",
+        "eligible_for_target": true,
+        "zh": "n. 时代；纪元；时期",
+        "tag_desc": "",
+        "rank": 1706,
+        "band": "3k",
+        "rarity_tier": 1,
+        "rarity": 0,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "PEA",
+        "length": 3,
+        "category": "unselected_common",
+        "category_label": "候选常用词",
+        "eligible_for_target": true,
+        "zh": "n. 豌豆；似豌豆的东西",
+        "tag_desc": "",
+        "rank": 4050,
+        "band": "5k",
+        "rarity_tier": 2,
+        "rarity": 0,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              1
             ],
             [
               1,
@@ -14324,6 +13666,37 @@
             ],
             [
               2,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "SEE",
+        "length": 3,
+        "category": "unselected_common",
+        "category_label": "候选常用词",
+        "eligible_for_target": true,
+        "zh": "v. 看见；查看；参观；游览；理解；知道；同意；看；观看；注意；考虑 | n. 主教的职位",
+        "tag_desc": "",
+        "rank": 651,
+        "band": "1k",
+        "rarity_tier": 1,
+        "rarity": 0,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
               1
             ]
           ]
@@ -14346,54 +13719,20 @@
         "sample_paths": [
           [
             [
+              2,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
               1,
               1
-            ],
-            [
-              2,
-              1
-            ],
-            [
-              2,
-              2
             ]
           ]
         ],
         "expiration_triggers": []
-      },
-      {
-        "word": "CAM",
-        "length": 3,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "n. 凸轮, 计算机辅助制造, 中央地址存储器",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 5,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              2,
-              0
-            ],
-            [
-              1,
-              0
-            ],
-            [
-              0,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "MASH",
-          "ACHE"
-        ]
       }
     ],
     "solver_report": {
@@ -14404,70 +13743,70 @@
       "path_unique": true,
       "issues": [],
       "total_active_cells": 9,
-      "total_counts": 13,
-      "target_char_sum": 13,
-      "avg_overlap": 1.44,
-      "rarity_score_total": 6,
-      "path_score_total": 7,
-      "diff_score_total": 13,
-      "diff_score_avg": 4.33,
-      "diff_score_max": 8,
+      "total_counts": 43,
+      "target_char_sum": 43,
+      "avg_overlap": 4.78,
+      "rarity_score_total": 9,
+      "path_score_total": 27,
+      "diff_score_total": 36,
+      "diff_score_avg": 3.6,
+      "diff_score_max": 6,
       "explored_states": 1,
       "truncated": false,
       "target_details": [
         {
-          "word": "ETHOS",
+          "word": "CHEER",
           "path_count": 1,
           "sample_paths": [
             [
               [
+                0,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
                 2,
                 2
-              ],
-              [
-                1,
-                2
-              ],
-              [
-                0,
-                2
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                1,
-                1
               ]
             ]
           ],
-          "dir_score": -3,
-          "path_score": 4,
-          "diff_score": 8,
-          "rank": 5516,
-          "band": "7k",
-          "tier": "中频进阶词 (4k-9k)",
+          "dir_score": 5,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 1024,
+          "band": "2k",
+          "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/ˈiːθɒs/",
-          "zh": "n. 气质；民族精神；社会思潮",
-          "rarity_tier": 3,
-          "rarity": 4,
+          "ipa": "/t͡ʃɪə/",
+          "zh": "n. 愉快；振奋；欢呼 | v. 欢呼；喝彩；快活起来；使振奋",
+          "rarity_tier": 1,
+          "rarity": 0,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "MASH",
+          "word": "SPEAR",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
-                0
+                2
               ],
               [
-                1,
-                0
+                0,
+                1
               ],
               [
                 1,
@@ -14476,25 +13815,107 @@
               [
                 2,
                 1
+              ],
+              [
+                2,
+                2
               ]
             ]
           ],
-          "dir_score": 4,
+          "dir_score": 1,
+          "path_score": 4,
+          "diff_score": 6,
+          "rank": 4142,
+          "band": "5k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/spɪə̯(ɹ)/",
+          "zh": "n. 矛；枪；持矛者；嫩枝 | v. 用矛刺；刺；戳",
+          "rarity_tier": 2,
+          "rarity": 2,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "SHEER",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                2,
+                0
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 1,
+          "path_score": 4,
+          "diff_score": 6,
+          "rank": 3716,
+          "band": "4k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/ʃɪə̯/",
+          "zh": "adj. 绝对的；全然的；纯粹的；透明的；峻峭的 | v. 偏转；偏航；使急转向；使偏航",
+          "rarity_tier": 2,
+          "rarity": 2,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "RASH",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                2,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                1,
+                0
+              ]
+            ]
+          ],
+          "dir_score": -4,
           "path_score": 2,
           "diff_score": 4,
-          "rank": 5338,
+          "rank": 5368,
           "band": "6k",
           "tier": "中频进阶词 (4k-9k)",
           "spelling": "通用",
-          "ipa": "/mæʃ/",
-          "zh": "n. 碎麦芽；饲料；糊状物 | v. 调情；捣碎",
+          "ipa": "/ɹæʃ/",
+          "zh": "adj. 轻率的；匆忙的；鲁莽的 | n. 皮疹",
           "rarity_tier": 3,
           "rarity": 2,
           "source": "core",
           "origin": "initial"
         },
         {
-          "word": "ACHE",
+          "word": "HEAR",
           "path_count": 1,
           "sample_paths": [
             [
@@ -14503,8 +13924,82 @@
                 0
               ],
               [
+                1,
+                1
+              ],
+              [
                 2,
-                0
+                1
+              ],
+              [
+                2,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 4,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 348,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/ˈhɪə/",
+          "zh": "v. 听到；倾听；听说；审理；听见；听",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "SEEP",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          "dir_score": 0,
+          "path_score": 3,
+          "diff_score": 5,
+          "rank": 5385,
+          "band": "6k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/siːp/",
+          "zh": "v. 渗出；渗流；漏 | n. 小泉；水陆两用吉普车",
+          "rarity_tier": 3,
+          "rarity": 2,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "PEAR",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
               ],
               [
                 2,
@@ -14519,12 +14014,123 @@
           "dir_score": 4,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 1588,
+          "rank": 2128,
+          "band": "6k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/pɛə/",
+          "zh": "n. 梨子；梨树；梨木",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "PEAS",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ],
+          "dir_score": 2,
+          "path_score": 1,
+          "diff_score": 2,
+          "rank": 4920,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
+          "spelling": "通用",
+          "ipa": "/piːz/",
+          "zh": "n. 豌豆（pea的复数）",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "PEER",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 4,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 1824,
           "band": "3k",
           "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/eɪk/",
-          "zh": "n. 疼痛 | v. 痛；哀怜；渴望",
+          "ipa": "/pɪə/",
+          "zh": "n. 同等的人；匹敌；贵族 | v. 凝视；窥视；费力地看；隐现；与...同等；封为贵族",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "ERAS",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ],
+          "dir_score": 0,
+          "path_score": 1,
+          "diff_score": 1,
+          "rank": 2377,
+          "band": "档位1",
+          "tier": "扩展词库 (档位1)",
+          "spelling": "通用",
+          "ipa": "/ˈɪə.ɹəz/",
+          "zh": "n. 纪元；时代；年代（era的复数形式）",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
@@ -14533,16 +14139,33 @@
       ],
       "winning_solution": [
         {
-          "word": "ETHOS",
+          "word": "CHEER",
           "path": [
             [
-              2,
-              2
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
             ],
             [
               1,
               2
             ],
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "SPEAR",
+          "path": [
             [
               0,
               2
@@ -14553,41 +14176,116 @@
             ],
             [
               1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "SHEER",
+          "path": [
+            [
+              2,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "RASH",
+          "path": [
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        },
+        {
+          "word": "HEAR",
+          "path": [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "SEEP",
+          "path": [
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              0,
               1
             ]
           ]
         },
         {
-          "word": "MASH",
+          "word": "PEAR",
           "path": [
             [
               0,
-              0
-            ],
-            [
-              1,
-              0
+              1
             ],
             [
               1,
               1
-            ],
-            [
-              2,
-              1
-            ]
-          ]
-        },
-        {
-          "word": "ACHE",
-          "path": [
-            [
-              1,
-              0
-            ],
-            [
-              2,
-              0
             ],
             [
               2,
@@ -14596,14 +14294,77 @@
             [
               2,
               2
+            ]
+          ]
+        },
+        {
+          "word": "PEAS",
+          "path": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              0
+            ]
+          ]
+        },
+        {
+          "word": "PEER",
+          "path": [
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "ERAS",
+          "path": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              2,
+              0
             ]
           ]
         }
       ],
       "deadlock_witness": null
     },
-    "generation_ms": 1.5,
-    "orientation_applied": "id"
+    "generation_ms": 247.9,
+    "orientation_applied": "flip_v"
   },
   {
     "level_num": 13,
@@ -14617,35 +14378,35 @@
           "r": 0,
           "c": 0,
           "void": false,
-          "letter": "B",
-          "count": 1
+          "letter": "C",
+          "count": 3
         },
         {
           "r": 0,
           "c": 1,
           "void": false,
-          "letter": "E",
-          "count": 1
+          "letter": "O",
+          "count": 5
         },
         {
           "r": 0,
           "c": 2,
           "void": false,
-          "letter": "Y",
-          "count": 1
+          "letter": "N",
+          "count": 7
         },
         {
           "r": 0,
           "c": 3,
           "void": false,
-          "letter": "K",
-          "count": 3
+          "letter": "O",
+          "count": 5
         },
         {
           "r": 0,
           "c": 4,
           "void": false,
-          "letter": "B",
+          "letter": "M",
           "count": 1
         }
       ],
@@ -14654,46 +14415,102 @@
           "r": 1,
           "c": 0,
           "void": false,
-          "letter": "S",
+          "letter": "U",
           "count": 2
         },
         {
           "r": 1,
           "c": 1,
           "void": false,
-          "letter": "T",
-          "count": 3
+          "letter": "S",
+          "count": 6
         },
         {
           "r": 1,
           "c": 2,
           "void": false,
-          "letter": "I",
-          "count": 2
+          "letter": "E",
+          "count": 8
         },
         {
           "r": 1,
           "c": 3,
           "void": false,
-          "letter": "C",
-          "count": 3
+          "letter": "R",
+          "count": 6
         },
         {
           "r": 1,
           "c": 4,
           "void": false,
-          "letter": "A",
-          "count": 1
+          "letter": "P",
+          "count": 2
         }
       ]
     ],
     "initial_words": [
-      "STICKY",
-      "BACK",
-      "BET"
+      "CONES",
+      "MORE",
+      "PRO",
+      "USE",
+      "CON"
     ],
     "initial_word_paths": {
-      "STICKY": [
+      "CONES": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "MORE": [
+        [
+          0,
+          4
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "PRO": [
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          3
+        ]
+      ],
+      "USE": [
         [
           1,
           0
@@ -14705,39 +14522,9 @@
         [
           1,
           2
-        ],
-        [
-          1,
-          3
-        ],
-        [
-          0,
-          3
-        ],
-        [
-          0,
-          2
         ]
       ],
-      "BACK": [
-        [
-          0,
-          4
-        ],
-        [
-          1,
-          4
-        ],
-        [
-          1,
-          3
-        ],
-        [
-          0,
-          3
-        ]
-      ],
-      "BET": [
+      "CON": [
         [
           0,
           0
@@ -14747,16 +14534,62 @@
           1
         ],
         [
-          1,
-          1
+          0,
+          2
         ]
       ]
     },
     "selected_candidates": [
-      "STICK"
+      "PRONE",
+      "NOSE",
+      "USER",
+      "ORES",
+      "CONE",
+      "SON",
+      "NOR"
     ],
     "selected_candidate_paths": {
-      "STICK": [
+      "PRONE": [
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "NOSE": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "USER": [
         [
           1,
           0
@@ -14772,29 +14605,230 @@
         [
           1,
           3
+        ]
+      ],
+      "ORES": [
+        [
+          0,
+          3
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "CONE": [
+        [
+          0,
+          0
         ],
         [
           0,
+          1
+        ],
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "SON": [
+        [
+          1,
+          1
+        ],
+        [
+          0,
+          1
+        ],
+        [
+          0,
+          2
+        ]
+      ],
+      "NOR": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          1,
           3
         ]
       ]
     },
     "target_words": [
-      "STICKY",
-      "BACK",
-      "BET",
-      "STICK"
+      "CONES",
+      "MORE",
+      "PRO",
+      "USE",
+      "CON",
+      "PRONE",
+      "NOSE",
+      "USER",
+      "ORES",
+      "CONE",
+      "SON",
+      "NOR"
     ],
     "extra_words": [
       {
-        "word": "ETIC",
+        "word": "MORES",
+        "length": 5,
+        "category": "inflection",
+        "category_label": "词形变化（复数/时态等）",
+        "eligible_for_target": false,
+        "zh": "n. 习惯；道德态度；惯例；习俗",
+        "tag_desc": "",
+        "rank": 9708,
+        "band": "档位4",
+        "rarity_tier": 4,
+        "rarity": 6,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              4
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": [
+          "MORE"
+        ]
+      },
+      {
+        "word": "SENOR",
+        "length": 5,
+        "category": "inflection",
+        "category_label": "词形变化（复数/时态等）",
+        "eligible_for_target": false,
+        "zh": "n. 先生；绅士",
+        "tag_desc": "",
+        "rank": 11111,
+        "band": "档位5",
+        "rarity_tier": 5,
+        "rarity": 8,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "RENO",
         "length": 4,
         "category": "inflection",
         "category_label": "词形变化（复数/时态等）",
         "eligible_for_target": false,
-        "zh": "adj. [语]非位的；素的；语音学的",
+        "zh": "n. 里诺（美国一城市名；著名的“离婚城市”）",
         "tag_desc": "",
-        "rank": 10426,
+        "rank": 9815,
+        "band": "档位4",
+        "rarity_tier": 4,
+        "rarity": 3,
+        "path_count": 2,
+        "sample_paths": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ]
+          ],
+          [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "SONE",
+        "length": 4,
+        "category": "inflection",
+        "category_label": "词形变化（复数/时态等）",
+        "eligible_for_target": false,
+        "zh": "n. 味(音响单位)",
+        "tag_desc": "",
+        "rank": 11172,
         "band": "档位5",
         "rarity_tier": 5,
         "rarity": 4,
@@ -14802,144 +14836,213 @@
         "sample_paths": [
           [
             [
-              0,
-              1
-            ],
-            [
               1,
               1
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BET"
-        ]
-      },
-      {
-        "word": "ICKY",
-        "length": 4,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "adj. 过粘的；过甜的；讨厌的 | n. 令人讨厌的人",
-        "tag_desc": "",
-        "rank": 7445,
-        "band": "档位4",
-        "rarity_tier": 4,
-        "rarity": 3,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "STICKY"
-        ]
-      },
-      {
-        "word": "YETI",
-        "length": 4,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "n. 雪人",
-        "tag_desc": "",
-        "rank": 8002,
-        "band": "档位4",
-        "rarity_tier": 4,
-        "rarity": 3,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
-              2
             ],
             [
               0,
               1
             ],
             [
-              1,
-              1
-            ],
-            [
-              1,
-              2
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "STICKY",
-          "BET"
-        ]
-      },
-      {
-        "word": "ITS",
-        "length": 3,
-        "category": "obscure_base",
-        "category_label": "低频 / 生僻词",
-        "eligible_for_target": false,
-        "zh": "pron. 它的",
-        "tag_desc": "",
-        "rank": null,
-        "band": null,
-        "rarity_tier": 5,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
+              0,
               2
             ],
             [
               1,
-              1
-            ],
-            [
-              1,
-              0
+              2
             ]
           ]
         ],
         "expiration_triggers": []
       },
       {
-        "word": "TIC",
-        "length": 3,
+        "word": "COSE",
+        "length": 4,
         "category": "obscure_base",
         "category_label": "低频 / 生僻词",
         "eligible_for_target": false,
-        "zh": "n. 痉挛, 三叉神经痛",
+        "zh": "vi. 使自己舒服",
         "tag_desc": "",
         "rank": null,
         "band": null,
         "rarity_tier": 5,
+        "rarity": 4,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "MONO",
+        "length": 4,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "adj. 单声道的",
+        "tag_desc": "",
+        "rank": 7574,
+        "band": "档位4",
+        "rarity_tier": 4,
+        "rarity": 3,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              4
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": [
+          "MORE"
+        ]
+      },
+      {
+        "word": "PROM",
+        "length": 4,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. (英)音乐会；(美)舞会；散步道",
+        "tag_desc": "",
+        "rank": 6154,
+        "band": "9k",
+        "rarity_tier": 3,
+        "rarity": 2,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              4
+            ]
+          ]
+        ],
+        "expiration_triggers": [
+          "MORE"
+        ]
+      },
+      {
+        "word": "ROMP",
+        "length": 4,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. 喧闹游玩；顽皮女孩 | v. 喧闹玩耍；轻快奔跑",
+        "tag_desc": "",
+        "rank": 7003,
+        "band": "8k",
+        "rarity_tier": 4,
+        "rarity": 3,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              1,
+              3
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              4
+            ],
+            [
+              1,
+              4
+            ]
+          ]
+        ],
+        "expiration_triggers": [
+          "MORE"
+        ]
+      },
+      {
+        "word": "COS",
+        "length": 3,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. 余弦",
+        "tag_desc": "",
+        "rank": null,
+        "band": null,
+        "rarity_tier": 5,
+        "rarity": 0,
+        "path_count": 1,
+        "sample_paths": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "SEN",
+        "length": 3,
+        "category": "obscure_base",
+        "category_label": "低频 / 生僻词",
+        "eligible_for_target": false,
+        "zh": "n. 传感器（传感元件；探测设备）",
+        "tag_desc": "",
+        "rank": 7776,
+        "band": "档位4",
+        "rarity_tier": 4,
         "rarity": 0,
         "path_count": 1,
         "sample_paths": [
@@ -14953,8 +15056,8 @@
               2
             ],
             [
-              1,
-              3
+              0,
+              2
             ]
           ]
         ],
@@ -14963,60 +15066,27 @@
     ],
     "other_candidates": [
       {
-        "word": "BETS",
+        "word": "ONES",
         "length": 4,
         "category": "unselected_common",
         "category_label": "候选常用词",
         "eligible_for_target": true,
-        "zh": "n. bet 的复数：n. 打赌；赌注",
+        "zh": "n. 刻录软件",
         "tag_desc": "",
-        "rank": 2219,
+        "rank": 2702,
         "band": "档位1",
         "rarity_tier": 1,
         "rarity": 0,
-        "path_count": 1,
+        "path_count": 2,
         "sample_paths": [
           [
             [
               0,
-              0
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
-            ],
-            [
-              1,
-              0
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BET"
-        ]
-      },
-      {
-        "word": "CITE",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "v. 引用；引证；表彰",
-        "tag_desc": "",
-        "rank": 1640,
-        "band": "3k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              1,
               3
+            ],
+            [
+              0,
+              2
             ],
             [
               1,
@@ -15025,35 +15095,16 @@
             [
               1,
               1
-            ],
+            ]
+          ],
+          [
             [
               0,
               1
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BET"
-        ]
-      },
-      {
-        "word": "TICK",
-        "length": 4,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "n. 滴答声；一瞬间；壁虱；褥套；信用；赊欠 | v. 滴答响；活动；滴答地记录；标记号于",
-        "tag_desc": "",
-        "rank": 3772,
-        "band": "4k",
-        "rarity_tier": 2,
-        "rarity": 1,
-        "path_count": 1,
-        "sample_paths": [
-          [
+            ],
             [
-              1,
-              1
+              0,
+              2
             ],
             [
               1,
@@ -15061,82 +15112,87 @@
             ],
             [
               1,
-              3
-            ],
-            [
-              0,
-              3
+              1
             ]
           ]
         ],
         "expiration_triggers": []
       },
       {
-        "word": "CAB",
+        "word": "ONE",
         "length": 3,
         "category": "unselected_common",
         "category_label": "候选常用词",
         "eligible_for_target": true,
-        "zh": "n. 出租车；出租汽车；出租马车 | v. 乘出租马车(或汽车)",
+        "zh": "n. 一(个) | pron. 一；任何人",
         "tag_desc": "",
-        "rank": 3417,
-        "band": "4k",
+        "rank": 533,
+        "band": "1k",
+        "rarity_tier": 1,
+        "rarity": 0,
+        "path_count": 2,
+        "sample_paths": [
+          [
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "expiration_triggers": []
+      },
+      {
+        "word": "ORE",
+        "length": 3,
+        "category": "unselected_common",
+        "category_label": "候选常用词",
+        "eligible_for_target": true,
+        "zh": "n. 矿石",
+        "tag_desc": "",
+        "rank": 4373,
+        "band": "6k",
         "rarity_tier": 2,
         "rarity": 0,
         "path_count": 1,
         "sample_paths": [
           [
             [
+              0,
+              3
+            ],
+            [
               1,
               3
             ],
             [
               1,
-              4
-            ],
-            [
-              0,
-              4
-            ]
-          ]
-        ],
-        "expiration_triggers": [
-          "BACK"
-        ]
-      },
-      {
-        "word": "YET",
-        "length": 3,
-        "category": "unselected_common",
-        "category_label": "候选常用词",
-        "eligible_for_target": true,
-        "zh": "adv. 还；尚；仍然；已经；然而 | conj. 然而",
-        "tag_desc": "",
-        "rank": 898,
-        "band": "1k",
-        "rarity_tier": 1,
-        "rarity": 0,
-        "path_count": 1,
-        "sample_paths": [
-          [
-            [
-              0,
               2
-            ],
-            [
-              0,
-              1
-            ],
-            [
-              1,
-              1
             ]
           ]
         ],
-        "expiration_triggers": [
-          "STICKY",
-          "BET"
-        ]
+        "expiration_triggers": []
       }
     ],
     "solver_report": {
@@ -15147,19 +15203,130 @@
       "path_unique": true,
       "issues": [],
       "total_active_cells": 10,
-      "total_counts": 18,
-      "target_char_sum": 18,
-      "avg_overlap": 1.8,
-      "rarity_score_total": 0,
-      "path_score_total": 8,
-      "diff_score_total": 8,
-      "diff_score_avg": 2.0,
-      "diff_score_max": 3,
+      "total_counts": 45,
+      "target_char_sum": 45,
+      "avg_overlap": 4.5,
+      "rarity_score_total": 6,
+      "path_score_total": 24,
+      "diff_score_total": 30,
+      "diff_score_avg": 2.5,
+      "diff_score_max": 6,
       "explored_states": 1,
       "truncated": false,
       "target_details": [
         {
-          "word": "STICKY",
+          "word": "CONES",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          ],
+          "dir_score": 3,
+          "path_score": 3,
+          "diff_score": 5,
+          "rank": 4684,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
+          "spelling": "通用",
+          "ipa": "/ˈkəʊnz/",
+          "zh": "n. 锥形体；视锥细胞（cone的复数）",
+          "rarity_tier": 2,
+          "rarity": 2,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "MORE",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                4
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                2
+              ]
+            ]
+          ],
+          "dir_score": -2,
+          "path_score": 3,
+          "diff_score": 3,
+          "rank": 485,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/mɔː/",
+          "zh": "n. 更多 | adj. 多的；程度较大的；更大的",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "PRO",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                4
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                3
+              ]
+            ]
+          ],
+          "dir_score": -3,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 4930,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
+          "spelling": "通用",
+          "ipa": "/pɹəʊ/",
+          "zh": "adv. 正面地",
+          "rarity_tier": 2,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "USE",
           "path_count": 1,
           "sample_paths": [
             [
@@ -15174,6 +15341,64 @@
               [
                 1,
                 2
+              ]
+            ]
+          ],
+          "dir_score": 3,
+          "path_score": 0,
+          "diff_score": 0,
+          "rank": 830,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/juːs/",
+          "zh": "n. 使用；习惯；使用价值；用法；使用权 | v. 使用；利用；运用；耗费；惯常",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "CON",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 3,
+          "path_score": 0,
+          "diff_score": 0,
+          "rank": 3448,
+          "band": "4k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/kɒn/",
+          "zh": "v. 精读；仔细研究；默记 | adv. 反面地；从反面",
+          "rarity_tier": 2,
+          "rarity": 0,
+          "source": "core",
+          "origin": "initial"
+        },
+        {
+          "word": "PRONE",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                4
               ],
               [
                 1,
@@ -15186,95 +15411,66 @@
               [
                 0,
                 2
+              ],
+              [
+                1,
+                2
               ]
             ]
           ],
-          "dir_score": 2,
-          "path_score": 3,
-          "diff_score": 3,
-          "rank": 2100,
+          "dir_score": -3,
+          "path_score": 5,
+          "diff_score": 7,
+          "rank": 4071,
           "band": "5k",
           "tier": "中频进阶词 (4k-9k)",
           "spelling": "通用",
-          "ipa": "/ˈstɪki/",
-          "zh": "adj. 粘的；有粘性的；顽固的",
-          "rarity_tier": 1,
-          "rarity": 0,
+          "ipa": "/pɹəʊn/",
+          "zh": "adj. 俯伏的；面向下的；有...倾向的",
+          "rarity_tier": 2,
+          "rarity": 2,
           "source": "core",
-          "origin": "initial"
+          "origin": "candidate"
         },
         {
-          "word": "BACK",
+          "word": "NOSE",
           "path_count": 1,
           "sample_paths": [
             [
               [
                 0,
-                4
-              ],
-              [
-                1,
-                4
-              ],
-              [
-                1,
-                3
+                2
               ],
               [
                 0,
-                3
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
               ]
             ]
           ],
           "dir_score": 0,
-          "path_score": 3,
-          "diff_score": 3,
-          "rank": 55,
+          "path_score": 4,
+          "diff_score": 4,
+          "rank": 516,
           "band": "1k",
           "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/bæk/",
-          "zh": "adj. 后面的 | v. 使后退；支持；倒退；背靠",
+          "ipa": "/nəʊ̯z/",
+          "zh": "n. 鼻子；突出部分；嗅觉 | v. 嗅到；探出；用鼻子触；闻；嗅；探听；告密",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
-          "origin": "initial"
+          "origin": "candidate"
         },
         {
-          "word": "BET",
-          "path_count": 1,
-          "sample_paths": [
-            [
-              [
-                0,
-                0
-              ],
-              [
-                0,
-                1
-              ],
-              [
-                1,
-                1
-              ]
-            ]
-          ],
-          "dir_score": 3,
-          "path_score": 1,
-          "diff_score": 1,
-          "rank": 79,
-          "band": "1k",
-          "tier": "核心高频词 (1k-3k)",
-          "spelling": "通用",
-          "ipa": "/bɛt/",
-          "zh": "n. 打赌；赌注 | v. 打赌",
-          "rarity_tier": 1,
-          "rarity": 0,
-          "source": "core",
-          "origin": "initial"
-        },
-        {
-          "word": "STICK",
+          "word": "USER",
           "path_count": 1,
           "sample_paths": [
             [
@@ -15293,9 +15489,145 @@
               [
                 1,
                 3
+              ]
+            ]
+          ],
+          "dir_score": 4,
+          "path_score": 0,
+          "diff_score": 0,
+          "rank": 3040,
+          "band": "档位1",
+          "tier": "扩展词库 (档位1)",
+          "spelling": "通用",
+          "ipa": "/ˈjuːzə/",
+          "zh": "n. 使用者",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "candidate"
+        },
+        {
+          "word": "ORES",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          ],
+          "dir_score": 0,
+          "path_score": 1,
+          "diff_score": 2,
+          "rank": 4908,
+          "band": "档位2",
+          "tier": "扩展词库 (档位2)",
+          "spelling": "通用",
+          "ipa": "/ɔːz/",
+          "zh": "n. 矿石；非金属矿物（ore的复数）",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "candidate"
+        },
+        {
+          "word": "CONE",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                0
               ],
               [
                 0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ]
+          ],
+          "dir_score": 4,
+          "path_score": 1,
+          "diff_score": 2,
+          "rank": 3872,
+          "band": "5k",
+          "tier": "中频进阶词 (4k-9k)",
+          "spelling": "通用",
+          "ipa": "/ˈkəʊn/",
+          "zh": "n. 圆锥体；球果 | v. 使成锥形",
+          "rarity_tier": 2,
+          "rarity": 1,
+          "source": "core",
+          "origin": "candidate"
+        },
+        {
+          "word": "SON",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ]
+          ],
+          "dir_score": -1,
+          "path_score": 2,
+          "diff_score": 2,
+          "rank": 706,
+          "band": "1k",
+          "tier": "核心高频词 (1k-3k)",
+          "spelling": "通用",
+          "ipa": "/sʌn/",
+          "zh": "n. 儿子；女婿；子孙",
+          "rarity_tier": 1,
+          "rarity": 0,
+          "source": "core",
+          "origin": "candidate"
+        },
+        {
+          "word": "NOR",
+          "path_count": 1,
+          "sample_paths": [
+            [
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
                 3
               ]
             ]
@@ -15303,12 +15635,12 @@
           "dir_score": 3,
           "path_score": 1,
           "diff_score": 1,
-          "rank": 731,
-          "band": "1k",
+          "rank": 1296,
+          "band": "2k",
           "tier": "核心高频词 (1k-3k)",
           "spelling": "通用",
-          "ipa": "/stɪk/",
-          "zh": "n. 棍；棒；刺；枯枝；茎；条状物 | v. 插进；刺入；钉住；伸出；粘贴；停止；粘住；停留；坚持；陷住",
+          "ipa": "/nɔː/",
+          "zh": "conj. 也不；也没有",
           "rarity_tier": 1,
           "rarity": 0,
           "source": "core",
@@ -15317,42 +15649,55 @@
       ],
       "winning_solution": [
         {
-          "word": "STICKY",
+          "word": "CONES",
           "path": [
             [
-              1,
+              0,
               0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
             ],
             [
               1,
               1
-            ],
-            [
-              1,
-              2
-            ],
-            [
-              1,
-              3
-            ],
-            [
-              0,
-              3
-            ],
-            [
-              0,
-              2
             ]
           ]
         },
         {
-          "word": "BACK",
+          "word": "MORE",
           "path": [
             [
               0,
               4
             ],
             [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "PRO",
+          "path": [
+            [
               1,
               4
             ],
@@ -15367,7 +15712,24 @@
           ]
         },
         {
-          "word": "BET",
+          "word": "USE",
+          "path": [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "CON",
           "path": [
             [
               0,
@@ -15378,13 +15740,59 @@
               1
             ],
             [
-              1,
-              1
+              0,
+              2
             ]
           ]
         },
         {
-          "word": "STICK",
+          "word": "PRONE",
+          "path": [
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "NOSE",
+          "path": [
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "USER",
           "path": [
             [
               1,
@@ -15401,9 +15809,81 @@
             [
               1,
               3
+            ]
+          ]
+        },
+        {
+          "word": "ORES",
+          "path": [
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        },
+        {
+          "word": "CONE",
+          "path": [
+            [
+              0,
+              0
             ],
             [
               0,
+              1
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "SON",
+          "path": [
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              2
+            ]
+          ]
+        },
+        {
+          "word": "NOR",
+          "path": [
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
               3
             ]
           ]
@@ -15411,8 +15891,8 @@
       ],
       "deadlock_witness": null
     },
-    "generation_ms": 1.4,
-    "orientation_applied": "id"
+    "generation_ms": 3.9,
+    "orientation_applied": "rot180"
   },
   {
     "level_num": 14,

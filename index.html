@@ -3369,7 +3369,7 @@
     }
 
     // ==================== Level Config Table ====================
-    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v4";
+    const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v5";
     const CFG_PAGE_SIZE = 50;
     let configRows = [];
     let configMatchResults = [];
@@ -3411,23 +3411,23 @@
 
     function buildDefaultConfigStarter() {
       return [
-        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 2, maxTargets: 4, minDiffTotal: 0, maxDiffTotal: 5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
-        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", lenRule: "3_4_5p", minTargets: 3, maxTargets: 5, minDiffTotal: 2, maxDiffTotal: 8, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
-        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", lenRule: "3_4_5p", minTargets: 4, maxTargets: 7, minDiffTotal: 5, maxDiffTotal: 14, maxDiffMax: 5, sortBy: "random" },
-        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 5, maxTargets: 9, minDiffTotal: 8, maxDiffTotal: 20, maxDiffMax: 6, sortBy: "random" },
-        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", lenRule: "3_4_5p", minTargets: 7, maxTargets: 12, minDiffTotal: 12, maxDiffTotal: 28, maxDiffMax: 8, sortBy: "random" },
+        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 5, maxTargets: 6, minDiffTotal: 4, maxDiffTotal: 9, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
+        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", lenRule: "3_4_5p", minTargets: 5, maxTargets: 7, minDiffTotal: 6, maxDiffTotal: 12, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
+        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", lenRule: "3_4_5p", minTargets: 6, maxTargets: 8, minDiffTotal: 8, maxDiffTotal: 16, maxDiffMax: 5, sortBy: "random" },
+        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", lenRule: "3_4_5p", minTargets: 6, maxTargets: 10, minDiffTotal: 12, maxDiffTotal: 24, maxDiffMax: 6, sortBy: "random" },
+        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "hard", size: "3x5", shapeType: "full", lenRule: "4_5p_opt3", minTargets: 10, maxTargets: 15, minDiffTotal: 18, maxDiffTotal: 36, maxDiffMax: 8, sortBy: "random" },
       ];
     }
 
     function buildConfigPreset2000Rows() {
       const rows = [];
-      // 1~5: 新手引导期（目标词数 + 关卡难度分 = 所有目标词难度分之和）
+      // 1~5: 新手引导期（目标词数: 简单>4, 中等>=6, 困难>=10 · 关卡难度=所有单词难度之和）
       const starters = [
-        { size: "2x4", minWords: 2, maxWords: 4, minT: 0, maxT: 5,  maxSingle: 3, maxR: 0.5, maxP: 1.2, maxCnt: 2, dir: "forward", sortBy: "diff_asc", role: "easy" },
-        { size: "2x4", minWords: 3, maxWords: 5, minT: 2, maxT: 7,  maxSingle: 3, maxR: 0.8, maxP: 1.5, maxCnt: 2, dir: "forward", sortBy: "random", role: "easy" },
-        { size: "3x3", minWords: 3, maxWords: 5, minT: 3, maxT: 9,  maxSingle: 4, maxR: 1.0, maxP: 1.8, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
-        { size: "3x3", minWords: 4, maxWords: 6, minT: 4, maxT: 11, maxSingle: 4, maxR: null, maxP: null, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
-        { size: "2x5", minWords: 4, maxWords: 7, minT: 5, maxT: 14, maxSingle: 5, maxR: null, maxP: null, maxCnt: 3, dir: "all", sortBy: "random", role: "normal" },
+        { size: "2x4", minWords: 5, maxWords: 6, minT: 4, maxT: 9,  maxSingle: 3, maxR: 0.6, maxP: 1.4, maxCnt: 3, dir: "forward", sortBy: "diff_asc", role: "easy" },
+        { size: "2x4", minWords: 5, maxWords: 7, minT: 5, maxT: 11, maxSingle: 3, maxR: 0.8, maxP: 1.6, maxCnt: 3, dir: "forward", sortBy: "random", role: "easy" },
+        { size: "3x3", minWords: 6, maxWords: 8, minT: 7, maxT: 14, maxSingle: 4, maxR: 1.0, maxP: 1.8, maxCnt: 4, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "3x3", minWords: 6, maxWords: 8, minT: 8, maxT: 16, maxSingle: 4, maxR: null, maxP: null, maxCnt: 4, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "2x5", minWords: 6, maxWords: 9, minT: 9, maxT: 18, maxSingle: 5, maxR: null, maxP: null, maxCnt: 4, dir: "all", sortBy: "random", role: "normal" },
       ];
       starters.forEach((s, i) => {
         rows.push({
@@ -3452,8 +3452,8 @@
 
       // 6~2000: 5关一组波浪尺寸 + 简/常/常/常/难 + 5大阶段梯度递增 + 每5关1异形(动态槽位)
       const SIZE_WAVE = ["2x4", "3x3", "2x5", "3x4", "3x5", "3x4", "2x5", "3x3"];
-      const SIZE_SCALE = { "2x4": 0.55, "3x3": 0.70, "2x5": 0.85, "3x4": 1.15, "3x5": 1.40 };
-      const TARGET_SCALE = { "2x4": 0.65, "3x3": 0.78, "2x5": 0.90, "3x4": 1.15, "3x5": 1.38 };
+      const SIZE_SCALE = { "2x4": 0.65, "3x3": 0.78, "2x5": 0.90, "3x4": 1.15, "3x5": 1.40 };
+      const SIZE_BONUS = { "2x4": 0, "3x3": 1, "2x5": 1, "3x4": 3, "3x5": 5 };
       const ROLE_CYCLE = ["easy", "normal", "normal", "normal", "hard"];
       const sc = (base, scale) => Math.round(base * scale);
 
@@ -3462,54 +3462,69 @@
         const posInGroup = (lv - 6) % 5;
         const size = SIZE_WAVE[groupIdx % SIZE_WAVE.length];
         const scale = SIZE_SCALE[size] || 1.0;
-        const tScale = TARGET_SCALE[size] || 1.0;
+        const sizeBonus = SIZE_BONUS[size] || 0;
         const role = ROLE_CYCLE[posInGroup];
 
         let stageLabel = "S5";
+        let stageStep = 4;
         let band;
         if (lv <= 10) {
           stageLabel = "S1";
+          stageStep = 0;
           band = {
-            easy:   { baseMin: 4,  baseMax: 10, wMin: 4, wMax: 6,  minMax: null, maxMax: 4, maxCnt: 3 },
-            normal: { baseMin: 8,  baseMax: 16, wMin: 5, wMax: 8,  minMax: null, maxMax: 5, maxCnt: 4 },
-            hard:   { baseMin: 14, baseMax: 24, wMin: 6, wMax: 10, minMax: 3,    maxMax: 7, maxCnt: 5 },
+            easy:   { baseMin: 8,  baseMax: 16, minMax: null, maxMax: 4, maxCnt: 4 },
+            normal: { baseMin: 11, baseMax: 20, minMax: null, maxMax: 5, maxCnt: 5 },
+            hard:   { baseMin: 18, baseMax: 30, minMax: 3,    maxMax: 7, maxCnt: 7 },
           }[role];
         } else if (lv <= 20) {
           stageLabel = "S2";
+          stageStep = 1;
           band = {
-            easy:   { baseMin: 6,  baseMax: 13, wMin: 4, wMax: 7,  minMax: null, maxMax: 4, maxCnt: 4 },
-            normal: { baseMin: 11, baseMax: 20, wMin: 6, wMax: 9,  minMax: null, maxMax: 6, maxCnt: 5 },
-            hard:   { baseMin: 17, baseMax: 29, wMin: 7, wMax: 11, minMax: 4,    maxMax: 8, maxCnt: 6 },
+            easy:   { baseMin: 9,  baseMax: 18, minMax: null, maxMax: 4, maxCnt: 4 },
+            normal: { baseMin: 13, baseMax: 24, minMax: null, maxMax: 6, maxCnt: 5 },
+            hard:   { baseMin: 22, baseMax: 36, minMax: 4,    maxMax: 8, maxCnt: 7 },
           }[role];
         } else if (lv <= 50) {
           stageLabel = "S3";
+          stageStep = 2;
           band = {
-            easy:   { baseMin: 8,  baseMax: 16, wMin: 5, wMax: 8,  minMax: null, maxMax: 5, maxCnt: 5 },
-            normal: { baseMin: 14, baseMax: 24, wMin: 6, wMax: 10, minMax: null, maxMax: 7, maxCnt: 6 },
-            hard:   { baseMin: 21, baseMax: 35, wMin: 8, wMax: 13, minMax: 5,    maxMax: 9, maxCnt: 7 },
+            easy:   { baseMin: 11, baseMax: 20, minMax: null, maxMax: 5, maxCnt: 5 },
+            normal: { baseMin: 16, baseMax: 28, minMax: null, maxMax: 7, maxCnt: 6 },
+            hard:   { baseMin: 26, baseMax: 42, minMax: 5,    maxMax: 9, maxCnt: 8 },
           }[role];
         } else if (lv <= 100) {
           stageLabel = "S4";
+          stageStep = 3;
           band = {
-            easy:   { baseMin: 10, baseMax: 18, wMin: 5, wMax: 9,  minMax: null, maxMax: 6,  maxCnt: 6 },
-            normal: { baseMin: 16, baseMax: 28, wMin: 7, wMax: 11, minMax: null, maxMax: 8,  maxCnt: 8 },
-            hard:   { baseMin: 25, baseMax: 42, wMin: 9, wMax: 15, minMax: 6,    maxMax: 11, maxCnt: 9 },
+            easy:   { baseMin: 13, baseMax: 23, minMax: null, maxMax: 6,  maxCnt: 6 },
+            normal: { baseMin: 19, baseMax: 32, minMax: null, maxMax: 8,  maxCnt: 8 },
+            hard:   { baseMin: 30, baseMax: 48, minMax: 6,    maxMax: 11, maxCnt: 9 },
           }[role];
         } else {
           stageLabel = "S5";
+          stageStep = 4;
           const step = Math.floor((lv - 101) / 300);
-          const wStep = Math.min(3, Math.floor((lv - 101) / 500));
           band = {
-            easy:   { baseMin: 11 + step * 0.5, baseMax: 20 + step * 1.0, wMin: 6 + wStep * 0.5, wMax: 9 + wStep,        minMax: null, maxMax: 6,                       maxCnt: 7 },
-            normal: { baseMin: 17 + step * 1.0, baseMax: 30 + step * 1.5, wMin: 8 + wStep * 0.5, wMax: 12 + wStep,       minMax: null, maxMax: 9 + Math.floor(step / 2), maxCnt: 9 },
-            hard:   { baseMin: 26 + step * 1.5, baseMax: 45 + step * 2.5, wMin: 10 + wStep,      wMax: 16 + wStep * 1.5, minMax: 7,    maxMax: 14,                      maxCnt: 10 },
+            easy:   { baseMin: 14 + step * 0.5, baseMax: 24 + step * 1.0, minMax: null, maxMax: 6,                       maxCnt: 7 },
+            normal: { baseMin: 20 + step * 1.0, baseMax: 35 + step * 1.5, minMax: null, maxMax: 9 + Math.floor(step / 2), maxCnt: 9 },
+            hard:   { baseMin: 32 + step * 1.5, baseMax: 52 + step * 2.5, minMax: 7,    maxMax: 14,                      maxCnt: 11 },
           }[role];
         }
 
-        const minTargets = Math.max(3, Math.round(band.wMin * tScale));
-        const maxTargets = Math.max(minTargets + 1, Math.round(band.wMax * tScale));
+        let minTargets;
+        let maxTargets;
+        if (role === "easy") {
+          minTargets = 5;
+          maxTargets = 6 + sizeBonus + Math.floor(stageStep / 2);
+        } else if (role === "normal") {
+          minTargets = 6 + Math.floor(sizeBonus / 2);
+          maxTargets = 8 + sizeBonus + stageStep;
+        } else {
+          minTargets = 10 + Math.floor(sizeBonus / 3);
+          maxTargets = 13 + sizeBonus + stageStep;
+        }
         const minDiffTotal = sc(band.baseMin, scale);
-        const maxDiffTotal = Math.max(minDiffTotal + 3, sc(band.baseMax, scale));
+        const maxDiffTotal = Math.max(minDiffTotal + 4, sc(band.baseMax, scale));
 
         rows.push({
           ...createEmptyConfigRow(lv),
@@ -3845,14 +3860,18 @@
 
     function applyConfigPreset20() {
       const rows = [];
+      const SIZE_BONUS = { "2x4": 0, "3x3": 1, "2x5": 1, "3x4": 3, "3x5": 5 };
       for (let i = 1; i <= 20; i++) {
-        let size = "3x4", minW = 6, maxW = 11, minTotal = 8, maxTotal = 22, maxSingle = 6;
-        if (i <= 2) { size = "2x4"; minW = 2; maxW = 5; minTotal = 0; maxTotal = 7; maxSingle = 3; }
-        else if (i <= 5) { size = "3x3"; minW = 3; maxW = 6; minTotal = 3; maxTotal = 12; maxSingle = 4; }
-        else if (i <= 9) { size = "2x5"; minW = 4; maxW = 8; minTotal = 6; maxTotal = 18; maxSingle = 6; }
-        else if (i <= 14) { size = "3x4"; minW = 6; maxW = 11; minTotal = 12; maxTotal = 30; maxSingle = 8; }
-        else { size = "3x5"; minW = 8; maxW = 15; minTotal = 18; maxTotal = 45; maxSingle = 11; }
+        let size = "3x4", minTotal = 12, maxTotal = 28, maxSingle = 6;
+        if (i <= 2) { size = "2x4"; minTotal = 4; maxTotal = 11; maxSingle = 3; }
+        else if (i <= 5) { size = "3x3"; minTotal = 6; maxTotal = 16; maxSingle = 4; }
+        else if (i <= 9) { size = "2x5"; minTotal = 9; maxTotal = 22; maxSingle = 6; }
+        else if (i <= 14) { size = "3x4"; minTotal = 14; maxTotal = 34; maxSingle = 8; }
+        else { size = "3x5"; minTotal = 20; maxTotal = 48; maxSingle = 11; }
         const role = i <= 5 ? "easy" : ((i - 6) % 5 === 4 ? "hard" : ((i - 6) % 5 === 0 ? "easy" : "normal"));
+        const sb = SIZE_BONUS[size] || 0;
+        const minW = role === "hard" ? 10 : (role === "normal" ? 6 : 5);
+        const maxW = role === "hard" ? (14 + sb) : (role === "normal" ? (9 + sb) : (7 + sb));
         rows.push({
           ...createEmptyConfigRow(i),
           stageLabel: i <= 5 ? "新手" : (i <= 10 ? "S1" : "S2"),

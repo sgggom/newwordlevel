@@ -1673,13 +1673,20 @@ class LevelGenerator:
             min_len = 3
             if non_void_total <= 9:
                 max_len = min(5, non_void_total)
-                default_wc = 3 if (non_void_total >= 6 and max_cell_count <= 2) else (rng.choice([3, 3, 4]) if non_void_total >= 6 else 2)
+                if non_void_total >= 6 and max_cell_count <= 2:
+                    default_wc = 3
+                elif non_void_total >= 6 and max_cell_count >= 5:
+                    default_wc = rng.choice([3, 4, 5])
+                elif non_void_total >= 6:
+                    default_wc = rng.choice([3, 3, 4])
+                else:
+                    default_wc = 2
             elif non_void_total <= 16:
                 max_len = min(6, non_void_total)
-                default_wc = rng.choice([3, 4, 4])
+                default_wc = rng.choice([4, 4, 5]) if max_cell_count >= 5 else rng.choice([3, 4, 4])
             elif non_void_total <= 25:
                 max_len = min(7, non_void_total)
-                default_wc = rng.choice([4, 4, 5])
+                default_wc = rng.choice([4, 5, 5]) if max_cell_count >= 5 else rng.choice([4, 4, 5])
             else:
                 max_len = min(8, non_void_total)
                 default_wc = rng.choice([5, 5, 6])
@@ -1687,9 +1694,10 @@ class LevelGenerator:
             wc = word_count if word_count is not None else default_wc
             budget_floor = 12 if (non_void_total >= 6 and max_cell_count >= 2) else non_void_total
             if fill_mode == "full_cover":
-                # Allow headroom so [3, 4, 5+] initial plans fit within char budget
+                # Allow headroom so [3, 4, 5+] initial plans & higher word counts fit within char budget
                 min_chars = non_void_total
-                max_chars = min(non_void_total * max_cell_count, max(budget_floor, non_void_total + 4, int(non_void_total * 1.55)))
+                high_cap = max(budget_floor, non_void_total + 6, int(non_void_total * 1.75)) if max_cell_count >= 5 else max(budget_floor, non_void_total + 4, int(non_void_total * 1.55))
+                max_chars = min(non_void_total * max_cell_count, high_cap)
             else:
                 min_chars = max(5, int(non_void_total * 0.55))
                 max_chars = min(non_void_total * max_cell_count, max(budget_floor, int(non_void_total * 1.35) + 1))
@@ -2250,12 +2258,15 @@ class LevelGenerator:
                     missing_req_len += 1
                 if non_void_total >= 4 and not any(len(w) == 4 for w in final_t):
                     missing_req_len += 1
+            too_few_words_penalty = (
+                1 if (word_count is None and explicit_lengths is None and max_cell_count >= 3 and len(final_t) <= 4) else 0
+            )
             need_promote_penalty = (
                 1 if (explicit_lengths is None and max_cell_count >= 2 and len(selected_cands) == 0) else 0
             )
-            quality_key = (missing_req_len, collision_cnt, need_promote_penalty)
+            quality_key = (missing_req_len, too_few_words_penalty, collision_cnt, need_promote_penalty)
 
-            if quality_key != (0, 0, 0) and restart < 10:
+            if quality_key != (0, 0, 0, 0) and restart < 10:
                 if best_fallback is None or quality_key < best_fallback[0]:
                     best_fallback = (quality_key, level_candidate)
                 continue

@@ -875,9 +875,10 @@
     function queryRowPool(row, shapeOverride, relaxLevel = 0) {
       const effectiveShape = shapeOverride || (row.shapeType && row.shapeType !== "group_auto_1of5" ? row.shapeType : "any");
       const effRow = { ...row, shapeType: effectiveShape === "any" ? "" : effectiveShape };
+      const roleMinFloor = effRow.role === "hard" ? 10 : (effRow.role === "normal" ? 6 : (effRow.role === "easy" ? 5 : 2));
       if (relaxLevel === 1) {
-        if (effRow.minTargets != null) effRow.minTargets = Math.max(2, effRow.minTargets - 2);
-        if (effRow.maxTargets != null) effRow.maxTargets = effRow.maxTargets + 3;
+        if (effRow.minTargets != null) effRow.minTargets = Math.max(roleMinFloor, effRow.minTargets - 1);
+        if (effRow.maxTargets != null) effRow.maxTargets = effRow.maxTargets + 4;
         if (effRow.minDiffTotal != null) effRow.minDiffTotal = Math.max(0, effRow.minDiffTotal - 6);
         if (effRow.maxDiffTotal != null) effRow.maxDiffTotal = effRow.maxDiffTotal + 10;
         if (effRow.minDiffAvg != null) effRow.minDiffAvg = Math.max(0, effRow.minDiffAvg - 1.0);
@@ -887,8 +888,6 @@
         if (effRow.maxMaxCount != null) effRow.maxMaxCount = effRow.maxMaxCount + 3;
         if (effRow.dirTendency === "forward") effRow.dirTendency = "all";
       } else if (relaxLevel >= 2) {
-        delete effRow.minTargets;
-        delete effRow.maxTargets;
         delete effRow.minDiffTotal;
         delete effRow.maxDiffTotal;
         delete effRow.minDiffAvg;
@@ -902,10 +901,14 @@
         delete effRow.maxMaxCount;
         effRow.dirTendency = "all";
         if (relaxLevel === 2) {
+          if (effRow.minTargets != null) effRow.minTargets = Math.max(4, roleMinFloor - 3);
+          delete effRow.maxTargets;
           if (effRow.lenRule === "3_4_5p" || effRow.lenRule === "4_5p_no3") {
             effRow.lenRule = "4_5p_opt3";
           }
         } else {
+          delete effRow.minTargets;
+          delete effRow.maxTargets;
           effRow.lenRule = "all";
         }
       }
