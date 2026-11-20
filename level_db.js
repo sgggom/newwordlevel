@@ -467,16 +467,32 @@
 
   function toIndexEntry(rec) {
     ensureMetrics(rec);
-    const rows = Number(rec.rows || (rec.data && rec.data.rows) || (rec.data && rec.data.board && rec.data.board.length) || 0);
-    const cols = Number(rec.cols || (rec.data && rec.data.cols) || (rec.data && rec.data.board && rec.data.board[0] && rec.data.board[0].length) || 0);
-    const targets = (rec.data && rec.data.target_words) || [];
+    const board = (rec.data && rec.data.board) || [];
+    const rows = Number(rec.rows || (rec.data && rec.data.rows) || board.length || 0);
+    const cols = Number(rec.cols || (rec.data && rec.data.cols) || (board[0] && board[0].length) || 0);
+    let voidCount = 0;
+    for (let r = 0; r < board.length; r++) {
+      const row = board[r];
+      if (!row) continue;
+      for (let c = 0; c < row.length; c++) {
+        if (row[c] && row[c].void) voidCount++;
+      }
+    }
+    const tpl = rec.data && rec.data.template;
+    const hasVoid = voidCount > 0 || (tpl && tpl !== "full" && tpl !== "rect");
+    const targets = ((rec.data && rec.data.target_words) || []).map((w) => String(w).toUpperCase());
+    const extras = ((rec.data && rec.data.extra_words) || [])
+      .map((ex) => (typeof ex === "string" ? ex.toUpperCase() : String((ex && ex.word) || "").toUpperCase()))
+      .filter(Boolean);
     return {
       id: rec.id,
       size: rec.size || `${rows}x${cols}`,
       size_num: (rows * 100) + cols,
+      void_count: voidCount,
+      has_void: hasVoid,
       max_cell_count: rec.max_cell_count || 0,
       target_count: rec.target_count != null ? rec.target_count : targets.length,
-      extra_count: rec.extra_count || 0,
+      extra_count: rec.extra_count != null ? rec.extra_count : extras.length,
       avg_len: rec.avg_len || 0,
       dir_score_avg: rec.dir_score_avg || 0,
       path_score_avg: rec.path_score_avg || 0,
@@ -486,11 +502,14 @@
       fwd_word_count: rec.fwd_word_count || 0,
       rev_word_count: rec.rev_word_count || 0,
       targets_str: "\0" + targets.join("\0") + "\0",
+      extras_str: "\0" + extras.join("\0") + "\0",
     };
   }
 
   function matchesIndexFilter(entry, f) {
     if (f.size && entry.size !== f.size) return false;
+    if (f.shapeType === "full" && entry.has_void) return false;
+    if (f.shapeType === "custom" && !entry.has_void) return false;
     if (f.minMaxCount != null && entry.max_cell_count < f.minMaxCount) return false;
     if (f.maxMaxCount != null && entry.max_cell_count > f.maxMaxCount) return false;
     if (f.minTargets != null && entry.target_count < f.minTargets) return false;
@@ -679,30 +698,112 @@
     return lines;
   }
 
-  function pickCandidateFromEntries(candidates, sortBy, prevWordSet, avoidAdjacentWords) {
-    if (!candidates || !candidates.length) return null;
-    let pool = candidates;
-    if (avoidAdjacentWords && prevWordSet && prevWordSet.size > 0) {
-      const nonOverlap = [];
-      for (let i = 0; i < candidates.length; i++) {
-        const ws = candidates[i].targets_str.split("\0");
-        let hasOverlap = false;
-        for (let j = 0; j < ws.length; j++) {
-          if (ws[j] && prevWordSet.has(ws[j])) {
-            hasOverlap = true;
-            break;
-          }
+  function splitTokens(packedStr) {
+    if (!packedStr || packedStr.length <= 2) return [];
+    const raw = packedStr.slice(1, -1);
+    return raw ? raw.split("\0") : [];
+  }
+
+  function scoreCandidatePenalty(entry, stepIdx, state, row, avoidAdjacentWords) {
+    let pen = 0;
+    const tWords = splitTokens(entry.targets_str);
+    const eWords = splitTokens(entry.extras_str);
+
+    for (let i = 0; i < tWords.length; i++) {
+      const w = tWords[i];
+      if (avoidAdjacentWords) {
+        const lastT = state.targetLastLvl.get(w);
+        if (lastT !== undefined) {
+          const dt = Math.max(1, stepIdx - lastT);
+          pen += 1800 / (dt * dt);
         }
-        if (!hasOverlap) nonOverlap.push(candidates[i]);
+        const lastAny = state.anyLastLvl.get(w);
+        if (lastAny !== undefined) {
+          const da = Math.max(1, stepIdx - lastAny);
+          pen += 1000 / (da * da);
+        }
       }
-      if (nonOverlap.length > 0) pool = nonOverlap;
+      pen += (state.targetCount.get(w) || 0) * 18 + (state.extraCount.get(w) || 0) * 4;
     }
 
-    const mode = sortBy || "random";
-    if (mode === "random") {
-      return pool[Math.floor(Math.random() * pool.length)];
+    for (let i = 0; i < eWords.length; i++) {
+      const u = eWords[i];
+      if (avoidAdjacentWords) {
+        const lastAny = state.anyLastLvl.get(u);
+        if (lastAny !== undefined) {
+          const da = Math.max(1, stepIdx - lastAny);
+          pen += 240 / (da * da);
+        }
+      }
+      pen += (state.targetCount.get(u) || 0) * 6 + (state.extraCount.get(u) || 0) * 3;
     }
-    const cmpMap = {
+
+    if (row && (row.minDiffAvg != null || row.maxDiffAvg != null)) {
+      const lo = row.minDiffAvg != null ? row.minDiffAvg : 0;
+      const hi = row.maxDiffAvg != null ? row.maxDiffAvg : (lo + 2);
+      const mid = (lo + hi) * 0.5;
+      pen += Math.abs(entry.diff_score_avg - mid) * 0.5;
+    }
+    return pen;
+  }
+
+  function sampleUnusedFromPool(pool, usedIds, dedupAcross, sortBy, maxSamples = 250) {
+    if (!pool || !pool.length) return [];
+    const n = pool.length;
+    if (!dedupAcross && !sortBy && n <= maxSamples) return pool;
+
+    if (sortBy && sortBy !== "random") {
+      const out = [];
+      for (let i = 0; i < n && out.length < Math.min(40, maxSamples); i++) {
+        if (!dedupAcross || !usedIds.has(pool[i].id)) out.push(pool[i]);
+      }
+      return out;
+    }
+
+    if (n <= 400) {
+      if (!dedupAcross) return pool;
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        if (!usedIds.has(pool[i].id)) out.push(pool[i]);
+      }
+      return out;
+    }
+
+    const pickedMap = new Map();
+    const attempts = Math.min(n, maxSamples * 3);
+    for (let a = 0; a < attempts && pickedMap.size < maxSamples; a++) {
+      const idx = Math.floor(Math.random() * n);
+      const item = pool[idx];
+      if (!dedupAcross || !usedIds.has(item.id)) {
+        pickedMap.set(item.id, item);
+      }
+    }
+    if (pickedMap.size > 0) return Array.from(pickedMap.values());
+
+    if (!dedupAcross) return pool.slice(0, maxSamples);
+    const fallback = [];
+    for (let i = 0; i < n && fallback.length < maxSamples; i++) {
+      if (!usedIds.has(pool[i].id)) fallback.push(pool[i]);
+    }
+    return fallback;
+  }
+
+  function buildCandidateMatcherContext(memIdx) {
+    const bySizeShape = new Map();
+    const bySize = new Map();
+    const byShape = { full: [], custom: [] };
+    for (let i = 0; i < memIdx.length; i++) {
+      const e = memIdx[i];
+      const sh = e.has_void ? "custom" : "full";
+      byShape[sh].push(e);
+      if (!bySize.has(e.size)) bySize.set(e.size, []);
+      bySize.get(e.size).push(e);
+      const ssKey = `${e.size}|${sh}`;
+      if (!bySizeShape.has(ssKey)) bySizeShape.set(ssKey, []);
+      bySizeShape.get(ssKey).push(e);
+    }
+
+    const sortComparators = {
       diff_asc: (a, b) => (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
       diff_desc: (a, b) => (b.diff_score_avg - a.diff_score_avg) || (a.id - b.id),
       path_asc: (a, b) => (a.path_score_avg - b.path_score_avg) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
@@ -711,10 +812,88 @@
       dir_desc: (a, b) => (b.dir_score_avg - a.dir_score_avg) || (a.path_score_avg - b.path_score_avg) || (a.id - b.id),
       id_asc: (a, b) => a.id - b.id,
     };
-    const cmp = cmpMap[mode] || cmpMap.diff_asc;
-    let best = pool[0];
-    for (let i = 1; i < pool.length; i++) {
-      if (cmp(pool[i], best) < 0) best = pool[i];
+
+    const filterCache = new Map();
+
+    function getBaseSlice(size, shape) {
+      if (size && (shape === "full" || shape === "custom")) {
+        return bySizeShape.get(`${size}|${shape}`) || [];
+      }
+      if (size) return bySize.get(size) || [];
+      if (shape === "full" || shape === "custom") return byShape[shape];
+      return memIdx;
+    }
+
+    function queryRowPool(row, shapeOverride, relaxLevel = 0) {
+      const effectiveShape = shapeOverride || (row.shapeType && row.shapeType !== "group_auto_1of5" ? row.shapeType : "any");
+      const effRow = { ...row, shapeType: effectiveShape === "any" ? "" : effectiveShape };
+      if (relaxLevel === 1) {
+        if (effRow.minDiffAvg != null) effRow.minDiffAvg = Math.max(0, effRow.minDiffAvg - 1.0);
+        if (effRow.maxDiffAvg != null) effRow.maxDiffAvg = effRow.maxDiffAvg + 1.5;
+        if (effRow.minDiffMax != null) effRow.minDiffMax = Math.max(0, effRow.minDiffMax - 2);
+        if (effRow.maxDiffMax != null) effRow.maxDiffMax = effRow.maxDiffMax + 3;
+        if (effRow.maxMaxCount != null) effRow.maxMaxCount = effRow.maxMaxCount + 3;
+        if (effRow.dirTendency === "forward") effRow.dirTendency = "all";
+      } else if (relaxLevel >= 2) {
+        delete effRow.minDiffAvg;
+        delete effRow.maxDiffAvg;
+        delete effRow.minDiffMax;
+        delete effRow.maxDiffMax;
+        delete effRow.minRarityAvg;
+        delete effRow.maxRarityAvg;
+        delete effRow.minPathAvg;
+        delete effRow.maxPathAvg;
+        delete effRow.maxMaxCount;
+        effRow.dirTendency = "all";
+      }
+
+      const keyObj = [
+        effRow.size || "", effRow.shapeType || "",
+        effRow.minMaxCount ?? "", effRow.maxMaxCount ?? "",
+        effRow.minTargets ?? "", effRow.maxTargets ?? "",
+        effRow.minExtras ?? "", effRow.maxExtras ?? "",
+        effRow.minAvgLen ?? "", effRow.maxAvgLen ?? "",
+        effRow.minDirAvg ?? "", effRow.maxDirAvg ?? "",
+        effRow.dirTendency || "all",
+        effRow.minRarityAvg ?? "", effRow.maxRarityAvg ?? "",
+        effRow.minPathAvg ?? "", effRow.maxPathAvg ?? "",
+        effRow.minDiffAvg ?? "", effRow.maxDiffAvg ?? "",
+        effRow.minDiffMax ?? "", effRow.maxDiffMax ?? "",
+        effRow.wordContains || "",
+        effRow.sortBy || "random",
+      ].join("|");
+
+      if (filterCache.has(keyObj)) return filterCache.get(keyObj);
+
+      const base = getBaseSlice(effRow.size || "", effRow.shapeType || "");
+      const out = [];
+      for (let i = 0; i < base.length; i++) {
+        if (matchesIndexFilter(base[i], effRow)) out.push(base[i]);
+      }
+      const cmp = sortComparators[effRow.sortBy];
+      if (cmp && out.length > 1) {
+        out.sort(cmp);
+      }
+      filterCache.set(keyObj, out);
+      return out;
+    }
+
+    return { queryRowPool };
+  }
+
+  function pickBestWithPenalty(pool, stepIdx, state, row, usedIds, dedupAcross, avoidAdjacentWords, forceRandom) {
+    const sortBy = forceRandom ? "random" : (row.sortBy || "random");
+    const samples = sampleUnusedFromPool(pool, usedIds, dedupAcross, sortBy, 250);
+    if (!samples.length) return null;
+    let best = samples[0];
+    let bestScore = scoreCandidatePenalty(best, stepIdx, state, row, avoidAdjacentWords) + (sortBy === "random" ? Math.random() * 0.01 : 0);
+    for (let i = 1; i < samples.length; i++) {
+      const cand = samples[i];
+      const sc = scoreCandidatePenalty(cand, stepIdx, state, row, avoidAdjacentWords) + (sortBy === "random" ? Math.random() * 0.01 : 0);
+      if (sc < bestScore) {
+        bestScore = sc;
+        best = cand;
+      }
     }
     return best;
   }
@@ -729,72 +908,235 @@
     const dedupAcross = options.dedupAcrossLevels !== false;
     const avoidAdjacent = options.avoidAdjacentWords !== false;
     const usedIds = new Set(options.excludeIds || []);
-    let prevWords = new Set();
+    const matcher = buildCandidateMatcherContext(memIdx);
 
-    const rowResults = [];
+    const state = {
+      targetLastLvl: new Map(),
+      anyLastLvl: new Map(),
+      targetCount: new Map(),
+      extraCount: new Map(),
+    };
+
+    const rowResults = new Array(configRows.length);
     const pickedIds = [];
+    let customCount = 0;
+    let shapeFallbackCount = 0;
+    let diffRelaxedCount = 0;
+    let adjOverlapPairs = 0;
+    let near5RepeatWords = 0;
+    const recentTargetSets = [];
+
+    // Resolve group_auto_1of5 runs in blocks of 5
+    const resolvedShapes = new Array(configRows.length);
+    const groupFallbackFlags = new Array(configRows.length).fill(false);
+    let idx = 0;
+    while (idx < configRows.length) {
+      const r = configRows[idx] || {};
+      if (r.shapeType !== "group_auto_1of5") {
+        resolvedShapes[idx] = r.shapeType || "any";
+        idx++;
+        continue;
+      }
+      let end = idx;
+      while (end < configRows.length && end - idx < 5 && (configRows[end] || {}).shapeType === "group_auto_1of5") {
+        end++;
+      }
+      let bestK = -1;
+      let bestPriority = -1;
+      for (let k = idx; k < end; k++) {
+        const rk = configRows[k] || {};
+        let cnt = matcher.queryRowPool(rk, "custom", 0).length;
+        let relax = 0;
+        if (cnt === 0) {
+          cnt = matcher.queryRowPool(rk, "custom", 1).length;
+          relax = 1;
+        }
+        if (cnt === 0) {
+          cnt = matcher.queryRowPool(rk, "custom", 2).length;
+          relax = 2;
+        }
+        if (cnt > 0) {
+          const roleBonus = rk.role === "normal" ? 300 : (rk.role === "hard" ? 200 : 100);
+          const prio = (2 - relax) * 10000 + roleBonus + Math.min(cnt, 99);
+          if (prio > bestPriority) {
+            bestPriority = prio;
+            bestK = k;
+          }
+        }
+      }
+      if (bestK >= 0) {
+        for (let k = idx; k < end; k++) {
+          resolvedShapes[k] = k === bestK ? "custom" : "full";
+        }
+      } else {
+        const fallbackSlot = idx + Math.min(3, end - idx - 1);
+        for (let k = idx; k < end; k++) {
+          resolvedShapes[k] = "full";
+          if (k === fallbackSlot) groupFallbackFlags[k] = true;
+        }
+      }
+      idx = end;
+    }
 
     for (let rIdx = 0; rIdx < configRows.length; rIdx++) {
       const row = configRows[rIdx] || {};
-      const matched = [];
-      for (let i = 0; i < memIdx.length; i++) {
-        if (matchesIndexFilter(memIdx[i], row)) {
-          matched.push(memIdx[i]);
+      const desiredShape = resolvedShapes[rIdx] || "any";
+      let shapeFallback = Boolean(groupFallbackFlags[rIdx]);
+      let diffRelaxed = false;
+
+      let pool = matcher.queryRowPool(row, desiredShape, 0);
+      let picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
+
+      if (!picked) {
+        for (let relax = 1; relax <= 2 && !picked; relax++) {
+          pool = matcher.queryRowPool(row, desiredShape, relax);
+          picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
+          if (picked) diffRelaxed = true;
         }
       }
-      const available = dedupAcross
-        ? matched.filter((e) => !usedIds.has(e.id))
-        : matched;
-      const picked = pickCandidateFromEntries(available, row.sortBy, prevWords, avoidAdjacent);
+
+      if (!picked && desiredShape === "custom") {
+        shapeFallback = true;
+        for (let relax = 0; relax <= 2 && !picked; relax++) {
+          pool = matcher.queryRowPool(row, "full", relax);
+          picked = pickBestWithPenalty(pool, rIdx, state, row, usedIds, dedupAcross, avoidAdjacent, false);
+          if (picked && relax > 0) diffRelaxed = true;
+        }
+      }
+
       if (picked) {
         usedIds.add(picked.id);
         pickedIds.push(picked.id);
-        prevWords = new Set(picked.targets_str.split("\0").filter(Boolean));
-      } else {
-        prevWords = new Set();
+        if (picked.has_void) customCount++;
+        if (shapeFallback) shapeFallbackCount++;
+        if (diffRelaxed) diffRelaxedCount++;
+
+        const tWords = splitTokens(picked.targets_str);
+        const eWords = splitTokens(picked.extras_str);
+        if (recentTargetSets.length > 0) {
+          const prevSet = recentTargetSets[recentTargetSets.length - 1];
+          if (tWords.some((w) => prevSet.has(w))) adjOverlapPairs++;
+        }
+        const recentUnion = new Set();
+        for (let q = Math.max(0, recentTargetSets.length - 5); q < recentTargetSets.length; q++) {
+          recentTargetSets[q].forEach((w) => recentUnion.add(w));
+        }
+        for (let i = 0; i < tWords.length; i++) {
+          if (recentUnion.has(tWords[i])) near5RepeatWords++;
+        }
+        recentTargetSets.push(new Set(tWords));
+
+        for (let i = 0; i < tWords.length; i++) {
+          const w = tWords[i];
+          state.targetLastLvl.set(w, rIdx);
+          state.anyLastLvl.set(w, rIdx);
+          state.targetCount.set(w, (state.targetCount.get(w) || 0) + 1);
+        }
+        for (let i = 0; i < eWords.length; i++) {
+          const u = eWords[i];
+          state.anyLastLvl.set(u, rIdx);
+          state.extraCount.set(u, (state.extraCount.get(u) || 0) + 1);
+        }
       }
-      rowResults.push({
+
+      rowResults[rIdx] = {
         rowIndex: rIdx,
         levelNum: row.levelNum != null ? row.levelNum : (rIdx + 1),
-        matchedCount: matched.length,
-        availableCount: available.length,
+        matchedCount: pool.length,
+        availableCount: pool.length,
         pickedId: picked ? picked.id : null,
+        isCustom: picked ? Boolean(picked.has_void) : false,
+        shapeFallback,
+        diffRelaxed,
         record: null,
-      });
+      };
+
+      if (onProgress && ((rIdx + 1) % 50 === 0 || rIdx + 1 === configRows.length)) {
+        onProgress({ phase: "match", done: rIdx + 1, total: configRows.length });
+        await new Promise((r) => setTimeout(r, 0));
+      }
     }
 
-    const fetched = await fetchByIds(pickedIds);
+    const CHUNK = 2000;
     const byId = new Map();
-    for (let i = 0; i < fetched.length; i++) {
-      byId.set(fetched[i].id, fetched[i]);
+    for (let i = 0; i < pickedIds.length; i += CHUNK) {
+      const fetched = await fetchByIds(pickedIds.slice(i, i + CHUNK));
+      for (let j = 0; j < fetched.length; j++) {
+        byId.set(fetched[j].id, fetched[j]);
+      }
+      if (onProgress && pickedIds.length > CHUNK) {
+        onProgress({ phase: "fetch", done: Math.min(i + CHUNK, pickedIds.length), total: pickedIds.length });
+        await new Promise((r) => setTimeout(r, 0));
+      }
     }
     for (let i = 0; i < rowResults.length; i++) {
       if (rowResults[i].pickedId != null) {
         rowResults[i].record = byId.get(rowResults[i].pickedId) || null;
       }
     }
+    rowResults.stats = {
+      totalRows: configRows.length,
+      matchedRows: pickedIds.length,
+      customCount,
+      shapeFallbackCount,
+      diffRelaxedCount,
+      adjOverlapPairs,
+      near5RepeatWords,
+      uniqueTargetWords: state.targetCount.size,
+      uniqueExtraWords: state.extraCount.size,
+    };
     return rowResults;
   }
 
   async function pickOneForConfigRow(row, options = {}, onProgress = null) {
     const memIdx = await ensureMemoryIndex(onProgress);
     const excludeSet = new Set(options.excludeIds || []);
-    const prevSet = new Set((options.prevWords || []).map((w) => String(w).toUpperCase()));
-    const matched = [];
-    for (let i = 0; i < memIdx.length; i++) {
-      if (matchesIndexFilter(memIdx[i], row)) matched.push(memIdx[i]);
-    }
-    const available = matched.filter((e) => !excludeSet.has(e.id));
-    const pool = available.length ? available : matched;
-    const picked = pickCandidateFromEntries(pool, options.forceRandom ? "random" : row.sortBy, prevSet, Boolean(options.avoidAdjacentWords));
+    const matcher = buildCandidateMatcherContext(memIdx);
+    const desiredShape = options.shapeOverride || (row.shapeType && row.shapeType !== "group_auto_1of5" ? row.shapeType : "any");
+    const state = {
+      targetLastLvl: new Map(),
+      anyLastLvl: new Map(),
+      targetCount: new Map(),
+      extraCount: new Map(),
+    };
+    (options.prevWords || []).forEach((w) => {
+      const wu = String(w).toUpperCase();
+      state.targetLastLvl.set(wu, 0);
+      state.anyLastLvl.set(wu, 0);
+      state.targetCount.set(wu, 1);
+    });
+
+    let shapeFallback = false;
+    let diffRelaxed = false;
+    let pool = matcher.queryRowPool(row, desiredShape, 0);
+    let picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
+
     if (!picked) {
-      return { matchedCount: matched.length, availableCount: available.length, pickedId: null, record: null };
+      for (let relax = 1; relax <= 2 && !picked; relax++) {
+        pool = matcher.queryRowPool(row, desiredShape, relax);
+        picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
+        if (picked) diffRelaxed = true;
+      }
+    }
+    if (!picked && desiredShape === "custom") {
+      shapeFallback = true;
+      for (let relax = 0; relax <= 2 && !picked; relax++) {
+        pool = matcher.queryRowPool(row, "full", relax);
+        picked = pickBestWithPenalty(pool, 1, state, row, excludeSet, true, Boolean(options.avoidAdjacentWords), Boolean(options.forceRandom));
+        if (picked && relax > 0) diffRelaxed = true;
+      }
+    }
+    if (!picked) {
+      return { matchedCount: 0, availableCount: 0, pickedId: null, isCustom: false, shapeFallback, diffRelaxed, record: null };
     }
     const recs = await fetchByIds([picked.id]);
     return {
-      matchedCount: matched.length,
-      availableCount: available.length,
+      matchedCount: pool.length,
+      availableCount: pool.length,
       pickedId: picked.id,
+      isCustom: Boolean(picked.has_void),
+      shapeFallback,
+      diffRelaxed,
       record: recs[0] || null,
     };
   }

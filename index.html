@@ -1115,6 +1115,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-sm" id="cfgAddRowBtn" onclick="addConfigRow()">➕ 新增 1 关</button>
         <button class="btn btn-sm" id="cfgPreset20Btn" onclick="applyConfigPreset20()">✨ 生成 20 关渐进模板</button>
+        <button class="btn btn-sm btn-primary" id="cfgPreset2000Btn" onclick="applyConfigPreset2000()">🚀 生成 2000 关预设模板</button>
         <button class="btn btn-sm" id="cfgImportBtn" onclick="triggerConfigImport()">📥 导入配置 JSON/CSV</button>
         <input type="file" id="cfgImportFile" accept=".json,.csv" class="hidden" onchange="handleConfigImportFile(event)" />
         <button class="btn btn-sm" onclick="exportConfigJson()">📤 导出配置 JSON</button>
@@ -1128,15 +1129,36 @@
 
     <div class="card" style="padding:12px;">
       <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
-        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+        <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
           <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
             <input type="checkbox" id="cfgMatchDedupCheck" checked />
             跨关不重复选同一关卡
           </label>
           <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
             <input type="checkbox" id="cfgMatchAvoidAdjCheck" checked />
-            相邻关卡尽量避开重复目标词
+            距离衰减防重（目标词 &amp; 额外词离得越近重复越少）
           </label>
+          <div style="display:flex; gap:6px; align-items:center; font-size:12px;">
+            <span style="color:var(--muted);">阶段:</span>
+            <select id="cfgStageFilter" class="cfg-sel" onchange="onConfigViewFilterChange()">
+              <option value="all">全部阶段</option>
+              <option value="新手">新手 (1~5关)</option>
+              <option value="S1">S1 (6~10关)</option>
+              <option value="S2">S2 (11~20关)</option>
+              <option value="S3">S3 (21~50关)</option>
+              <option value="S4">S4 (51~100关)</option>
+              <option value="S5">S5 (101~2000关)</option>
+            </select>
+            <span style="color:var(--muted); margin-left:4px;">结果:</span>
+            <select id="cfgMatchFilter" class="cfg-sel" onchange="onConfigViewFilterChange()">
+              <option value="all">全部行</option>
+              <option value="matched">已匹配</option>
+              <option value="custom">异形关</option>
+              <option value="fallback">异形回退</option>
+              <option value="relaxed">难度微调</option>
+              <option value="unmatched">未匹配</option>
+            </select>
+          </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
           <span style="font-size:11px; color:var(--muted);">配置自动保存在浏览器本地</span>
@@ -1154,12 +1176,24 @@
           <div id="configProgressBar" class="db-progress-bar"></div>
         </div>
       </div>
+      <div class="section-head">
+        <span id="cfgPageSummaryText">配置明细（每页 50 关）</span>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <button class="btn btn-sm" id="cfgPrevPageBtn" onclick="changeConfigPage(-1)">上一页</button>
+          <span id="cfgPageInfo" style="font-size:12px; color:var(--muted);">第 1 / 1 页</span>
+          <button class="btn btn-sm" id="cfgNextPageBtn" onclick="changeConfigPage(1)">下一页</button>
+          <input type="number" id="cfgJumpPageInput" min="1" placeholder="页码" style="width:68px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; font-size:12px;" onkeydown="if(event.key==='Enter') jumpToConfigPage()" />
+          <button class="btn btn-sm" id="cfgJumpPageBtn" onclick="jumpToConfigPage()">跳转</button>
+        </div>
+      </div>
       <div class="pool-table-wrap">
         <table class="pool-table">
           <thead>
             <tr>
               <th>关号</th>
+              <th>阶段 / 定位</th>
               <th>尺寸</th>
+              <th>棋盘形态</th>
               <th>最大层数</th>
               <th>目标词数</th>
               <th>额外词数</th>
@@ -3295,14 +3329,20 @@
 
     // ==================== Level Config Table ====================
     const CONFIG_STORAGE_KEY = "NewWordLevelConfigRows_v1";
+    const CFG_PAGE_SIZE = 50;
     let configRows = [];
     let configMatchResults = [];
+    let configMatchStats = null;
     let configBusy = false;
+    let cfgPage = 0;
 
     function createEmptyConfigRow(levelNum = 1) {
       return {
         levelNum,
+        stageLabel: "",
+        role: "",
         size: "",
+        shapeType: "any",
         minMaxCount: null,
         maxMaxCount: null,
         minTargets: null,
@@ -3329,12 +3369,109 @@
 
     function buildDefaultConfigStarter() {
       return [
-        { ...createEmptyConfigRow(1), size: "2x4", maxDiffAvg: 1.5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
-        { ...createEmptyConfigRow(2), size: "3x3", maxDiffAvg: 2.0, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
-        { ...createEmptyConfigRow(3), size: "2x5", minDiffAvg: 1.0, maxDiffAvg: 3.0, maxDiffMax: 5, sortBy: "random" },
-        { ...createEmptyConfigRow(4), size: "3x4", minDiffAvg: 1.5, maxDiffAvg: 4.0, maxDiffMax: 6, sortBy: "random" },
-        { ...createEmptyConfigRow(5), size: "3x5", minDiffAvg: 2.0, maxDiffAvg: 5.5, maxDiffMax: 8, sortBy: "random" },
+        { ...createEmptyConfigRow(1), stageLabel: "新手", role: "easy", size: "2x4", shapeType: "full", maxDiffAvg: 1.5, maxDiffMax: 3, dirTendency: "forward", sortBy: "diff_asc" },
+        { ...createEmptyConfigRow(2), stageLabel: "新手", role: "easy", size: "3x3", shapeType: "full", maxDiffAvg: 2.0, maxDiffMax: 4, dirTendency: "forward", sortBy: "random" },
+        { ...createEmptyConfigRow(3), stageLabel: "新手", role: "normal", size: "2x5", shapeType: "full", minDiffAvg: 1.0, maxDiffAvg: 3.0, maxDiffMax: 5, sortBy: "random" },
+        { ...createEmptyConfigRow(4), stageLabel: "新手", role: "normal", size: "3x4", shapeType: "full", minDiffAvg: 1.5, maxDiffAvg: 4.0, maxDiffMax: 6, sortBy: "random" },
+        { ...createEmptyConfigRow(5), stageLabel: "新手", role: "normal", size: "3x5", shapeType: "full", minDiffAvg: 2.0, maxDiffAvg: 5.5, maxDiffMax: 8, sortBy: "random" },
       ];
+    }
+
+    function buildConfigPreset2000Rows() {
+      const rows = [];
+      // 1~5: 新手引导期
+      const starters = [
+        { size: "2x4", minD: 0, maxD: 1.2, maxSingle: 3, maxR: 0.5, maxP: 1.2, maxCnt: 2, dir: "forward", sortBy: "diff_asc", role: "easy" },
+        { size: "2x4", minD: 0, maxD: 1.5, maxSingle: 3, maxR: 0.8, maxP: 1.5, maxCnt: 2, dir: "forward", sortBy: "random", role: "easy" },
+        { size: "3x3", minD: 0, maxD: 1.8, maxSingle: 4, maxR: 1.0, maxP: 1.8, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "3x3", minD: 0.5, maxD: 2.0, maxSingle: 4, maxR: null, maxP: null, maxCnt: 3, dir: "forward", sortBy: "random", role: "normal" },
+        { size: "2x5", minD: 0.8, maxD: 2.2, maxSingle: 5, maxR: null, maxP: null, maxCnt: 3, dir: "all", sortBy: "random", role: "normal" },
+      ];
+      starters.forEach((s, i) => {
+        rows.push({
+          ...createEmptyConfigRow(i + 1),
+          stageLabel: "新手",
+          role: s.role,
+          size: s.size,
+          shapeType: "full",
+          maxMaxCount: s.maxCnt,
+          dirTendency: s.dir,
+          maxRarityAvg: s.maxR,
+          maxPathAvg: s.maxP,
+          minDiffAvg: s.minD,
+          maxDiffAvg: s.maxD,
+          maxDiffMax: s.maxSingle,
+          sortBy: s.sortBy,
+        });
+      });
+
+      // 6~2000: 5关一组波浪尺寸 + 简/常/常/常/难 + 5大阶段梯度递增 + 每5关1异形(动态槽位)
+      const SIZE_WAVE = ["2x4", "3x3", "2x5", "3x4", "3x5", "3x4", "2x5", "3x3"];
+      const ROLE_CYCLE = ["easy", "normal", "normal", "normal", "hard"];
+      const r1 = (x) => Math.round(x * 10) / 10;
+
+      for (let lv = 6; lv <= 2000; lv++) {
+        const groupIdx = Math.floor((lv - 6) / 5);
+        const posInGroup = (lv - 6) % 5;
+        const size = SIZE_WAVE[groupIdx % SIZE_WAVE.length];
+        const role = ROLE_CYCLE[posInGroup];
+
+        let stageLabel = "S5";
+        let band;
+        if (lv <= 10) {
+          stageLabel = "S1";
+          band = {
+            easy:   { minD: 0.5, maxD: 1.6, minMax: null, maxMax: 4, maxCnt: 3 },
+            normal: { minD: 1.2, maxD: 2.2, minMax: null, maxMax: 5, maxCnt: 4 },
+            hard:   { minD: 2.0, maxD: 3.0, minMax: 4,    maxMax: 6, maxCnt: 5 },
+          }[role];
+        } else if (lv <= 20) {
+          stageLabel = "S2";
+          band = {
+            easy:   { minD: 0.8, maxD: 1.8, minMax: null, maxMax: 4, maxCnt: 4 },
+            normal: { minD: 1.5, maxD: 2.6, minMax: null, maxMax: 6, maxCnt: 5 },
+            hard:   { minD: 2.4, maxD: 3.5, minMax: 5,    maxMax: 7, maxCnt: 6 },
+          }[role];
+        } else if (lv <= 50) {
+          stageLabel = "S3";
+          band = {
+            easy:   { minD: 1.0, maxD: 2.1, minMax: null, maxMax: 5, maxCnt: 5 },
+            normal: { minD: 1.8, maxD: 3.0, minMax: null, maxMax: 7, maxCnt: 6 },
+            hard:   { minD: 2.8, maxD: 4.2, minMax: 5,    maxMax: 9, maxCnt: 7 },
+          }[role];
+        } else if (lv <= 100) {
+          stageLabel = "S4";
+          band = {
+            easy:   { minD: 1.2, maxD: 2.3, minMax: null, maxMax: 5,  maxCnt: 6 },
+            normal: { minD: 2.1, maxD: 3.5, minMax: null, maxMax: 8,  maxCnt: 8 },
+            hard:   { minD: 3.2, maxD: 5.0, minMax: 6,    maxMax: 11, maxCnt: 9 },
+          }[role];
+        } else {
+          stageLabel = "S5";
+          const step = Math.floor((lv - 101) / 250) * 0.1;
+          band = {
+            easy:   { minD: r1(1.4 + step * 0.4), maxD: r1(2.5 + step * 0.5), minMax: null, maxMax: 6,                        maxCnt: 7 },
+            normal: { minD: r1(2.4 + step * 0.7), maxD: r1(4.0 + step * 0.8), minMax: null, maxMax: 9 + Math.floor(step * 2), maxCnt: 9 },
+            hard:   { minD: r1(3.6 + step * 0.9), maxD: r1(6.5 + step * 1.2), minMax: 7,    maxMax: 14,                       maxCnt: 10 },
+          }[role];
+        }
+
+        rows.push({
+          ...createEmptyConfigRow(lv),
+          stageLabel,
+          role,
+          size,
+          shapeType: "group_auto_1of5",
+          maxMaxCount: band.maxCnt,
+          dirTendency: lv <= 10 && role === "easy" ? "forward" : "all",
+          minDiffAvg: band.minD,
+          maxDiffAvg: band.maxD,
+          minDiffMax: band.minMax,
+          maxDiffMax: band.maxMax,
+          sortBy: "random",
+        });
+      }
+      return rows;
     }
 
     function loadConfigRowsFromStorage() {
@@ -3382,7 +3519,10 @@
         statusEl.appendChild(sp);
         statusEl.appendChild(document.createTextNode(msg));
       }
-      ["cfgAddRowBtn", "cfgPreset20Btn", "cfgImportBtn", "cfgMatchBtn", "cfgExportMatchedBtn", "cfgLoadPoolBtn"].forEach((id) => {
+      [
+        "cfgAddRowBtn", "cfgPreset20Btn", "cfgPreset2000Btn",
+        "cfgImportBtn", "cfgMatchBtn", "cfgExportMatchedBtn", "cfgLoadPoolBtn",
+      ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.disabled = active;
       });
@@ -3414,11 +3554,72 @@
       saveConfigRowsToStorage();
     }
 
+    function onConfigViewFilterChange() {
+      cfgPage = 0;
+      renderConfigTable();
+    }
+
+    function getFilteredConfigIndices() {
+      const stageF = (document.getElementById("cfgStageFilter") || {}).value || "all";
+      const matchF = (document.getElementById("cfgMatchFilter") || {}).value || "all";
+      const out = [];
+      for (let i = 0; i < configRows.length; i++) {
+        const row = configRows[i];
+        const mr = configMatchResults[i];
+        if (stageF !== "all" && (row.stageLabel || "") !== stageF) continue;
+        if (matchF === "matched" && !(mr && mr.record)) continue;
+        if (matchF === "custom" && !(mr && mr.record && mr.isCustom)) continue;
+        if (matchF === "fallback" && !(mr && mr.shapeFallback)) continue;
+        if (matchF === "relaxed" && !(mr && mr.diffRelaxed)) continue;
+        if (matchF === "unmatched" && (mr && mr.record)) continue;
+        out.push(i);
+      }
+      return out;
+    }
+
+    function changeConfigPage(delta) {
+      const indices = getFilteredConfigIndices();
+      const totalPages = Math.max(1, Math.ceil(indices.length / CFG_PAGE_SIZE));
+      cfgPage = Math.max(0, Math.min(totalPages - 1, cfgPage + delta));
+      renderConfigTable();
+    }
+
+    function jumpToConfigPage() {
+      const inp = document.getElementById("cfgJumpPageInput");
+      if (!inp) return;
+      const raw = parseInt(inp.value, 10);
+      if (Number.isNaN(raw)) return;
+      const indices = getFilteredConfigIndices();
+      const totalPages = Math.max(1, Math.ceil(indices.length / CFG_PAGE_SIZE));
+      cfgPage = Math.max(0, Math.min(totalPages - 1, raw - 1));
+      inp.value = String(cfgPage + 1);
+      renderConfigTable();
+    }
+
     function renderConfigTable() {
       if (!configRows.length) loadConfigRowsFromStorage();
       const tbody = document.getElementById("configTableBody");
       if (!tbody) return;
       tbody.innerHTML = "";
+
+      const filteredIndices = getFilteredConfigIndices();
+      const totalMatchedRows = filteredIndices.length;
+      const totalPages = Math.max(1, Math.ceil(totalMatchedRows / CFG_PAGE_SIZE));
+      if (cfgPage >= totalPages) cfgPage = totalPages - 1;
+      if (cfgPage < 0) cfgPage = 0;
+      const start = cfgPage * CFG_PAGE_SIZE;
+      const pageIndices = filteredIndices.slice(start, start + CFG_PAGE_SIZE);
+
+      const pageInfoEl = document.getElementById("cfgPageInfo");
+      if (pageInfoEl) pageInfoEl.textContent = `第 ${cfgPage + 1} / ${totalPages} 页`;
+      const summaryEl = document.getElementById("cfgPageSummaryText");
+      if (summaryEl) summaryEl.textContent = `配置明细（当前筛选 ${totalMatchedRows} / ${configRows.length} 关 · 每页 ${CFG_PAGE_SIZE} 关）`;
+      const prevBtn = document.getElementById("cfgPrevPageBtn");
+      const nextBtn = document.getElementById("cfgNextPageBtn");
+      if (prevBtn) prevBtn.disabled = cfgPage <= 0;
+      if (nextBtn) nextBtn.disabled = cfgPage + 1 >= totalPages;
+      const jumpInput = document.getElementById("cfgJumpPageInput");
+      if (jumpInput) jumpInput.max = String(totalPages);
 
       const valStr = (v) => (v == null || Number.isNaN(v)) ? "" : String(v);
       const sizeOpts = [
@@ -3428,6 +3629,12 @@
         ["2x5", "2×5"],
         ["3x4", "3×4"],
         ["3x5", "3×5"],
+      ];
+      const shapeOpts = [
+        ["any", "不限"],
+        ["group_auto_1of5", "5关内动态1异形"],
+        ["full", "标准满格"],
+        ["custom", "异形镂空"],
       ];
       const dirOpts = [
         ["all", "全部"],
@@ -3446,24 +3653,43 @@
         ["dir_desc", "方向分最高"],
         ["id_asc", "ID升序"],
       ];
+      const roleMeta = {
+        easy: ["简单", "pill-green"],
+        normal: ["正常", "pill-blue"],
+        hard: ["难关", "pill-red"],
+      };
 
-      configRows.forEach((row, idx) => {
+      pageIndices.forEach((idx) => {
+        const row = configRows[idx];
         const mr = configMatchResults[idx];
         const tr = document.createElement("tr");
         if (mr && !mr.record) tr.className = "cfg-miss";
+
+        const stageTxt = row.stageLabel || "-";
+        const rInfo = roleMeta[row.role];
+        const stageHtml = rInfo
+          ? `<span class="pill" style="background:rgba(148,163,184,0.14);color:var(--text);">${stageTxt}</span> <span class="pill ${rInfo[1]}">${rInfo[0]}</span>`
+          : `<span style="color:var(--muted);font-size:11px;">${stageTxt}</span>`;
 
         let resultHtml = `<span style="color:var(--muted); font-size:11px;">未匹配，点击「一键寻关」</span>`;
         if (mr) {
           if (mr.record) {
             const rec = mr.record;
             const targetsPreview = (rec.data.target_words || []).slice(0, 6).join(", ") + ((rec.data.target_words || []).length > 6 ? "…" : "");
+            const shapeBadge = mr.isCustom
+              ? `<span class="pill" style="background:rgba(192,132,252,0.2);color:#e9d5ff;">🧩 异形</span>`
+              : (mr.shapeFallback ? `<span class="pill pill-amber" title="本地库暂无该尺寸异形关，已回退标准满格">异形回退</span>` : "");
+            const relaxBadge = mr.diffRelaxed
+              ? `<span class="pill pill-amber" title="原难度区间无满足关卡，已微调放宽">难度微调</span>`
+              : "";
             resultHtml = `
               <div style="display:flex; align-items:center; gap:8px;">
                 ${renderMiniBoardHtml(rec.data.board)}
                 <div style="font-size:11px; line-height:1.4;">
-                  <div>
+                  <div style="display:flex; gap:3px; flex-wrap:wrap; align-items:center;">
                     <span class="pill pill-green">#${rec.id}</span>
                     <span class="pill pill-blue">${rec.size}</span>
+                    ${shapeBadge}${relaxBadge}
                     <span style="color:var(--muted);">候选 ${mr.matchedCount.toLocaleString()}</span>
                   </div>
                   <div style="color:var(--text);">
@@ -3481,8 +3707,10 @@
           `<select class="cfg-sel" onchange="${onCh}">${opts.map(([v, label]) => `<option value="${v}" ${String(curVal || "") === v ? "selected" : ""}>${label}</option>`).join("")}</select>`;
 
         tr.innerHTML = `
-          <td><input type="number" class="cfg-inp" style="width:52px; font-weight:700;" min="1" value="${valStr(row.levelNum ?? idx + 1)}" onchange="updateConfigField(${idx}, 'levelNum', this.value, true)" /></td>
+          <td><input type="number" class="cfg-inp" style="width:54px; font-weight:700;" min="1" value="${valStr(row.levelNum ?? idx + 1)}" onchange="updateConfigField(${idx}, 'levelNum', this.value, true)" /></td>
+          <td style="white-space:nowrap;">${stageHtml}</td>
           <td>${makeSel(sizeOpts, row.size, `updateConfigField(${idx}, 'size', this.value)`)}</td>
+          <td>${makeSel(shapeOpts, row.shapeType || "any", `updateConfigField(${idx}, 'shapeType', this.value)`)}</td>
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="1" value="${valStr(row.minMaxCount)}" onchange="updateConfigField(${idx}, 'minMaxCount', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="10" value="${valStr(row.maxMaxCount)}" onchange="updateConfigField(${idx}, 'maxMaxCount', this.value, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="1" value="${valStr(row.minTargets)}" onchange="updateConfigField(${idx}, 'minTargets', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="99" value="${valStr(row.maxTargets)}" onchange="updateConfigField(${idx}, 'maxTargets', this.value, true)" /></div></td>
           <td><div class="cfg-range"><input type="number" class="cfg-inp cfg-num" placeholder="0" value="${valStr(row.minExtras)}" onchange="updateConfigField(${idx}, 'minExtras', this.value, true)" />~<input type="number" class="cfg-inp cfg-num" placeholder="99" value="${valStr(row.maxExtras)}" onchange="updateConfigField(${idx}, 'maxExtras', this.value, true)" /></div></td>
@@ -3512,6 +3740,7 @@
     function addConfigRow() {
       const nextNum = configRows.length ? Math.max(...configRows.map((r) => Number(r.levelNum) || 0)) + 1 : 1;
       configRows.push(createEmptyConfigRow(nextNum));
+      cfgPage = Math.max(0, Math.ceil(configRows.length / CFG_PAGE_SIZE) - 1);
       saveConfigRowsToStorage();
       renderConfigTable();
     }
@@ -3536,6 +3765,8 @@
     function clearConfigRows() {
       configRows = [];
       configMatchResults = [];
+      configMatchStats = null;
+      cfgPage = 0;
       saveConfigRowsToStorage();
       renderConfigTable();
     }
@@ -3551,7 +3782,10 @@
         else { size = "3x5"; minD = 2.5; maxD = 7.0; maxSingle = 11; }
         rows.push({
           ...createEmptyConfigRow(i),
+          stageLabel: i <= 5 ? "新手" : (i <= 10 ? "S1" : "S2"),
+          role: i <= 5 ? "easy" : ((i - 6) % 5 === 4 ? "hard" : ((i - 6) % 5 === 0 ? "easy" : "normal")),
           size,
+          shapeType: i <= 5 ? "full" : "group_auto_1of5",
           minDiffAvg: minD,
           maxDiffAvg: maxD,
           maxDiffMax: maxSingle,
@@ -3561,10 +3795,25 @@
       }
       configRows = rows;
       configMatchResults = [];
+      configMatchStats = null;
+      cfgPage = 0;
       saveConfigRowsToStorage();
       renderConfigTable();
       const st = document.getElementById("configStatusText");
       if (st) st.textContent = "✨ 已生成 20 关渐进难度配置模板，点击「🔍 从本地库一键寻关」即可匹配";
+    }
+
+    function applyConfigPreset2000() {
+      configRows = buildConfigPreset2000Rows();
+      configMatchResults = [];
+      configMatchStats = null;
+      cfgPage = 0;
+      saveConfigRowsToStorage();
+      renderConfigTable();
+      const st = document.getElementById("configStatusText");
+      if (st) {
+        st.textContent = "🚀 已生成 2000 关预设模板（前5关新手 + 每5关1异形 + 尺寸波浪 + 简/常/常/常/难节奏 + 5大阶段梯度递增），点击「🔍 从本地库一键寻关」即可从本地库匹配！";
+      }
     }
 
     async function runConfigMatchAll() {
@@ -3592,17 +3841,28 @@
               const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
               setConfigLoading(true, `正在建立本地库索引 ${info.done.toLocaleString()} / ${info.total.toLocaleString()} 关 (${pct}%)...`, pct);
             } else if (info.phase === "match") {
-              setConfigLoading(true, `正在按配置表匹配 ${configRows.length} 关...`, null);
+              const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
+              setConfigLoading(true, `正在按配置表匹配第 ${info.done.toLocaleString()} / ${info.total.toLocaleString()} 关 (${pct}%)...`, pct);
+            } else if (info.phase === "fetch") {
+              const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
+              setConfigLoading(true, `正在批量拉取棋盘详情 ${info.done.toLocaleString()} / ${info.total.toLocaleString()} (${pct}%)...`, pct);
             }
           }
         );
         configMatchResults = results;
+        configMatchStats = results.stats || null;
         const dt = (performance.now() - t0).toFixed(1);
         const okCount = results.filter((r) => r && r.record).length;
         setConfigLoading(false);
         renderConfigTable();
         if (statusEl) {
-          statusEl.textContent = `✅ 寻关完成，耗时 ${dt} ms：成功匹配 ${okCount} / ${configRows.length} 关`;
+          const st = configMatchStats || {};
+          const adjRate = okCount > 1 ? (((okCount - 1 - (st.adjOverlapPairs || 0)) / (okCount - 1)) * 100).toFixed(1) : "100.0";
+          const near5Avg = okCount ? ((st.near5RepeatWords || 0) / okCount).toFixed(2) : "0.00";
+          const extraMeta = configMatchStats
+            ? ` · 异形 ${st.customCount || 0} 关${st.shapeFallbackCount ? ` (回退 ${st.shapeFallbackCount})` : ""}${st.diffRelaxedCount ? ` · 难度微调 ${st.diffRelaxedCount}` : ""} · 相邻无重复率 ${adjRate}% · 近5关均重复 ${near5Avg} 词`
+            : "";
+          statusEl.textContent = `✅ 寻关完成，耗时 ${dt} ms：成功匹配 ${okCount} / ${configRows.length} 关${extraMeta}`;
         }
       } catch (err) {
         setConfigLoading(false);
@@ -3617,8 +3877,8 @@
       const dedup = Boolean(document.getElementById("cfgMatchDedupCheck")?.checked);
       const avoidAdj = Boolean(document.getElementById("cfgMatchAvoidAdjCheck")?.checked);
       const excludeIds = [];
-      const curId = configMatchResults[idx]?.pickedId;
-      if (curId != null) excludeIds.push(curId);
+      const curMr = configMatchResults[idx];
+      if (curMr?.pickedId != null) excludeIds.push(curMr.pickedId);
       if (dedup) {
         configMatchResults.forEach((r, i) => {
           if (i !== idx && r && r.pickedId != null) excludeIds.push(r.pickedId);
@@ -3627,13 +3887,16 @@
       const prevWords = idx > 0 && configMatchResults[idx - 1]?.record?.data?.target_words
         ? configMatchResults[idx - 1].record.data.target_words
         : [];
+      const shapeOverride = row.shapeType === "group_auto_1of5"
+        ? (curMr && curMr.isCustom ? "custom" : "full")
+        : undefined;
 
       setConfigLoading(true, `正在为第 ${row.levelNum || idx + 1} 关重新挑选...`, null);
       await yieldToPaint();
       try {
         const res = await window.LevelDB.pickOneForConfigRow(
           row,
-          { excludeIds, prevWords, avoidAdjacentWords: avoidAdj, forceRandom: true },
+          { excludeIds, prevWords, avoidAdjacentWords: avoidAdj, forceRandom: true, shapeOverride },
           (info) => {
             if (info && info.phase === "index") {
               const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
@@ -3727,7 +3990,7 @@
 
     function exportConfigCsv() {
       const cols = [
-        "levelNum", "size", "minMaxCount", "maxMaxCount", "minTargets", "maxTargets",
+        "levelNum", "stageLabel", "role", "size", "shapeType", "minMaxCount", "maxMaxCount", "minTargets", "maxTargets",
         "minExtras", "maxExtras", "minAvgLen", "maxAvgLen", "dirTendency",
         "minDirAvg", "maxDirAvg", "minRarityAvg", "maxRarityAvg", "minPathAvg", "maxPathAvg",
         "minDiffAvg", "maxDiffAvg", "minDiffMax", "maxDiffMax", "wordContains", "sortBy",
@@ -3787,6 +4050,8 @@
         if (imported.length) {
           configRows = imported;
           configMatchResults = [];
+          configMatchStats = null;
+          cfgPage = 0;
           saveConfigRowsToStorage();
           renderConfigTable();
           if (st) st.textContent = `✅ 已导入 ${imported.length} 关配置，点击「🔍 从本地库一键寻关」即可匹配`;
