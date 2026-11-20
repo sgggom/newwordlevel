@@ -15,6 +15,26 @@
   }
 
   let dbPromise = null;
+  let _memIndex = null;
+  let _memIndexPromise = null;
+  let _lastQueryCache = null;
+  let _cacheEpoch = 0;
+
+  function invalidateCache() {
+    _cacheEpoch++;
+    _memIndex = null;
+    _memIndexPromise = null;
+    _lastQueryCache = null;
+  }
+
+  function getIndexStatus() {
+    return {
+      ready: Array.isArray(_memIndex),
+      building: Boolean(_memIndexPromise),
+      count: _memIndex ? _memIndex.length : 0,
+      hasQueryCache: Boolean(_lastQueryCache),
+    };
+  }
 
   function openDB() {
     if (dbPromise) return dbPromise;
@@ -325,18 +345,19 @@
 
   async function clear() {
     const db = await openDB();
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const req = tx.objectStore(STORE_NAME).clear();
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
+    invalidateCache();
   }
 
   async function insertBatch(rawLevels) {
     if (!rawLevels || !rawLevels.length) return { inserted: 0, skipped: 0 };
     const db = await openDB();
-    return new Promise((resolve, reject) => {
+    const res = await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readwrite");
       const store = tx.objectStore(STORE_NAME);
       let inserted = 0;
@@ -359,189 +380,301 @@
       tx.oncomplete = () => resolve({ inserted, skipped });
       tx.onerror = () => reject(tx.error || new Error("批量写入 IndexedDB 失败"));
     });
+    if (res.inserted > 0) invalidateCache();
+    return res;
+  }
+
+  function fillRarityDiffFast(rec) {
+    const targets = (rec.data && rec.data.target_words) || [];
+    const pScores = (rec.data && rec.data.word_path_scores) || {};
+    const existingTiers = (rec.data && rec.data.word_rarity_tiers) || {};
+    const wordRarityTiers = {};
+    const wordRarityScores = {};
+    const wordDiffScores = {};
+    let rarityTotal = 0;
+    let diffTotal = 0;
+    let diffMax = 0;
+
+    for (let i = 0; i < targets.length; i++) {
+      const w = String(targets[i]).toUpperCase();
+      const tier = getWordRarityTier(w, existingTiers[w]);
+      const rScore = scoreWordRarity(w, tier);
+      const pScore = Number(pScores[w] || 0);
+      const dScore = rScore + pScore;
+      wordRarityTiers[w] = tier;
+      wordRarityScores[w] = rScore;
+      wordDiffScores[w] = dScore;
+      rarityTotal += rScore;
+      diffTotal += dScore;
+      if (dScore > diffMax) diffMax = dScore;
+    }
+
+    const n = targets.length;
+    rec.rarity_score_total = rarityTotal;
+    rec.rarity_score_avg = n ? Math.round((rarityTotal / n) * 100) / 100 : 0;
+    rec.diff_score_total = diffTotal;
+    rec.diff_score_avg = n ? Math.round((diffTotal / n) * 100) / 100 : 0;
+    rec.diff_score_max = n ? diffMax : 0;
+    rec.data.word_rarity_tiers = wordRarityTiers;
+    rec.data.word_rarity_scores = wordRarityScores;
+    rec.data.word_diff_scores = wordDiffScores;
   }
 
   function ensureMetrics(rec) {
-    if (
-      rec.avg_len == null ||
-      rec.dir_score_avg == null ||
-      rec.path_score_avg == null ||
-      rec.rarity_score_avg == null ||
-      rec.diff_score_avg == null ||
-      rec.diff_score_max == null ||
-      rec.rev_word_count == null ||
-      !rec.data.word_dir_scores ||
-      !rec.data.word_path_scores ||
-      !rec.data.word_rarity_tiers ||
-      !rec.data.word_rarity_scores ||
-      !rec.data.word_diff_scores ||
-      !rec.data.word_paths
-    ) {
-      const m = computeLevelMetrics(rec.data);
-      rec.avg_len = m.avg_len;
-      rec.dir_score_total = m.dir_score_total;
-      rec.dir_score_avg = m.dir_score_avg;
-      rec.path_score_total = m.path_score_total;
-      rec.path_score_avg = m.path_score_avg;
-      rec.rarity_score_total = m.rarity_score_total;
-      rec.rarity_score_avg = m.rarity_score_avg;
-      rec.diff_score_total = m.diff_score_total;
-      rec.diff_score_avg = m.diff_score_avg;
-      rec.diff_score_max = m.diff_score_max;
-      rec.fwd_word_count = m.fwd_word_count;
-      rec.rev_word_count = m.rev_word_count;
-      rec.data.word_dir_scores = m.word_dir_scores;
-      rec.data.word_path_scores = m.word_path_scores;
-      rec.data.word_rarity_tiers = m.word_rarity_tiers;
-      rec.data.word_rarity_scores = m.word_rarity_scores;
-      rec.data.word_diff_scores = m.word_diff_scores;
-      rec.data.word_paths = m.word_paths;
+    if (!rec || !rec.data) return rec;
+    const hasCorePathMetrics =
+      rec.avg_len != null &&
+      rec.dir_score_avg != null &&
+      rec.path_score_avg != null &&
+      rec.rev_word_count != null &&
+      rec.data.word_path_scores;
+
+    if (hasCorePathMetrics) {
+      if (
+        rec.rarity_score_avg == null ||
+        rec.diff_score_avg == null ||
+        rec.diff_score_max == null ||
+        !rec.data.word_rarity_tiers ||
+        !rec.data.word_rarity_scores ||
+        !rec.data.word_diff_scores
+      ) {
+        fillRarityDiffFast(rec);
+      }
+      return rec;
     }
+
+    const m = computeLevelMetrics(rec.data);
+    rec.avg_len = m.avg_len;
+    rec.dir_score_total = m.dir_score_total;
+    rec.dir_score_avg = m.dir_score_avg;
+    rec.path_score_total = m.path_score_total;
+    rec.path_score_avg = m.path_score_avg;
+    rec.rarity_score_total = m.rarity_score_total;
+    rec.rarity_score_avg = m.rarity_score_avg;
+    rec.diff_score_total = m.diff_score_total;
+    rec.diff_score_avg = m.diff_score_avg;
+    rec.diff_score_max = m.diff_score_max;
+    rec.fwd_word_count = m.fwd_word_count;
+    rec.rev_word_count = m.rev_word_count;
+    rec.data.word_dir_scores = m.word_dir_scores;
+    rec.data.word_path_scores = m.word_path_scores;
+    rec.data.word_rarity_tiers = m.word_rarity_tiers;
+    rec.data.word_rarity_scores = m.word_rarity_scores;
+    rec.data.word_diff_scores = m.word_diff_scores;
+    rec.data.word_paths = m.word_paths;
     return rec;
   }
 
-  function matchesFilter(rec, f) {
+  function toIndexEntry(rec) {
     ensureMetrics(rec);
-    if (f.size && rec.size !== f.size) return false;
-    if (f.minMaxCount != null && rec.max_cell_count < f.minMaxCount) return false;
-    if (f.maxMaxCount != null && rec.max_cell_count > f.maxMaxCount) return false;
-    if (f.minTargets != null && rec.target_count < f.minTargets) return false;
-    if (f.maxTargets != null && rec.target_count > f.maxTargets) return false;
-    if (f.minExtras != null && rec.extra_count < f.minExtras) return false;
-    if (f.maxExtras != null && rec.extra_count > f.maxExtras) return false;
-    if (f.minAvgLen != null && rec.avg_len < f.minAvgLen) return false;
-    if (f.maxAvgLen != null && rec.avg_len > f.maxAvgLen) return false;
-    if (f.minDirAvg != null && rec.dir_score_avg < f.minDirAvg) return false;
-    if (f.maxDirAvg != null && rec.dir_score_avg > f.maxDirAvg) return false;
-    if (f.minPathAvg != null && rec.path_score_avg < f.minPathAvg) return false;
-    if (f.maxPathAvg != null && rec.path_score_avg > f.maxPathAvg) return false;
-    if (f.minRarityAvg != null && rec.rarity_score_avg < f.minRarityAvg) return false;
-    if (f.maxRarityAvg != null && rec.rarity_score_avg > f.maxRarityAvg) return false;
-    if (f.minDiffAvg != null && rec.diff_score_avg < f.minDiffAvg) return false;
-    if (f.maxDiffAvg != null && rec.diff_score_avg > f.maxDiffAvg) return false;
-    if (f.minRevWords != null && rec.rev_word_count < f.minRevWords) return false;
-    if (f.maxRevWords != null && rec.rev_word_count > f.maxRevWords) return false;
+    const rows = Number(rec.rows || (rec.data && rec.data.rows) || (rec.data && rec.data.board && rec.data.board.length) || 0);
+    const cols = Number(rec.cols || (rec.data && rec.data.cols) || (rec.data && rec.data.board && rec.data.board[0] && rec.data.board[0].length) || 0);
+    const targets = (rec.data && rec.data.target_words) || [];
+    return {
+      id: rec.id,
+      size: rec.size || `${rows}x${cols}`,
+      size_num: (rows * 100) + cols,
+      max_cell_count: rec.max_cell_count || 0,
+      target_count: rec.target_count != null ? rec.target_count : targets.length,
+      extra_count: rec.extra_count || 0,
+      avg_len: rec.avg_len || 0,
+      dir_score_avg: rec.dir_score_avg || 0,
+      path_score_avg: rec.path_score_avg || 0,
+      rarity_score_avg: rec.rarity_score_avg || 0,
+      diff_score_avg: rec.diff_score_avg || 0,
+      diff_score_max: rec.diff_score_max || 0,
+      fwd_word_count: rec.fwd_word_count || 0,
+      rev_word_count: rec.rev_word_count || 0,
+      targets_str: "\0" + targets.join("\0") + "\0",
+    };
+  }
+
+  function matchesIndexFilter(entry, f) {
+    if (f.size && entry.size !== f.size) return false;
+    if (f.minMaxCount != null && entry.max_cell_count < f.minMaxCount) return false;
+    if (f.maxMaxCount != null && entry.max_cell_count > f.maxMaxCount) return false;
+    if (f.minTargets != null && entry.target_count < f.minTargets) return false;
+    if (f.maxTargets != null && entry.target_count > f.maxTargets) return false;
+    if (f.minExtras != null && entry.extra_count < f.minExtras) return false;
+    if (f.maxExtras != null && entry.extra_count > f.maxExtras) return false;
+    if (f.minAvgLen != null && entry.avg_len < f.minAvgLen) return false;
+    if (f.maxAvgLen != null && entry.avg_len > f.maxAvgLen) return false;
+    if (f.minDirAvg != null && entry.dir_score_avg < f.minDirAvg) return false;
+    if (f.maxDirAvg != null && entry.dir_score_avg > f.maxDirAvg) return false;
+    if (f.minPathAvg != null && entry.path_score_avg < f.minPathAvg) return false;
+    if (f.maxPathAvg != null && entry.path_score_avg > f.maxPathAvg) return false;
+    if (f.minRarityAvg != null && entry.rarity_score_avg < f.minRarityAvg) return false;
+    if (f.maxRarityAvg != null && entry.rarity_score_avg > f.maxRarityAvg) return false;
+    if (f.minDiffAvg != null && entry.diff_score_avg < f.minDiffAvg) return false;
+    if (f.maxDiffAvg != null && entry.diff_score_avg > f.maxDiffAvg) return false;
+    if (f.minRevWords != null && entry.rev_word_count < f.minRevWords) return false;
+    if (f.maxRevWords != null && entry.rev_word_count > f.maxRevWords) return false;
     if (f.dirTendency && f.dirTendency !== "all") {
-      if (f.dirTendency === "forward" && !(rec.dir_score_avg > 0)) return false;
-      if (f.dirTendency === "reverse" && !(rec.dir_score_avg < 0)) return false;
-      if (f.dirTendency === "all_forward" && rec.rev_word_count !== 0) return false;
-      if (f.dirTendency === "has_reverse" && !(rec.rev_word_count > 0)) return false;
+      if (f.dirTendency === "forward" && !(entry.dir_score_avg > 0)) return false;
+      if (f.dirTendency === "reverse" && !(entry.dir_score_avg < 0)) return false;
+      if (f.dirTendency === "all_forward" && entry.rev_word_count !== 0) return false;
+      if (f.dirTendency === "has_reverse" && !(entry.rev_word_count > 0)) return false;
     }
     if (f.wordContains) {
-      const targetUpper = f.wordContains;
-      if (!rec.data.target_words.some((w) => w.includes(targetUpper))) return false;
+      if (!entry.targets_str.includes(f.wordContains)) return false;
     }
     return true;
   }
 
-  function getSortValue(rec, field) {
-    if (field === "size") {
-      return (Number(rec.rows || 0) * 100) + Number(rec.cols || 0);
-    }
-    const v = rec[field];
+  function matchesFilter(rec, f) {
+    return matchesIndexFilter(toIndexEntry(rec), f);
+  }
+
+  function getSortValue(entry, field) {
+    if (field === "size") return entry.size_num;
+    const v = entry[field];
     return typeof v === "number" ? v : (v == null ? -Infinity : String(v));
   }
 
-  async function queryLevels(filters = {}, limit = 50, offset = 0, sort = null) {
+  async function ensureMemoryIndex(onProgress) {
+    if (_memIndex) return _memIndex;
+    if (_memIndexPromise) return _memIndexPromise;
+
+    const startEpoch = _cacheEpoch;
+    _memIndexPromise = (async () => {
+      const db = await openDB();
+      const total = await count();
+      if (total === 0) {
+        if (_cacheEpoch === startEpoch) _memIndex = [];
+        return _memIndex || [];
+      }
+
+      const BATCH_SIZE = 5000;
+      const indexArr = [];
+      let lastId = null;
+
+      while (true) {
+        if (_cacheEpoch !== startEpoch) {
+          return _memIndex || indexArr;
+        }
+        const range = lastId == null ? undefined : IDBKeyRange.lowerBound(lastId, true);
+        const batch = await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, "readonly");
+          const req = tx.objectStore(STORE_NAME).getAll(range, BATCH_SIZE);
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+        if (!batch.length) break;
+
+        for (let i = 0; i < batch.length; i++) {
+          indexArr.push(toIndexEntry(batch[i]));
+        }
+        lastId = batch[batch.length - 1].id;
+        if (onProgress) {
+          onProgress({ phase: "index", done: indexArr.length, total: Math.max(total, indexArr.length) });
+        }
+        await new Promise((r) => setTimeout(r, 0));
+        if (batch.length < BATCH_SIZE) break;
+      }
+
+      if (_cacheEpoch === startEpoch) {
+        _memIndex = indexArr;
+      }
+      return _memIndex || indexArr;
+    })();
+
+    try {
+      return await _memIndexPromise;
+    } finally {
+      if (_cacheEpoch === startEpoch) {
+        _memIndexPromise = null;
+      }
+    }
+  }
+
+  async function fetchByIds(ids) {
+    if (!ids || !ids.length) return [];
     const db = await openDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, "readonly");
       const store = tx.objectStore(STORE_NAME);
-      const source = filters.size
-        ? store.index("size").openCursor(IDBKeyRange.only(filters.size))
-        : store.openCursor();
-
-      const hasSort = Boolean(sort && sort.field);
-      const items = [];
-      const matchedAll = hasSort ? [] : null;
-      let totalMatched = 0;
-
-      source.onsuccess = (ev) => {
-        const cursor = ev.target.result;
-        if (!cursor) {
-          if (hasSort) {
-            const mult = sort.dir === "asc" ? 1 : -1;
-            matchedAll.sort((a, b) => {
-              const va = getSortValue(a, sort.field);
-              const vb = getSortValue(b, sort.field);
-              if (va < vb) return -1 * mult;
-              if (va > vb) return 1 * mult;
-              return (a.id || 0) - (b.id || 0);
-            });
-            resolve({
-              totalMatched: matchedAll.length,
-              items: matchedAll.slice(offset, offset + limit),
-            });
-          } else {
-            resolve({ totalMatched, items });
-          }
-          return;
-        }
-        const rec = cursor.value;
-        if (matchesFilter(rec, filters)) {
-          if (hasSort) {
-            matchedAll.push(rec);
-          } else {
-            if (totalMatched >= offset && items.length < limit) {
-              items.push(rec);
-            }
-            totalMatched++;
-          }
-        }
-        cursor.continue();
-      };
-      source.onerror = () => reject(source.error);
+      const results = new Array(ids.length);
+      for (let i = 0; i < ids.length; i++) {
+        const idx = i;
+        const req = store.get(ids[idx]);
+        req.onsuccess = () => {
+          const rec = req.result;
+          results[idx] = rec ? ensureMetrics(rec) : null;
+        };
+        req.onerror = () => {
+          results[idx] = null;
+        };
+      }
+      tx.oncomplete = () => resolve(results.filter(Boolean));
+      tx.onerror = () => reject(tx.error || new Error("读取分页数据失败"));
     });
   }
 
-  async function collectAllMatching(filters = {}, onProgress, sort = null) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const source = filters.size
-        ? store.index("size").openCursor(IDBKeyRange.only(filters.size))
-        : store.openCursor();
+  function filterAndSortIndex(memIdx, filters, sort) {
+    const matched = [];
+    for (let i = 0; i < memIdx.length; i++) {
+      const entry = memIdx[i];
+      if (matchesIndexFilter(entry, filters)) {
+        matched.push(entry);
+      }
+    }
+    if (sort && sort.field && sort.dir) {
+      const mult = sort.dir === "asc" ? 1 : -1;
+      matched.sort((a, b) => {
+        const va = getSortValue(a, sort.field);
+        const vb = getSortValue(b, sort.field);
+        if (va < vb) return -1 * mult;
+        if (va > vb) return 1 * mult;
+        return (a.id || 0) - (b.id || 0);
+      });
+    }
+    return matched.map((e) => e.id);
+  }
 
-      const hasSort = Boolean(sort && sort.field);
-      const matchedRecs = hasSort ? [] : null;
-      const lines = [];
-      let scanned = 0;
+  async function queryLevels(filters = {}, limit = 50, offset = 0, sort = null, onProgress = null) {
+    const normSort = (sort && sort.field && sort.dir) ? { field: sort.field, dir: sort.dir } : null;
+    const cacheKey = JSON.stringify({ filters, sort: normSort });
 
-      source.onsuccess = (ev) => {
-        const cursor = ev.target.result;
-        if (!cursor) {
-          if (hasSort) {
-            const mult = sort.dir === "asc" ? 1 : -1;
-            matchedRecs.sort((a, b) => {
-              const va = getSortValue(a, sort.field);
-              const vb = getSortValue(b, sort.field);
-              if (va < vb) return -1 * mult;
-              if (va > vb) return 1 * mult;
-              return (a.id || 0) - (b.id || 0);
-            });
-            resolve(matchedRecs.map((r) => JSON.stringify(r.data)));
-          } else {
-            resolve(lines);
-          }
-          return;
-        }
-        scanned++;
-        const rec = cursor.value;
-        if (matchesFilter(rec, filters)) {
-          if (hasSort) {
-            matchedRecs.push(rec);
-          } else {
-            lines.push(JSON.stringify(rec.data));
-          }
-        }
-        if (onProgress && scanned % 5000 === 0) {
-          onProgress(scanned, hasSort ? matchedRecs.length : lines.length);
-        }
-        cursor.continue();
-      };
-      source.onerror = () => reject(source.error);
-    });
+    if (_memIndex && _lastQueryCache && _lastQueryCache.key === cacheKey) {
+      const pageIds = _lastQueryCache.ids.slice(offset, offset + limit);
+      const items = await fetchByIds(pageIds);
+      return { totalMatched: _lastQueryCache.ids.length, items, cached: true };
+    }
+
+    const memIdx = await ensureMemoryIndex(onProgress);
+    if (onProgress) {
+      onProgress({ phase: "filter", total: memIdx.length });
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    const ids = filterAndSortIndex(memIdx, filters, normSort);
+    _lastQueryCache = { key: cacheKey, ids };
+    const pageIds = ids.slice(offset, offset + limit);
+    const items = await fetchByIds(pageIds);
+    return { totalMatched: ids.length, items, cached: false };
+  }
+
+  async function collectAllMatching(filters = {}, onProgress = null, sort = null) {
+    const normSort = (sort && sort.field && sort.dir) ? { field: sort.field, dir: sort.dir } : null;
+    const memIdx = await ensureMemoryIndex(
+      onProgress ? (info) => onProgress(info.done, 0, info) : null
+    );
+    const ids = filterAndSortIndex(memIdx, filters, normSort);
+    const totalMatched = ids.length;
+    const lines = [];
+    const CHUNK = 2000;
+
+    for (let i = 0; i < totalMatched; i += CHUNK) {
+      const recs = await fetchByIds(ids.slice(i, i + CHUNK));
+      for (let j = 0; j < recs.length; j++) {
+        lines.push(JSON.stringify(recs[j].data));
+      }
+      if (onProgress) {
+        onProgress(Math.min(i + CHUNK, totalMatched), totalMatched, { phase: "export", done: Math.min(i + CHUNK, totalMatched), total: totalMatched });
+      }
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    return lines;
   }
 
   async function importText(text, isJsonl, onProgress) {
@@ -569,6 +702,7 @@
       totalInserted += res.inserted;
       totalSkipped += res.skipped;
       if (onProgress) onProgress(Math.min(i + chunk.length, items.length), items.length, totalInserted, totalSkipped);
+      await new Promise((r) => setTimeout(r, 0));
     }
     return { total: items.length, inserted: totalInserted, skipped: totalSkipped };
   }
@@ -674,21 +808,24 @@
     const total = await count();
     if (total === 0) return { total: 0, updated: 0, unchanged: 0, deduped: 0 };
 
-    // Read all keys/records in chunks via cursor, then write updates in batches
-    const allRecs = await new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const req = tx.objectStore(STORE_NAME).getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
-    });
-
     let updated = 0;
     let unchanged = 0;
     let deduped = 0;
+    let processed = 0;
+    let lastId = null;
     const chunkSize = 500;
 
-    for (let i = 0; i < allRecs.length; i += chunkSize) {
-      const chunk = allRecs.slice(i, i + chunkSize);
+    while (true) {
+      const range = lastId == null ? undefined : IDBKeyRange.lowerBound(lastId, true);
+      const chunk = await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const req = tx.objectStore(STORE_NAME).getAll(range, chunkSize);
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+      if (!chunk.length) break;
+      lastId = chunk[chunk.length - 1].id;
+
       await new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, "readwrite");
         const store = tx.objectStore(STORE_NAME);
@@ -760,14 +897,17 @@
         tx.onerror = () => reject(tx.error);
       });
 
+      processed += chunk.length;
       if (onProgress) {
-        onProgress(Math.min(i + chunk.length, allRecs.length), allRecs.length, updated, unchanged, deduped);
+        onProgress(Math.min(processed, total), total, updated, unchanged, deduped);
       }
       // Yield to browser UI thread between chunks
       await new Promise((r) => setTimeout(r, 0));
+      if (chunk.length < chunkSize) break;
     }
 
-    return { total: allRecs.length, updated, unchanged, deduped };
+    invalidateCache();
+    return { total: Math.max(total, processed), updated, unchanged, deduped };
   }
 
   const api = {
@@ -775,6 +915,11 @@
     count,
     clear,
     insertBatch,
+    invalidateCache,
+    getIndexStatus,
+    ensureMetrics,
+    toIndexEntry,
+    matchesIndexFilter,
     queryLevels,
     collectAllMatching,
     importText,

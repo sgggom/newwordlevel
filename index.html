@@ -525,6 +525,61 @@
     table.pool-table th.sortable-th.sort-active .sort-ind {
       opacity: 1;
     }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .inline-spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(56, 189, 248, 0.25);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+    .db-loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.76);
+      backdrop-filter: blur(3px);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .db-spinner-lg {
+      width: 34px;
+      height: 34px;
+      border: 3px solid rgba(56, 189, 248, 0.22);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    .db-progress-wrap {
+      width: 260px;
+      max-width: 80%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.2);
+      overflow: hidden;
+    }
+    .db-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 999px;
+      transition: width 0.15s ease;
+    }
     table.pool-table tr:hover td {
       background: rgba(56, 189, 248, 0.06);
     }
@@ -881,11 +936,11 @@
         <span class="pill" id="dbMatchPill">匹配 0 关</span>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn btn-sm" onclick="triggerDbImport()">📥 导入 JSONL / JSON 入库</button>
+        <button class="btn btn-sm" id="dbImportBtn" onclick="triggerDbImport()">📥 导入 JSONL / JSON 入库</button>
         <input type="file" id="dbImportFile" accept=".jsonl,.json" class="hidden" onchange="handleDbImportFile(event)" />
         <button class="btn btn-sm btn-primary" id="dbOrientAllBtn" onclick="orientAllDbLevels()">🧭 全体转最大方向分</button>
-        <button class="btn btn-sm btn-primary" onclick="exportDbFiltered()">📤 导出筛选结果 JSONL</button>
-        <button class="btn btn-sm btn-warn" onclick="clearLocalDb()">🗑️ 清空本地库</button>
+        <button class="btn btn-sm btn-primary" id="dbExportBtn" onclick="exportDbFiltered()">📤 导出筛选结果 JSONL</button>
+        <button class="btn btn-sm btn-warn" id="dbClearBtn" onclick="clearLocalDb()">🗑️ 清空本地库</button>
         <button class="btn btn-sm" onclick="toggleDbView(false)">← 返回棋盘</button>
       </div>
     </div>
@@ -980,19 +1035,28 @@
           <label>包含目标词</label>
           <input type="text" id="dbFilterWord" placeholder="如 CAT" style="width:110px; text-transform:uppercase;" />
         </div>
-        <button class="btn btn-sm btn-primary" onclick="runDbQuery(0)">🔍 筛选查询</button>
-        <button class="btn btn-sm" onclick="resetDbFilters()">🔄 重置筛选</button>
+        <button class="btn btn-sm btn-primary" id="dbQueryBtn" onclick="runDbQuery(0)">🔍 筛选查询</button>
+        <button class="btn btn-sm" id="dbResetBtn" onclick="resetDbFilters()">🔄 重置筛选</button>
       </div>
       <div id="dbStatusText" style="margin-top:8px; font-size:12px; color:var(--muted);"></div>
     </div>
 
-    <div class="card">
+    <div class="card" style="position:relative; min-height:240px;">
+      <div id="dbLoadingOverlay" class="db-loading-overlay hidden">
+        <div class="db-spinner-lg"></div>
+        <div id="dbLoadingText" style="font-size:13px; font-weight:700; color:var(--text);">正在处理...</div>
+        <div id="dbProgressWrap" class="db-progress-wrap hidden">
+          <div id="dbProgressBar" class="db-progress-bar"></div>
+        </div>
+      </div>
       <div class="section-head">
         <span>查询结果（每页 50 条 · 难度分 = 生僻分[max(0,长度-3)×(档位-1)] + 路径分[起步+拐弯+折返]）</span>
-        <div style="display:flex; gap:6px; align-items:center;">
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
           <button class="btn btn-sm" id="dbPrevPageBtn" onclick="changeDbPage(-1)">上一页</button>
           <span id="dbPageInfo" style="font-size:12px; color:var(--muted);">第 1 页</span>
           <button class="btn btn-sm" id="dbNextPageBtn" onclick="changeDbPage(1)">下一页</button>
+          <input type="number" id="dbJumpPageInput" min="1" placeholder="页码" style="width:68px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:6px; padding:3px 6px; font-size:12px;" onkeydown="if(event.key==='Enter') jumpToDbPage()" />
+          <button class="btn btn-sm" id="dbJumpPageBtn" onclick="jumpToDbPage()">跳转</button>
         </div>
       </div>
       <div class="pool-table-wrap">
@@ -1031,6 +1095,8 @@
     let dbPage = 0;
     let dbLastTotal = 0;
     let dbCurrentItems = [];
+    let dbQuerySeq = 0;
+    let dbBusy = false;
     let poolSort = { field: null, dir: null };
     let dbSort = { field: null, dir: null };
     let hideWords = false;
@@ -1219,14 +1285,21 @@
       };
     }
 
-    function setStatus(text, cls = "") {
+    function setStatus(text, cls = "", loading = false) {
       const strip = document.getElementById("statusStrip");
       strip.className = "status-strip" + (cls ? " " + cls : "");
-      document.getElementById("statusMsg").textContent = text;
+      const msgEl = document.getElementById("statusMsg");
+      msgEl.innerHTML = "";
+      if (loading) {
+        const sp = document.createElement("span");
+        sp.className = "inline-spinner";
+        msgEl.appendChild(sp);
+      }
+      msgEl.appendChild(document.createTextNode(text));
     }
 
     async function generateSingle() {
-      setStatus("正在生成零死局关卡...");
+      setStatus("正在生成零死局关卡...", "", true);
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
@@ -1371,7 +1444,7 @@
             }
             const rLabel = rounds > 1 ? `第 ${r}/${rounds} 轮 · ` : "";
             const dupLabel = dupSkippedTotal > 0 ? `（已去重 ${dupSkippedTotal}）` : "";
-            setStatus(`正在 ${batchOpts.workers} 核满载并行跑关：${rLabel}${roundAccepted} / ${n}${dupLabel} ...`);
+            setStatus(`正在 ${batchOpts.workers} 核满载并行跑关：${rLabel}${roundAccepted} / ${n}${dupLabel} ...`, "", true);
           };
 
           const makeTaskCfg = (take, workerIdx, seq) => {
@@ -1640,6 +1713,7 @@
     }
 
     function toggleDbSort(field) {
+      if (dbBusy) return;
       dbSort = nextSortState(dbSort, field, new Set(["id", "size"]));
       updateSortHeaderIndicators("data-db-sort", dbSort);
       runDbQuery(0);
@@ -2562,6 +2636,7 @@
     }
 
     function resetDbFilters() {
+      if (dbBusy) return;
       document.getElementById("dbFilterSize").value = "";
       [
         "dbMinMaxCnt", "dbMaxMaxCnt",
@@ -2642,16 +2717,99 @@
       return `<div title="${tip}" style="display:inline-flex;flex-direction:column;align-items:center;padding:3px 4px;margin:2px;border-radius:6px;background:rgba(15,23,42,0.45);border:1px solid rgba(148,163,184,0.16);vertical-align:middle;"><div style="position:relative;display:grid;grid-template-columns:repeat(${cols},${cell}px);gap:${gap}px;">${svg}${cellsHtml}</div>${labelHtml}</div>`;
     }
 
+    function yieldToPaint() {
+      return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+    }
+
+    function setDbLoading(active, msg = "正在处理...", pct = null) {
+      dbBusy = active;
+      const overlay = document.getElementById("dbLoadingOverlay");
+      const textEl = document.getElementById("dbLoadingText");
+      const progWrap = document.getElementById("dbProgressWrap");
+      const progBar = document.getElementById("dbProgressBar");
+      const statusEl = document.getElementById("dbStatusText");
+
+      if (overlay) overlay.classList.toggle("hidden", !active);
+      if (textEl && msg) textEl.textContent = msg;
+      if (progWrap && progBar) {
+        if (active && typeof pct === "number" && !Number.isNaN(pct)) {
+          progWrap.classList.remove("hidden");
+          progBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+        } else {
+          progWrap.classList.add("hidden");
+          progBar.style.width = "0%";
+        }
+      }
+      if (active && statusEl) {
+        statusEl.innerHTML = "";
+        const sp = document.createElement("span");
+        sp.className = "inline-spinner";
+        statusEl.appendChild(sp);
+        statusEl.appendChild(document.createTextNode(msg));
+      }
+
+      [
+        "dbQueryBtn", "dbResetBtn", "dbJumpPageBtn",
+        "dbImportBtn", "dbOrientAllBtn", "dbExportBtn", "dbClearBtn",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = active;
+      });
+      if (active) {
+        const prevBtn = document.getElementById("dbPrevPageBtn");
+        const nextBtn = document.getElementById("dbNextPageBtn");
+        if (prevBtn) prevBtn.disabled = true;
+        if (nextBtn) nextBtn.disabled = true;
+      }
+    }
+
     async function runDbQuery(page = 0) {
       if (!window.LevelDB) return;
+      const mySeq = ++dbQuerySeq;
       dbPage = Math.max(0, page);
       const limit = 50;
       const offset = dbPage * limit;
       const filters = collectDbFilters();
       const statusEl = document.getElementById("dbStatusText");
-      if (statusEl) statusEl.textContent = "⏳ 正在查询本地库...";
+      const idxStatus = window.LevelDB.getIndexStatus ? window.LevelDB.getIndexStatus() : { ready: false };
+      setDbLoading(
+        true,
+        idxStatus.ready ? `正在加载第 ${dbPage + 1} 页...` : "正在读取本地库并建立内存索引...",
+        idxStatus.ready ? null : 0
+      );
+      await yieldToPaint();
+
       const t0 = performance.now();
-      const res = await window.LevelDB.queryLevels(filters, limit, offset, dbSort.field ? dbSort : null);
+      let res;
+      try {
+        res = await window.LevelDB.queryLevels(
+          filters,
+          limit,
+          offset,
+          dbSort.field ? dbSort : null,
+          (info) => {
+            if (mySeq !== dbQuerySeq || !info) return;
+            if (info.phase === "index") {
+              const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
+              setDbLoading(
+                true,
+                `正在建立本地库索引 ${info.done.toLocaleString()} / ${info.total.toLocaleString()} 关 (${pct}%)...`,
+                pct
+              );
+            } else if (info.phase === "filter") {
+              setDbLoading(true, `正在筛选排序 ${info.total.toLocaleString()} 关...`, null);
+            }
+          }
+        );
+      } catch (err) {
+        if (mySeq === dbQuerySeq) {
+          setDbLoading(false);
+          if (statusEl) statusEl.textContent = `❌ 查询失败: ${err.message}`;
+        }
+        return;
+      }
+
+      if (mySeq !== dbQuerySeq) return;
       const dt = (performance.now() - t0).toFixed(1);
 
       dbLastTotal = res.totalMatched;
@@ -2659,9 +2817,8 @@
       document.getElementById("dbMatchPill").textContent = `匹配 ${res.totalMatched} 关`;
       const totalPages = Math.max(1, Math.ceil(res.totalMatched / limit));
       document.getElementById("dbPageInfo").textContent = `第 ${dbPage + 1} / ${totalPages} 页`;
-      document.getElementById("dbPrevPageBtn").disabled = dbPage <= 0;
-      document.getElementById("dbNextPageBtn").disabled = (dbPage + 1) * limit >= res.totalMatched;
-      if (statusEl) statusEl.textContent = `✅ 查询完成，耗时 ${dt} ms（共匹配 ${res.totalMatched} 关）`;
+      const jumpInput = document.getElementById("dbJumpPageInput");
+      if (jumpInput) jumpInput.max = String(totalPages);
 
       const tbody = document.getElementById("dbTableBody");
       tbody.innerHTML = "";
@@ -2737,10 +2894,30 @@
         `;
         tbody.appendChild(tr);
       }
+
+      setDbLoading(false);
+      document.getElementById("dbPrevPageBtn").disabled = dbPage <= 0;
+      document.getElementById("dbNextPageBtn").disabled = (dbPage + 1) * limit >= res.totalMatched;
+      if (statusEl) {
+        statusEl.textContent = `✅ 查询完成，耗时 ${dt} ms（共匹配 ${res.totalMatched.toLocaleString()} 关${res.cached ? " · 缓存秒切" : ""}）`;
+      }
     }
 
     async function changeDbPage(delta) {
+      if (dbBusy) return;
       await runDbQuery(dbPage + delta);
+    }
+
+    async function jumpToDbPage() {
+      if (dbBusy) return;
+      const input = document.getElementById("dbJumpPageInput");
+      if (!input) return;
+      const raw = parseInt(input.value, 10);
+      if (Number.isNaN(raw)) return;
+      const totalPages = Math.max(1, Math.ceil((dbLastTotal || 0) / 50));
+      const targetPage = Math.max(1, Math.min(totalPages, raw)) - 1;
+      input.value = String(targetPage + 1);
+      await runDbQuery(targetPage);
     }
 
     async function loadDbLevelToBoard(idx) {
@@ -2750,7 +2927,7 @@
       levels.push(lvl);
       currentIndex = levels.length - 1;
       await toggleDbView(false);
-      setStatus("⏳ 正在对载入关卡执行求解验算...");
+      setStatus("⏳ 正在对载入关卡执行求解验算...", "", true);
       try {
         const res = await fetch("/api/solve", {
           method: "POST",
@@ -2768,6 +2945,7 @@
     }
 
     function triggerDbImport() {
+      if (dbBusy) return;
       document.getElementById("dbImportFile").click();
     }
 
@@ -2775,74 +2953,106 @@
       const file = ev.target.files[0];
       if (!file || !window.LevelDB) return;
       const statusEl = document.getElementById("dbStatusText");
-      if (statusEl) statusEl.textContent = `⏳ 正在读取并导入 ${file.name} ...`;
+      setDbLoading(true, `正在读取并导入 ${file.name} ...`, 0);
+      await yieldToPaint();
       try {
         const text = await file.text();
         const isJsonl = file.name.toLowerCase().endsWith(".jsonl");
         const res = await window.LevelDB.importText(text, isJsonl, (done, total, ins, skip) => {
-          if (statusEl) statusEl.textContent = `⏳ 导入中 ${done}/${total}（新增 ${ins}，去重跳过 ${skip}）...`;
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          setDbLoading(
+            true,
+            `导入中 ${done.toLocaleString()} / ${total.toLocaleString()}（新增 ${ins.toLocaleString()}，去重跳过 ${skip.toLocaleString()}）...`,
+            pct
+          );
         });
+        setDbLoading(false);
         await refreshDbCount();
         await runDbQuery(0);
         if (statusEl) {
-          statusEl.textContent = `✅ 导入完成：共 ${res.total} 条，新增 ${res.inserted} 关，去重跳过 ${res.skipped} 关`;
+          statusEl.textContent = `✅ 导入完成：共 ${res.total.toLocaleString()} 条，新增 ${res.inserted.toLocaleString()} 关，去重跳过 ${res.skipped.toLocaleString()} 关`;
         }
       } catch (err) {
+        setDbLoading(false);
         if (statusEl) statusEl.textContent = `❌ 导入失败: ${err.message}`;
       }
       ev.target.value = "";
     }
 
     async function exportDbFiltered() {
-      if (!window.LevelDB) return;
+      if (!window.LevelDB || dbBusy) return;
       const statusEl = document.getElementById("dbStatusText");
       const filters = collectDbFilters();
-      if (statusEl) statusEl.textContent = "⏳ 正在导出筛选结果...";
-      const lines = await window.LevelDB.collectAllMatching(filters, (scanned, matched) => {
-        if (statusEl) statusEl.textContent = `⏳ 已扫描 ${scanned} 条，匹配 ${matched} 条...`;
-      }, dbSort.field ? dbSort : null);
-      if (!lines.length) {
-        if (statusEl) statusEl.textContent = "⚠️ 当前筛选条件下没有可导出的关卡";
-        return;
+      setDbLoading(true, "正在准备导出筛选结果...", 0);
+      await yieldToPaint();
+      try {
+        const lines = await window.LevelDB.collectAllMatching(filters, (done, matched, info) => {
+          if (info && info.phase === "index") {
+            const pct = info.total ? Math.round((info.done / info.total) * 100) : 0;
+            setDbLoading(true, `正在建立索引 ${info.done.toLocaleString()} / ${info.total.toLocaleString()} (${pct}%)...`, pct);
+          } else {
+            const pct = matched ? Math.round((done / matched) * 100) : null;
+            setDbLoading(true, `正在打包导出 ${done.toLocaleString()} / ${matched.toLocaleString()} 关...`, pct);
+          }
+        }, dbSort.field ? dbSort : null);
+        setDbLoading(false);
+        if (!lines.length) {
+          if (statusEl) statusEl.textContent = "⚠️ 当前筛选条件下没有可导出的关卡";
+          return;
+        }
+        const blob = new Blob([lines.join("\n") + "\n"], { type: "application/x-ndjson;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `db_filtered_${lines.length}.jsonl`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        if (statusEl) statusEl.textContent = `✅ 已导出 ${lines.length.toLocaleString()} 关 JSONL`;
+      } catch (err) {
+        setDbLoading(false);
+        if (statusEl) statusEl.textContent = `❌ 导出失败: ${err.message}`;
       }
-      const blob = new Blob([lines.join("\n") + "\n"], { type: "application/x-ndjson;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `db_filtered_${lines.length}.jsonl`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      if (statusEl) statusEl.textContent = `✅ 已导出 ${lines.length} 关 JSONL`;
     }
 
     async function orientAllDbLevels() {
-      if (!window.LevelDB) return;
-      const btn = document.getElementById("dbOrientAllBtn");
+      if (!window.LevelDB || dbBusy) return;
       const statusEl = document.getElementById("dbStatusText");
-      if (btn) btn.disabled = true;
-      if (statusEl) statusEl.textContent = "⏳ 正在对本地库全部关卡计算最大方向分朝向...";
+      setDbLoading(true, "正在对本地库全部关卡计算最大方向分朝向...", 0);
+      await yieldToPaint();
       try {
         const res = await window.LevelDB.orientAllLevels((done, total, upd, unch, dedup) => {
-          if (statusEl) {
-            statusEl.textContent = `⏳ 正在优化朝向 ${done} / ${total}（已翻转 ${upd} 关，原向最优 ${unch} 关${dedup ? `，合并重复 ${dedup}` : ""}）...`;
-          }
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          setDbLoading(
+            true,
+            `正在优化朝向 ${done.toLocaleString()} / ${total.toLocaleString()} (${pct}% · 已翻转 ${upd} 关，原向最优 ${unch} 关${dedup ? `，合并重复 ${dedup}` : ""})...`,
+            pct
+          );
         });
+        setDbLoading(false);
         await refreshDbCount();
         await runDbQuery(dbPage);
         if (statusEl) {
-          statusEl.textContent = `✅ 全部处理完成：共 ${res.total} 关，已优化翻转 ${res.updated} 关，原向已最优 ${res.unchanged} 关${res.deduped ? `，去重合并 ${res.deduped} 关` : ""}`;
+          statusEl.textContent = `✅ 全部处理完成：共 ${res.total.toLocaleString()} 关，已优化翻转 ${res.updated.toLocaleString()} 关，原向已最优 ${res.unchanged.toLocaleString()} 关${res.deduped ? `，去重合并 ${res.deduped} 关` : ""}`;
         }
       } catch (err) {
+        setDbLoading(false);
         if (statusEl) statusEl.textContent = `❌ 处理失败: ${err.message}`;
-      } finally {
-        if (btn) btn.disabled = false;
       }
     }
 
     async function clearLocalDb() {
-      if (!window.LevelDB) return;
-      await window.LevelDB.clear();
-      await refreshDbCount();
-      await runDbQuery(0);
+      if (!window.LevelDB || dbBusy) return;
+      const statusEl = document.getElementById("dbStatusText");
+      setDbLoading(true, "正在清空本地关卡库...", null);
+      await yieldToPaint();
+      try {
+        await window.LevelDB.clear();
+        setDbLoading(false);
+        await refreshDbCount();
+        await runDbQuery(0);
+      } catch (err) {
+        setDbLoading(false);
+        if (statusEl) statusEl.textContent = `❌ 清空失败: ${err.message}`;
+      }
     }
 
     function applyBoardTransform(lvl, mode) {
