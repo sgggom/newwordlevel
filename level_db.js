@@ -507,6 +507,8 @@
     if (f.maxRarityAvg != null && entry.rarity_score_avg > f.maxRarityAvg) return false;
     if (f.minDiffAvg != null && entry.diff_score_avg < f.minDiffAvg) return false;
     if (f.maxDiffAvg != null && entry.diff_score_avg > f.maxDiffAvg) return false;
+    if (f.minDiffMax != null && entry.diff_score_max < f.minDiffMax) return false;
+    if (f.maxDiffMax != null && entry.diff_score_max > f.maxDiffMax) return false;
     if (f.minRevWords != null && entry.rev_word_count < f.minRevWords) return false;
     if (f.maxRevWords != null && entry.rev_word_count > f.maxRevWords) return false;
     if (f.dirTendency && f.dirTendency !== "all") {
@@ -675,6 +677,126 @@
       await new Promise((r) => setTimeout(r, 0));
     }
     return lines;
+  }
+
+  function pickCandidateFromEntries(candidates, sortBy, prevWordSet, avoidAdjacentWords) {
+    if (!candidates || !candidates.length) return null;
+    let pool = candidates;
+    if (avoidAdjacentWords && prevWordSet && prevWordSet.size > 0) {
+      const nonOverlap = [];
+      for (let i = 0; i < candidates.length; i++) {
+        const ws = candidates[i].targets_str.split("\0");
+        let hasOverlap = false;
+        for (let j = 0; j < ws.length; j++) {
+          if (ws[j] && prevWordSet.has(ws[j])) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        if (!hasOverlap) nonOverlap.push(candidates[i]);
+      }
+      if (nonOverlap.length > 0) pool = nonOverlap;
+    }
+
+    const mode = sortBy || "random";
+    if (mode === "random") {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    const cmpMap = {
+      diff_asc: (a, b) => (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
+      diff_desc: (a, b) => (b.diff_score_avg - a.diff_score_avg) || (a.id - b.id),
+      path_asc: (a, b) => (a.path_score_avg - b.path_score_avg) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
+      rarity_asc: (a, b) => (a.rarity_score_avg - b.rarity_score_avg) || (a.diff_score_avg - b.diff_score_avg) || (a.id - b.id),
+      rarity_desc: (a, b) => (b.rarity_score_avg - a.rarity_score_avg) || (a.id - b.id),
+      dir_desc: (a, b) => (b.dir_score_avg - a.dir_score_avg) || (a.path_score_avg - b.path_score_avg) || (a.id - b.id),
+      id_asc: (a, b) => a.id - b.id,
+    };
+    const cmp = cmpMap[mode] || cmpMap.diff_asc;
+    let best = pool[0];
+    for (let i = 1; i < pool.length; i++) {
+      if (cmp(pool[i], best) < 0) best = pool[i];
+    }
+    return best;
+  }
+
+  async function matchConfigTable(configRows, options = {}, onProgress = null) {
+    const memIdx = await ensureMemoryIndex(onProgress);
+    if (onProgress) {
+      onProgress({ phase: "match", done: 0, total: configRows.length });
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    const dedupAcross = options.dedupAcrossLevels !== false;
+    const avoidAdjacent = options.avoidAdjacentWords !== false;
+    const usedIds = new Set(options.excludeIds || []);
+    let prevWords = new Set();
+
+    const rowResults = [];
+    const pickedIds = [];
+
+    for (let rIdx = 0; rIdx < configRows.length; rIdx++) {
+      const row = configRows[rIdx] || {};
+      const matched = [];
+      for (let i = 0; i < memIdx.length; i++) {
+        if (matchesIndexFilter(memIdx[i], row)) {
+          matched.push(memIdx[i]);
+        }
+      }
+      const available = dedupAcross
+        ? matched.filter((e) => !usedIds.has(e.id))
+        : matched;
+      const picked = pickCandidateFromEntries(available, row.sortBy, prevWords, avoidAdjacent);
+      if (picked) {
+        usedIds.add(picked.id);
+        pickedIds.push(picked.id);
+        prevWords = new Set(picked.targets_str.split("\0").filter(Boolean));
+      } else {
+        prevWords = new Set();
+      }
+      rowResults.push({
+        rowIndex: rIdx,
+        levelNum: row.levelNum != null ? row.levelNum : (rIdx + 1),
+        matchedCount: matched.length,
+        availableCount: available.length,
+        pickedId: picked ? picked.id : null,
+        record: null,
+      });
+    }
+
+    const fetched = await fetchByIds(pickedIds);
+    const byId = new Map();
+    for (let i = 0; i < fetched.length; i++) {
+      byId.set(fetched[i].id, fetched[i]);
+    }
+    for (let i = 0; i < rowResults.length; i++) {
+      if (rowResults[i].pickedId != null) {
+        rowResults[i].record = byId.get(rowResults[i].pickedId) || null;
+      }
+    }
+    return rowResults;
+  }
+
+  async function pickOneForConfigRow(row, options = {}, onProgress = null) {
+    const memIdx = await ensureMemoryIndex(onProgress);
+    const excludeSet = new Set(options.excludeIds || []);
+    const prevSet = new Set((options.prevWords || []).map((w) => String(w).toUpperCase()));
+    const matched = [];
+    for (let i = 0; i < memIdx.length; i++) {
+      if (matchesIndexFilter(memIdx[i], row)) matched.push(memIdx[i]);
+    }
+    const available = matched.filter((e) => !excludeSet.has(e.id));
+    const pool = available.length ? available : matched;
+    const picked = pickCandidateFromEntries(pool, options.forceRandom ? "random" : row.sortBy, prevSet, Boolean(options.avoidAdjacentWords));
+    if (!picked) {
+      return { matchedCount: matched.length, availableCount: available.length, pickedId: null, record: null };
+    }
+    const recs = await fetchByIds([picked.id]);
+    return {
+      matchedCount: matched.length,
+      availableCount: available.length,
+      pickedId: picked.id,
+      record: recs[0] || null,
+    };
   }
 
   async function importText(text, isJsonl, onProgress) {
@@ -922,6 +1044,8 @@
     matchesIndexFilter,
     queryLevels,
     collectAllMatching,
+    matchConfigTable,
+    pickOneForConfigRow,
     importText,
     computeSignature,
     computeLevelMetrics,
