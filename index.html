@@ -2694,7 +2694,7 @@
       });
 
       const pts = path.map(([r, c]) => `${c * step + cell / 2},${r * step + cell / 2}`).join(" ");
-      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="1.8" stroke-opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const svg = `<svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="position:absolute;left:0;top:0;pointer-events:none;z-index:0;"><polyline points="${pts}" fill="none" stroke="${colorHex}" stroke-width="1.8" stroke-opacity="0.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
       let cellsHtml = "";
       for (let r = 0; r < rows; r++) {
@@ -2707,7 +2707,7 @@
             const isStart = info.idx === 0;
             const bg = isStart ? `${colorHex}44` : `${colorHex}1e`;
             const bd = isStart ? `1px solid ${colorHex}` : `1px solid ${colorHex}66`;
-            cellsHtml += `<span style="position:relative;z-index:1;width:${cell}px;height:${cell}px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;background:${bg};border:${bd};font-size:9px;font-weight:800;font-family:monospace;color:${colorHex};line-height:1;">${info.ch}</span>`;
+            cellsHtml += `<span style="position:relative;z-index:2;width:${cell}px;height:${cell}px;display:inline-flex;align-items:center;justify-content:center;border-radius:3px;background:${bg};border:${bd};font-size:10px;font-weight:800;font-family:monospace;color:#ffffff;text-shadow:0 0 3px rgba(15,23,42,0.95),0 1px 2px rgba(15,23,42,0.95);line-height:1;">${info.ch}</span>`;
           } else {
             cellsHtml += `<span style="position:relative;z-index:1;width:${cell}px;height:${cell}px;display:inline-block;border-radius:3px;background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.16);"></span>`;
           }
