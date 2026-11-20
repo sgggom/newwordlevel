@@ -764,6 +764,12 @@
       const mid = (lo + hi) * 0.5;
       pen += Math.abs(entry.diff_score_avg - mid) * 0.5;
     }
+    if (row && (row.minTargets != null || row.maxTargets != null)) {
+      const loT = row.minTargets != null ? row.minTargets : 2;
+      const hiT = row.maxTargets != null ? row.maxTargets : (loT + 4);
+      const midT = (loT + hiT) * 0.5;
+      pen += Math.abs(entry.target_count - midT) * 0.3;
+    }
     return pen;
   }
 
@@ -848,6 +854,8 @@
       const effectiveShape = shapeOverride || (row.shapeType && row.shapeType !== "group_auto_1of5" ? row.shapeType : "any");
       const effRow = { ...row, shapeType: effectiveShape === "any" ? "" : effectiveShape };
       if (relaxLevel === 1) {
+        if (effRow.minTargets != null) effRow.minTargets = Math.max(2, effRow.minTargets - 2);
+        if (effRow.maxTargets != null) effRow.maxTargets = effRow.maxTargets + 3;
         if (effRow.minDiffTotal != null) effRow.minDiffTotal = Math.max(0, effRow.minDiffTotal - 6);
         if (effRow.maxDiffTotal != null) effRow.maxDiffTotal = effRow.maxDiffTotal + 10;
         if (effRow.minDiffAvg != null) effRow.minDiffAvg = Math.max(0, effRow.minDiffAvg - 1.0);
@@ -857,6 +865,8 @@
         if (effRow.maxMaxCount != null) effRow.maxMaxCount = effRow.maxMaxCount + 3;
         if (effRow.dirTendency === "forward") effRow.dirTendency = "all";
       } else if (relaxLevel >= 2) {
+        delete effRow.minTargets;
+        delete effRow.maxTargets;
         delete effRow.minDiffTotal;
         delete effRow.maxDiffTotal;
         delete effRow.minDiffAvg;

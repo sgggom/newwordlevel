@@ -193,6 +193,7 @@ def dispatch_api(path, body_str):
                 if any(not void_mask[r][col] and counts[r][col] == 0 for r in range(rows) for col in range(cols)):
                     continue
 
+                target_wc = int(body["word_count"]) if body.get("word_count") else None
                 rem_order = sorted(
                     range(len(unique_elig)),
                     key=lambda i: (-GENERATOR.target_usage[unique_elig[i]["word"]], unique_elig[i]["length"], unique_elig[i]["word"]),
@@ -200,7 +201,8 @@ def dispatch_api(path, body_str):
                 removed_words = set()
                 for i in rem_order:
                     cur_max = max(counts[r][col] for r in range(rows) for col in range(cols))
-                    if cur_max <= max_cell_count:
+                    cur_wc = len(unique_elig) - len(removed_words)
+                    if cur_max <= max_cell_count and (target_wc is None or cur_wc <= target_wc):
                         break
                     path = unique_elig[i]["sample_paths"][0]
                     if all(counts[r][col] >= 2 for r, col in path):
