@@ -1726,12 +1726,14 @@ class LevelGenerator:
             fixed_indices: set[int] = set()
             free_slots = list(range(rem_n))
             rng.shuffle(free_slots)
+            ge5_idx: int | None = None
 
             if need_ge5 and free_slots and seed_sum + 5 <= max_chars:
                 idx = next((i for i in free_slots if chosen[i] >= 5), free_slots[0])
                 free_slots.remove(idx)
                 if chosen[idx] < 5:
                     chosen[idx] = 5
+                ge5_idx = idx
                 fixed_indices.add(idx)
             if need_eq4 and free_slots:
                 idx = next((i for i in free_slots if chosen[i] == 4), free_slots[0])
@@ -1748,12 +1750,33 @@ class LevelGenerator:
                 tot = seed_sum + sum(chosen)
                 if min_chars <= tot <= max_chars:
                     break
-                adjustable = [i for i in range(rem_n) if i not in fixed_indices] or list(range(rem_n))
-                idx = rng.choice(adjustable)
-                if tot < min_chars and chosen[idx] < max_len:
-                    chosen[idx] += 1
-                elif tot > max_chars and chosen[idx] > min_len:
-                    chosen[idx] -= 1
+                if tot < min_chars:
+                    adjustable = [
+                        i for i in range(rem_n)
+                        if (i not in fixed_indices or i == ge5_idx) and chosen[i] < max_len
+                    ]
+                    if not adjustable:
+                        adjustable = [i for i in range(rem_n) if chosen[i] < max_len]
+                    if not adjustable:
+                        break
+                    chosen[rng.choice(adjustable)] += 1
+                else:
+                    adjustable = [i for i in range(rem_n) if i not in fixed_indices and chosen[i] > min_len]
+                    if not adjustable:
+                        adjustable = [
+                            i for i in range(rem_n)
+                            if (i != ge5_idx and chosen[i] > min_len) or (i == ge5_idx and chosen[i] > 5)
+                        ]
+                    if not adjustable:
+                        adjustable = [i for i in range(rem_n) if chosen[i] > min_len]
+                    if not adjustable:
+                        break
+                    chosen[rng.choice(adjustable)] -= 1
+
+            while seed_sum + sum(chosen) < min_chars and len(chosen) + seed_n < 12:
+                need = min_chars - (seed_sum + sum(chosen))
+                chosen.append(min(max_len, max(min_len, need)))
+
             return chosen
 
         for _ in range(40):

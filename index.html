@@ -617,6 +617,7 @@
       <button class="preset-btn" data-preset="2x5" onclick="selectPreset('2x5')">2×5</button>
       <button class="preset-btn active" data-preset="3x4" onclick="selectPreset('3x4')">3×4</button>
       <button class="preset-btn" data-preset="3x5" onclick="selectPreset('3x5')">3×5</button>
+      <button class="preset-btn" data-preset="4x5" onclick="selectPreset('4x5')">4×5</button>
       <button class="preset-btn" data-preset="custom" onclick="selectCustomShapePreset()">🧩 自定义形状</button>
     </div>
 
@@ -987,6 +988,7 @@
             <option value="2x5">2×5</option>
             <option value="3x4">3×4</option>
             <option value="3x5">3×5</option>
+            <option value="4x5">4×5</option>
           </select>
         </div>
         <div class="field" style="min-width:130px;">
@@ -1136,6 +1138,7 @@
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="btn btn-sm" id="cfgAddRowBtn" onclick="addConfigRow()">➕ 新增 1 关</button>
         <button class="btn btn-sm" id="cfgPreset20Btn" onclick="applyConfigPreset20()">✨ 生成 20 关渐进模板</button>
+        <button class="btn btn-sm" id="cfgPreset31Btn" onclick="applyConfigPreset31()">📅 生成 31 关 4×5 模板</button>
         <button class="btn btn-sm btn-primary" id="cfgPreset2000Btn" onclick="applyConfigPreset2000()">🚀 生成 2000 关预设模板</button>
         <button class="btn btn-sm" id="cfgImportBtn" onclick="triggerConfigImport()">📥 导入配置 JSON/CSV</button>
         <input type="file" id="cfgImportFile" accept=".json,.csv" class="hidden" onchange="handleConfigImportFile(event)" />
@@ -1309,6 +1312,7 @@
         "2x5": [2, 5, 3],
         "3x4": [3, 4, 4],
         "3x5": [3, 5, 5],
+        "4x5": [4, 5, 6],
       };
       const spec = specMap[name];
       if (spec) {
@@ -3593,7 +3597,7 @@
         statusEl.appendChild(document.createTextNode(msg));
       }
       [
-        "cfgAddRowBtn", "cfgPreset20Btn", "cfgPreset2000Btn",
+        "cfgAddRowBtn", "cfgPreset20Btn", "cfgPreset31Btn", "cfgPreset2000Btn",
         "cfgImportBtn", "cfgMatchBtn", "cfgExportMatchedBtn", "cfgLoadPoolBtn",
       ].forEach((id) => {
         const el = document.getElementById(id);
@@ -3702,6 +3706,7 @@
         ["2x5", "2×5"],
         ["3x4", "3×4"],
         ["3x5", "3×5"],
+        ["4x5", "4×5"],
       ];
       const shapeOpts = [
         ["any", "不限"],
@@ -3896,6 +3901,97 @@
       renderConfigTable();
       const st = document.getElementById("configStatusText");
       if (st) st.textContent = "✨ 已生成 20 关渐进难度配置模板，点击「🔍 从本地库一键寻关」即可匹配";
+    }
+
+    function buildConfigPreset31Rows() {
+      const rows = [];
+      const starters = [
+        { role: "easy",   minW: 5, maxW: 10, maxCnt: 4, minT: 14, maxT: 24, maxSingle: 5, dir: "forward", sortBy: "diff_asc" },
+        { role: "easy",   minW: 5, maxW: 11, maxCnt: 4, minT: 16, maxT: 28, maxSingle: 5, dir: "forward", sortBy: "random" },
+        { role: "normal", minW: 7, maxW: 13, maxCnt: 5, minT: 20, maxT: 34, maxSingle: 6, dir: "forward", sortBy: "random" },
+        { role: "normal", minW: 7, maxW: 14, maxCnt: 5, minT: 22, maxT: 38, maxSingle: 7, dir: "forward", sortBy: "random" },
+        { role: "normal", minW: 8, maxW: 15, maxCnt: 5, minT: 24, maxT: 42, maxSingle: 7, dir: "all",     sortBy: "random" },
+      ];
+      starters.forEach((s, i) => {
+        rows.push({
+          ...createEmptyConfigRow(i + 1),
+          stageLabel: "新手",
+          role: s.role,
+          size: "4x5",
+          shapeType: "full",
+          maxMaxCount: s.maxCnt,
+          minTargets: s.minW,
+          maxTargets: s.maxW,
+          lenRule: "3_4_5p",
+          dirTendency: s.dir,
+          minDiffTotal: s.minT,
+          maxDiffTotal: s.maxT,
+          maxDiffMax: s.maxSingle,
+          sortBy: s.sortBy,
+        });
+      });
+
+      const ROLE_CYCLE = ["easy", "normal", "normal", "normal", "hard"];
+      for (let lv = 6; lv <= 31; lv++) {
+        const posInGroup = (lv - 6) % 5;
+        const role = ROLE_CYCLE[posInGroup];
+        let stageLabel = "S3";
+        let band;
+        if (lv <= 10) {
+          stageLabel = "S1";
+          band = {
+            easy:   { minW: 5,  maxW: 12, maxCnt: 5, minT: 16, maxT: 30, minMax: null, maxMax: 6 },
+            normal: { minW: 8,  maxW: 15, maxCnt: 6, minT: 22, maxT: 38, minMax: null, maxMax: 7 },
+            hard:   { minW: 12, maxW: 20, maxCnt: 8, minT: 32, maxT: 54, minMax: 4,    maxMax: 9 },
+          }[role];
+        } else if (lv <= 20) {
+          stageLabel = "S2";
+          band = {
+            easy:   { minW: 6,  maxW: 13, maxCnt: 6, minT: 18, maxT: 34, minMax: null, maxMax: 6 },
+            normal: { minW: 9,  maxW: 17, maxCnt: 7, minT: 26, maxT: 44, minMax: null, maxMax: 8 },
+            hard:   { minW: 13, maxW: 22, maxCnt: 9, minT: 38, maxT: 64, minMax: 5,    maxMax: 11 },
+          }[role];
+        } else {
+          stageLabel = "S3";
+          band = {
+            easy:   { minW: 6,  maxW: 14, maxCnt: 6,  minT: 20, maxT: 38, minMax: null, maxMax: 7 },
+            normal: { minW: 10, maxW: 18, maxCnt: 8,  minT: 30, maxT: 50, minMax: null, maxMax: 9 },
+            hard:   { minW: 14, maxW: 24, maxCnt: 10, minT: 44, maxT: 74, minMax: 6,    maxMax: 13 },
+          }[role];
+        }
+
+        rows.push({
+          ...createEmptyConfigRow(lv),
+          stageLabel,
+          role,
+          size: "4x5",
+          shapeType: lv <= 30 ? "group_auto_1of5" : "full",
+          maxMaxCount: band.maxCnt,
+          minTargets: band.minW,
+          maxTargets: band.maxW,
+          lenRule: role === "hard" ? "4_5p_opt3" : "3_4_5p",
+          dirTendency: lv <= 10 && role === "easy" ? "forward" : "all",
+          minDiffTotal: band.minT,
+          maxDiffTotal: band.maxT,
+          minDiffMax: band.minMax,
+          maxDiffMax: band.maxMax,
+          sortBy: "random",
+        });
+      }
+      return rows;
+    }
+
+    function applyConfigPreset31() {
+      configRows = buildConfigPreset31Rows();
+      configMatchResults = [];
+      configMatchStats = null;
+      cfgPage = 0;
+      saveConfigRowsToStorage();
+      renderConfigTable();
+      const st = document.getElementById("configStatusText");
+      if (st) {
+        st.textContent = "📅 已生成 31 关 4×5 统一尺寸模板（新手 1~5 关 + S1~S3 阶段递增 + 简/常/常/常/难节奏 + 每5关1异形），点击「🔍 从本地库一键寻关」即可匹配！";
+      }
     }
 
     function applyConfigPreset2000() {
