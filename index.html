@@ -138,6 +138,134 @@
       gap: 10px;
     }
 
+    .header-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      margin: 0 2px;
+    }
+
+    /* Generation Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-dialog {
+      width: 100%;
+      max-width: 940px;
+      max-height: 90vh;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .modal-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+    .modal-close:hover {
+      color: var(--text);
+      border-color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-section {
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .modal-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 10px 14px;
+      align-items: end;
+    }
+    .modal-status {
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-status.st-win, .modal-status.st-ok { background: rgba(34, 197, 94, 0.14); border-color: rgba(34, 197, 94, 0.5); color: #86efac; }
+    .modal-status.st-err { background: rgba(239, 68, 68, 0.14); border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+    .modal-status.st-warn { background: rgba(245, 158, 11, 0.14); border-color: rgba(245, 158, 11, 0.5); color: #fde68a; }
+    .modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--panel-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     /* Main 2-column Layout */
     .container {
       flex: 1;
@@ -611,143 +739,189 @@
       <span id="levelBadge" class="pill pill-blue">第 2 关</span>
     </div>
 
-    <div class="presets">
-      <button class="preset-btn" data-preset="2x4" onclick="selectPreset('2x4')">2×4</button>
-      <button class="preset-btn" data-preset="3x3" onclick="selectPreset('3x3')">3×3</button>
-      <button class="preset-btn" data-preset="2x5" onclick="selectPreset('2x5')">2×5</button>
-      <button class="preset-btn active" data-preset="3x4" onclick="selectPreset('3x4')">3×4</button>
-      <button class="preset-btn" data-preset="3x5" onclick="selectPreset('3x5')">3×5</button>
-      <button class="preset-btn" data-preset="4x5" onclick="selectPreset('4x5')">4×5</button>
-      <button class="preset-btn" data-preset="custom" onclick="selectCustomShapePreset()">🧩 自定义形状</button>
-    </div>
-
     <div class="actions">
-      <button class="btn btn-primary" onclick="generateSingle()">🎲 生成新关卡</button>
+      <button class="btn btn-primary" id="openGenModalBtn" onclick="openGenModal()">🎲 生成关卡</button>
+      <span class="header-sep"></span>
       <button class="btn" id="hideWordsBtn" onclick="toggleHideWords()">🙈 隐藏单词</button>
       <button class="btn" onclick="hintNextWord()">💡 提示一步</button>
       <button class="btn" onclick="resetPlaySession()">🔄 重置本关</button>
+      <button class="btn" id="editModeBtn" onclick="toggleEditMode()">✏️ 手动改盘</button>
+      <span class="header-sep"></span>
       <button class="btn" id="statsToggleBtn" onclick="toggleStatsView()">📊 关卡统计 (<span id="poolCountHeader">0</span>)</button>
       <button class="btn" id="dbToggleBtn" onclick="toggleDbView()">🗄️ 本地库 (<span id="dbCountHeader">0</span>)</button>
       <button class="btn" id="configToggleBtn" onclick="toggleConfigView()">📋 关卡配置表</button>
-      <button class="btn" id="advToggleBtn" onclick="toggleAdvanced()">⚙️ 高级设置 / 导出</button>
+      <span class="header-sep"></span>
+      <button class="btn" onclick="triggerImport()">📥 导入 JSON</button>
+      <input type="file" id="importFile" accept=".json" class="hidden" onchange="handleImportFile(event)" />
+      <button class="btn" onclick="exportCurrentLevel()">📤 导出当前</button>
+      <button class="btn" id="exportAllBtn" onclick="exportAllLevels()">📤 导出全部 (1)</button>
     </div>
   </header>
 
-  <!-- Collapsible Advanced Drawer -->
-  <div id="advancedDrawer" class="drawer hidden">
-    <div class="drawer-grid">
-      <div class="field">
-        <label>关卡号 (1=允许2字母)</label>
-        <input type="number" id="cfgLevelNum" value="2" min="1" max="999" />
-      </div>
-      <div class="field">
-        <label>行数 × 列数</label>
-        <div style="display:flex; gap:6px;">
-          <input type="number" id="cfgRows" value="3" min="2" max="7" onchange="onTemplateOrSizeChange()" />
-          <input type="number" id="cfgCols" value="4" min="2" max="7" onchange="onTemplateOrSizeChange()" />
+  <!-- Generation Modal -->
+  <div id="genModal" class="modal-backdrop hidden" onclick="onGenModalBackdropClick(event)">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="genModalTitle">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-title" id="genModalTitle">🎲 关卡生成器</span>
+          <span id="dictSummary" class="pill" style="font-size:11px; color:var(--muted);">词库加载中...</span>
         </div>
+        <button class="modal-close" type="button" onclick="closeGenModal()" title="关闭">✕</button>
       </div>
-      <div class="field">
-        <label>异形棋盘</label>
-        <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); cursor:pointer; padding-top:6px;">
-          <input type="checkbox" id="cfgCustomShapeCheck" onchange="onTemplateOrSizeChange()" />
-          开启异形矩阵编辑
-        </label>
-      </div>
-      <div class="field">
-        <label>目标词数 / 长度序列 (留空自动)</label>
-        <div style="display:flex; gap:6px;">
-          <input type="number" id="cfgWordCount" value="" min="2" max="30" placeholder="留空自动" style="width:78px;" />
-          <input type="text" id="cfgLengths" value="" placeholder="留空随机，或填 3,4,5" />
-        </div>
-      </div>
-      <div class="field">
-        <label>必含种子词 (可选)</label>
-        <input type="text" id="cfgSeeds" value="" placeholder="BOOK, PLAY" />
-      </div>
-      <div class="field">
-        <label>目标词词频上限</label>
-        <input type="number" id="cfgMaxRank" value="6000" min="200" max="8500" step="100" />
-      </div>
-      <div class="field">
-        <label>单格最大次数 / 死局标准</label>
-        <div style="display:flex; gap:6px;">
-          <input type="number" id="cfgMaxCellCount" value="10" min="1" max="20" style="width:62px;" />
-          <select id="cfgStrictness">
-            <option value="deadlock_free">全顺序零死局</option>
-            <option value="path_unique">路径唯一</option>
-            <option value="solvable">仅需有解</option>
-          </select>
-        </div>
-      </div>
-    </div>
 
-    <div id="customShapePanel" class="hidden" style="margin-top:10px; padding:10px; border:1px dashed var(--accent); border-radius:8px; background:rgba(56,189,248,0.05);">
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-        <span style="font-size:12px; font-weight:700; color:var(--accent);">🧩 自定义异形矩阵（点击格子删除/镂空，再点击打开）</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span id="customShapeInfo" style="font-size:12px; color:var(--muted);"></span>
-          <button class="btn btn-sm" onclick="resetCustomShape()">🔄 全部打开</button>
+      <div class="modal-body">
+        <div id="modalGenStatus" class="modal-status hidden"></div>
+
+        <!-- Section 1: Board Size & Shape -->
+        <div class="modal-section">
+          <div class="modal-section-head">
+            <span class="modal-section-title">📐 棋盘尺寸与形态</span>
+            <div class="presets">
+              <button class="preset-btn" data-preset="2x4" onclick="selectPreset('2x4')">2×4</button>
+              <button class="preset-btn" data-preset="3x3" onclick="selectPreset('3x3')">3×3</button>
+              <button class="preset-btn" data-preset="2x5" onclick="selectPreset('2x5')">2×5</button>
+              <button class="preset-btn active" data-preset="3x4" onclick="selectPreset('3x4')">3×4</button>
+              <button class="preset-btn" data-preset="3x5" onclick="selectPreset('3x5')">3×5</button>
+              <button class="preset-btn" data-preset="4x5" onclick="selectPreset('4x5')">4×5</button>
+              <button class="preset-btn" data-preset="custom" onclick="selectCustomShapePreset()">🧩 自定义形状</button>
+            </div>
+          </div>
+
+          <div class="modal-grid">
+            <div class="field">
+              <label>行数 × 列数</label>
+              <div style="display:flex; gap:6px;">
+                <input type="number" id="cfgRows" value="3" min="2" max="7" onchange="onTemplateOrSizeChange()" />
+                <input type="number" id="cfgCols" value="4" min="2" max="7" onchange="onTemplateOrSizeChange()" />
+              </div>
+            </div>
+            <div class="field">
+              <label>异形棋盘</label>
+              <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); cursor:pointer; padding-top:6px;">
+                <input type="checkbox" id="cfgCustomShapeCheck" onchange="onTemplateOrSizeChange()" />
+                开启异形矩阵编辑
+              </label>
+            </div>
+          </div>
+
+          <div id="customShapePanel" class="hidden" style="padding:10px; border:1px dashed var(--accent); border-radius:8px; background:rgba(56,189,248,0.05);">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+              <span style="font-size:12px; font-weight:700; color:var(--accent);">🧩 自定义异形矩阵（点击格子删除/镂空，再点击打开）</span>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span id="customShapeInfo" style="font-size:12px; color:var(--muted);"></span>
+                <button class="btn btn-sm" onclick="resetCustomShape()">🔄 全部打开</button>
+              </div>
+            </div>
+            <div id="customShapeGrid" style="display:inline-grid; gap:5px;"></div>
+          </div>
+        </div>
+
+        <!-- Section 2: Single Level Parameters -->
+        <div class="modal-section">
+          <div class="modal-section-head">
+            <span class="modal-section-title">⚙️ 单关生成参数</span>
+            <button class="btn btn-sm btn-primary" id="modalGenSingleBtn" onclick="generateSingleFromModal()">🎲 生成新关卡并预览</button>
+          </div>
+          <div class="modal-grid">
+            <div class="field">
+              <label>关卡号 (1=允许2字母)</label>
+              <input type="number" id="cfgLevelNum" value="2" min="1" max="999" />
+            </div>
+            <div class="field">
+              <label>目标词数 / 长度序列 (留空自动)</label>
+              <div style="display:flex; gap:6px;">
+                <input type="number" id="cfgWordCount" value="" min="2" max="30" placeholder="留空自动" style="width:78px;" />
+                <input type="text" id="cfgLengths" value="" placeholder="留空随机，或填 3,4,5" />
+              </div>
+            </div>
+            <div class="field">
+              <label>必含种子词 (可选)</label>
+              <input type="text" id="cfgSeeds" value="" placeholder="BOOK, PLAY" />
+            </div>
+            <div class="field">
+              <label>目标词词频上限</label>
+              <input type="number" id="cfgMaxRank" value="6000" min="200" max="8500" step="100" />
+            </div>
+            <div class="field">
+              <label>单格最大次数 / 死局标准</label>
+              <div style="display:flex; gap:6px;">
+                <input type="number" id="cfgMaxCellCount" value="10" min="1" max="20" style="width:62px;" />
+                <select id="cfgStrictness">
+                  <option value="deadlock_free">全顺序零死局</option>
+                  <option value="path_unique">路径唯一</option>
+                  <option value="solvable">仅需有解</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Batch Generation -->
+        <div class="modal-section">
+          <div class="modal-section-head">
+            <span class="modal-section-title">📦 批量生成与入池</span>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+            <div class="field" style="min-width:90px;">
+              <label>每轮数量</label>
+              <input type="number" id="batchCountInput" value="20" min="1" max="100000" style="width:90px;" />
+            </div>
+            <div class="field" style="min-width:76px;">
+              <label>连续轮数</label>
+              <input type="number" id="batchRoundsInput" value="1" min="1" max="100" style="width:70px;" />
+            </div>
+            <div class="field" style="min-width:85px;">
+              <label>并行核心数</label>
+              <input type="number" id="batchWorkersInput" value="4" min="1" max="32" style="width:76px;" />
+            </div>
+            <div class="field" style="min-width:210px;">
+              <label>批量策略</label>
+              <select id="batchStrategySelect">
+                <option value="full_scan_peel">全盘扫描 + 从多到少减词（零死局）</option>
+                <option value="standard">标准生成</option>
+              </select>
+            </div>
+            <div class="field" style="min-width:170px;">
+              <label>批量尺寸模式</label>
+              <select id="batchSizeModeSelect" onchange="onBatchSizeModeChange()">
+                <option value="presets">轮换尺寸 (2×4 ~ 3×5)</option>
+                <option value="current">仅当前尺寸</option>
+                <option value="custom_shape">当前异形棋盘</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between; padding-top:4px;">
+            <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
+              <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer;">
+                <input type="checkbox" id="batchAvoidHotCheck" checked />
+                防高频重复避让
+              </label>
+              <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer;">
+                <input type="checkbox" id="batchDedupCheck" checked />
+                生成去重
+              </label>
+              <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer;">
+                <input type="checkbox" id="batchSaveDbCheck" checked />
+                存入本地库
+              </label>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <button class="btn btn-sm btn-primary" id="batchRunBtn" onclick="runConfiguredBatch(false)">📦 批量生成入池</button>
+              <button class="btn btn-sm" id="batchExportBtn" onclick="runConfiguredBatch(true)">💾 批量跑并导出 JSONL</button>
+              <button class="btn btn-sm" onclick="dedupPool()">🧹 池内去重</button>
+              <button class="btn btn-sm btn-warn hidden" id="batchStopBtn" onclick="stopBatchRun()">⏹️ 停止</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="customShapeGrid" style="display:inline-grid; gap:5px;"></div>
-    </div>
 
-    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-      <div class="field" style="min-width:90px;">
-        <label>每轮数量</label>
-        <input type="number" id="batchCountInput" value="20" min="1" max="100000" style="width:90px;" />
+      <div class="modal-footer">
+        <span style="font-size:11px; color:var(--muted);">提示：按 Esc 或点击空白处关闭弹窗（批量生成可在后台继续运行）</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn" type="button" onclick="closeGenModal()">关闭</button>
+          <button class="btn btn-primary" type="button" onclick="generateSingleFromModal()">🎲 生成新关卡</button>
+        </div>
       </div>
-      <div class="field" style="min-width:76px;">
-        <label>连续轮数</label>
-        <input type="number" id="batchRoundsInput" value="1" min="1" max="100" style="width:70px;" />
-      </div>
-      <div class="field" style="min-width:85px;">
-        <label>并行核心数</label>
-        <input type="number" id="batchWorkersInput" value="4" min="1" max="32" style="width:76px;" />
-      </div>
-      <div class="field" style="min-width:210px;">
-        <label>批量策略</label>
-        <select id="batchStrategySelect">
-          <option value="full_scan_peel">全盘扫描 + 从多到少减词（零死局）</option>
-          <option value="standard">标准生成</option>
-        </select>
-      </div>
-      <div class="field" style="min-width:170px;">
-        <label>批量尺寸模式</label>
-        <select id="batchSizeModeSelect" onchange="onBatchSizeModeChange()">
-          <option value="presets">轮换尺寸 (2×4 ~ 3×5)</option>
-          <option value="current">仅当前尺寸</option>
-          <option value="custom_shape">当前异形棋盘</option>
-        </select>
-      </div>
-      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
-        <input type="checkbox" id="batchAvoidHotCheck" checked />
-        防高频重复避让
-      </label>
-      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
-        <input type="checkbox" id="batchDedupCheck" checked />
-        生成去重
-      </label>
-      <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text); cursor:pointer; padding-bottom:6px;">
-        <input type="checkbox" id="batchSaveDbCheck" checked />
-        存入本地库
-      </label>
-      <button class="btn btn-sm btn-primary" id="batchRunBtn" onclick="runConfiguredBatch(false)">📦 批量生成入池</button>
-      <button class="btn btn-sm" id="batchExportBtn" onclick="runConfiguredBatch(true)">💾 批量跑并导出 JSONL</button>
-      <button class="btn btn-sm" onclick="dedupPool()">🧹 池内去重</button>
-      <button class="btn btn-sm btn-warn hidden" id="batchStopBtn" onclick="stopBatchRun()">⏹️ 停止</button>
-    </div>
-
-    <div class="drawer-footer">
-      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-        <button class="btn btn-sm" id="editModeBtn" onclick="toggleEditMode()">✏️ 手动改盘开关</button>
-        <button class="btn btn-sm" onclick="triggerImport()">📥 导入 JSON</button>
-        <input type="file" id="importFile" accept=".json" class="hidden" onchange="handleImportFile(event)" />
-        <button class="btn btn-sm" onclick="exportCurrentLevel()">📤 导出当前关卡</button>
-        <button class="btn btn-sm" id="exportAllBtn" onclick="exportAllLevels()">📤 导出全部 (1)</button>
-      </div>
-      <span id="dictSummary" style="font-size:11px; color:var(--muted);">词库加载中...</span>
     </div>
   </div>
 
@@ -835,8 +1009,7 @@
         <span class="pill pill-blue" id="statsPoolCountPill">共 0 关</span>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button class="btn btn-sm btn-primary" onclick="generateSingle()">🎲 +1 关入池</button>
-        <button class="btn btn-sm" onclick="generateBatch(10)">📦 批量 +10 关入池</button>
+        <button class="btn btn-sm btn-primary" onclick="openGenModal()">🎲 生成关卡</button>
         <button class="btn btn-sm" onclick="exportAllLevels()">📤 导出关卡池 JSON</button>
         <button class="btn btn-sm btn-warn" onclick="clearPool()">🗑️ 清空关卡池</button>
         <button class="btn btn-sm" onclick="toggleStatsView(false)">← 返回棋盘</button>
@@ -1297,8 +1470,34 @@
       renderInfoPanel();
     }
 
-    function toggleAdvanced() {
-      document.getElementById("advancedDrawer").classList.toggle("hidden");
+    function openGenModal() {
+      document.getElementById("genModal").classList.remove("hidden");
+    }
+
+    function closeGenModal() {
+      document.getElementById("genModal").classList.add("hidden");
+    }
+
+    function onGenModalBackdropClick(e) {
+      if (e.target && e.target.id === "genModal") {
+        closeGenModal();
+      }
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const modal = document.getElementById("genModal");
+        if (modal && !modal.classList.contains("hidden")) {
+          closeGenModal();
+        }
+      }
+    });
+
+    async function generateSingleFromModal() {
+      const ok = await generateSingle();
+      if (ok) {
+        closeGenModal();
+      }
     }
 
     function selectPreset(name) {
@@ -1323,14 +1522,12 @@
       }
       document.getElementById("cfgCustomShapeCheck").checked = false;
       onTemplateOrSizeChange();
-      generateSingle();
     }
 
     function selectCustomShapePreset() {
       document.querySelectorAll(".preset-btn").forEach((b) => {
         b.classList.toggle("active", b.dataset.preset === "custom");
       });
-      document.getElementById("advancedDrawer").classList.remove("hidden");
       document.getElementById("cfgCustomShapeCheck").checked = true;
       onTemplateOrSizeChange();
     }
@@ -1454,9 +1651,24 @@
         msgEl.appendChild(sp);
       }
       msgEl.appendChild(document.createTextNode(text));
+
+      const modalStatus = document.getElementById("modalGenStatus");
+      if (modalStatus) {
+        modalStatus.classList.remove("hidden");
+        modalStatus.className = "modal-status" + (cls ? " " + cls : "");
+        modalStatus.innerHTML = "";
+        if (loading) {
+          const sp2 = document.createElement("span");
+          sp2.className = "inline-spinner";
+          modalStatus.appendChild(sp2);
+        }
+        modalStatus.appendChild(document.createTextNode(text));
+      }
     }
 
     async function generateSingle() {
+      const singleBtn = document.getElementById("modalGenSingleBtn");
+      if (singleBtn) singleBtn.disabled = true;
       setStatus("正在生成零死局关卡...", "", true);
       try {
         const res = await fetch("/api/generate", {
@@ -1469,8 +1681,12 @@
         levels.push(data.level);
         currentIndex = levels.length - 1;
         await onLevelLoaded(`新关卡已入池（共 ${levels.length} 关 · 耗时 ${data.level.generation_ms} ms）`);
+        return true;
       } catch (e) {
         setStatus("❌ " + e.message, "st-err");
+        return false;
+      } finally {
+        if (singleBtn) singleBtn.disabled = false;
       }
     }
 
